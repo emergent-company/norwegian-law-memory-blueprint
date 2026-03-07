@@ -1,0 +1,23 @@
+# Norwegian Law Memory Blueprint — gitignore
+
+# Compiled binary (the bare name would also match the cmd/seeder/ dir, so be specific)
+/seeder
+/cmd/seeder/seeder
+
+# State files
+*.jsonl
+idmap.json
+state.json
+
+# Temporary data cache
+/tmp/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
