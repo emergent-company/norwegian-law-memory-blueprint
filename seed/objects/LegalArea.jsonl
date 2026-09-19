@@ -1,0 +1,283 @@
+{"type":"LegalArea","key":"area_Anskaffelser, avtaler, bygg og entrepriser","properties":{"name":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"area_Arbeidsrett","properties":{"name":"Arbeidsrett"}}
+{"type":"LegalArea","key":"area_Bank, finans og regnskapsrett","properties":{"name":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"area_EU/EØS-rett","properties":{"name":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"area_Energirett","properties":{"name":"Energirett"}}
+{"type":"LegalArea","key":"area_Erstatnings- og forsikringsrett","properties":{"name":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"area_Familie-, person- og barnerett","properties":{"name":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"area_Fast eiendoms rettsforhold","properties":{"name":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"area_Fiskeri- og fangstrett og havbruk","properties":{"name":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"area_Forbruker-, kjøps- og konkurranserett","properties":{"name":"Forbruker-, kjøps- og konkurranserett"}}
+{"type":"LegalArea","key":"area_Forurensninger, klima og utslipp","properties":{"name":"Forurensninger, klima og utslipp"}}
+{"type":"LegalArea","key":"area_Forvaltnings- og kommunalrett","properties":{"name":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"area_HMS og beredskaps- og sikkerhetsrett","properties":{"name":"HMS og beredskaps- og sikkerhetsrett"}}
+{"type":"LegalArea","key":"area_Helse- og omsorgsrett","properties":{"name":"Helse- og omsorgsrett"}}
+{"type":"LegalArea","key":"area_IKT- og medierett","properties":{"name":"IKT- og medierett"}}
+{"type":"LegalArea","key":"area_Immaterialrett","properties":{"name":"Immaterialrett"}}
+{"type":"LegalArea","key":"area_Internasjonal rett","properties":{"name":"Internasjonal rett"}}
+{"type":"LegalArea","key":"area_Konkurs, gjeld og pant","properties":{"name":"Konkurs, gjeld og pant"}}
+{"type":"LegalArea","key":"area_Kultur, idrett og underholdning","properties":{"name":"Kultur, idrett og underholdning"}}
+{"type":"LegalArea","key":"area_Landbruk, jakt og skogbruk","properties":{"name":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"area_Menneskerettigheter","properties":{"name":"Menneskerettigheter"}}
+{"type":"LegalArea","key":"area_Miljøvern, natur og friluftsliv","properties":{"name":"Miljøvern, natur og friluftsliv"}}
+{"type":"LegalArea","key":"area_Næringsrett","properties":{"name":"Næringsrett"}}
+{"type":"LegalArea","key":"area_Pensjons- og trygderett","properties":{"name":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"area_Samerett","properties":{"name":"Samerett"}}
+{"type":"LegalArea","key":"area_Selskaper, fond og foreninger","properties":{"name":"Selskaper, fond og foreninger"}}
+{"type":"LegalArea","key":"area_Sivil- og straffeprosess","properties":{"name":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"area_Skatte- og avgiftsrett","properties":{"name":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"area_Skoler, universiteter og forskning","properties":{"name":"Skoler, universiteter og forskning"}}
+{"type":"LegalArea","key":"area_Stats-, statsforfatnings- og statsborgerrett","properties":{"name":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"area_Strafferett","properties":{"name":"Strafferett"}}
+{"type":"LegalArea","key":"area_Svalbard og biland","properties":{"name":"Svalbard og biland"}}
+{"type":"LegalArea","key":"area_Transport og kommunikasjoner","properties":{"name":"Transport og kommunikasjoner"}}
+{"type":"LegalArea","key":"area_Tvangsfullbyrdelse","properties":{"name":"Tvangsfullbyrdelse"}}
+{"type":"LegalArea","key":"area_Utlendingsrett","properties":{"name":"Utlendingsrett"}}
+{"type":"LegalArea","key":"subarea_Adopsjon","properties":{"name":"Adopsjon","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Advokatrett, rettshjelp","properties":{"name":"Advokatrett, rettshjelp","parent_area":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"subarea_Aksjeselskaper og allmennaksjeselskaper","properties":{"name":"Aksjeselskaper og allmennaksjeselskaper","parent_area":"Næringsrett"}}
+{"type":"LegalArea","key":"subarea_Akvakultur. Havbruk","properties":{"name":"Akvakultur. Havbruk","parent_area":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"subarea_Allemannsretten","properties":{"name":"Allemannsretten","parent_area":"Miljøvern, natur og friluftsliv"}}
+{"type":"LegalArea","key":"subarea_Alminnelig strafferett","properties":{"name":"Alminnelig strafferett","parent_area":"Strafferett"}}
+{"type":"LegalArea","key":"subarea_Alminnelige bestemmelser","properties":{"name":"Alminnelige bestemmelser","parent_area":"Utlendingsrett"}}
+{"type":"LegalArea","key":"subarea_Andelslag","properties":{"name":"Andelslag","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Ansettelse. Avskjed. Oppsigelse","properties":{"name":"Ansettelse. Avskjed. Oppsigelse","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Anskaffelser","properties":{"name":"Anskaffelser","parent_area":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"subarea_Ansvarsforsikringer","properties":{"name":"Ansvarsforsikringer","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Arbeids- og sosialpolitikk","properties":{"name":"Arbeids- og sosialpolitikk","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Arbeidsavklaringspenger","properties":{"name":"Arbeidsavklaringspenger","parent_area":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"subarea_Arbeidsforhold","properties":{"name":"Arbeidsforhold","parent_area":"Svalbard og biland"}}
+{"type":"LegalArea","key":"subarea_Arbeidsforhold. Sysselsetting","properties":{"name":"Arbeidsforhold. Sysselsetting","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Arbeidsgiveravgift","properties":{"name":"Arbeidsgiveravgift","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Arbeidsmiljø","properties":{"name":"Arbeidsmiljø","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Arbeidstvister","properties":{"name":"Arbeidstvister","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Arkiv","properties":{"name":"Arkiv","parent_area":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"subarea_Artistskatt","properties":{"name":"Artistskatt","parent_area":"Kultur, idrett og underholdning"}}
+{"type":"LegalArea","key":"subarea_Arv","properties":{"name":"Arv","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Atomenergi","properties":{"name":"Atomenergi","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Avhending","properties":{"name":"Avhending","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Avtaler","properties":{"name":"Avtaler","parent_area":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"subarea_Banker","properties":{"name":"Banker","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Barn og foreldre","properties":{"name":"Barn og foreldre","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Barnehager","properties":{"name":"Barnehager","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Barnetrygd","properties":{"name":"Barnetrygd","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Barnevern","properties":{"name":"Barnevern","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Beredskap","properties":{"name":"Beredskap","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Beregning av pensjoner m.m.","properties":{"name":"Beregning av pensjoner m.m.","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Bergverk. Mineraler. Muting","properties":{"name":"Bergverk. Mineraler. Muting","parent_area":"Næringsrett"}}
+{"type":"LegalArea","key":"subarea_Betalingsformidling","properties":{"name":"Betalingsformidling","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Bevisførsel","properties":{"name":"Bevisførsel","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Bibliotek","properties":{"name":"Bibliotek","parent_area":"Kultur, idrett og underholdning"}}
+{"type":"LegalArea","key":"subarea_Bidragsforskudd","properties":{"name":"Bidragsforskudd","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Bilavgifter","properties":{"name":"Bilavgifter","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Boligoppføring","properties":{"name":"Boligoppføring","parent_area":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"subarea_Borettslag. Boligbyggelag","properties":{"name":"Borettslag. Boligbyggelag","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Byggesaksbehandling","properties":{"name":"Byggesaksbehandling","parent_area":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"subarea_Børs- og verdipapir","properties":{"name":"Børs- og verdipapir","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Dekningsrett","properties":{"name":"Dekningsrett","parent_area":"Konkurs, gjeld og pant"}}
+{"type":"LegalArea","key":"subarea_Den offentlige ro, orden og sikkerhet","properties":{"name":"Den offentlige ro, orden og sikkerhet","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Diskriminering","properties":{"name":"Diskriminering","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Dokumentavgift","properties":{"name":"Dokumentavgift","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Domstolloven","properties":{"name":"Domstolloven","parent_area":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"subarea_Drap","properties":{"name":"Drap","parent_area":"Strafferett"}}
+{"type":"LegalArea","key":"subarea_Dyrevern. Veterinær","properties":{"name":"Dyrevern. Veterinær","parent_area":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"subarea_EMK","properties":{"name":"EMK","parent_area":"Menneskerettigheter"}}
+{"type":"LegalArea","key":"subarea_Eiendomsmegling","properties":{"name":"Eiendomsmegling","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Eiendomsskatt","properties":{"name":"Eiendomsskatt","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Ekspropriasjon","properties":{"name":"Ekspropriasjon","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Ekteskap og samboerskap (husstandsfellesskap)","properties":{"name":"Ekteskap og samboerskap (husstandsfellesskap)","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Elektrisitetsproduksjon og -forsyning","properties":{"name":"Elektrisitetsproduksjon og -forsyning","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Elektronisk handel. E-signatur","properties":{"name":"Elektronisk handel. E-signatur","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Energi","properties":{"name":"Energi","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Entrepriser","properties":{"name":"Entrepriser","parent_area":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"subarea_Fangst","properties":{"name":"Fangst","parent_area":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"subarea_Film","properties":{"name":"Film","parent_area":"Kultur, idrett og underholdning"}}
+{"type":"LegalArea","key":"subarea_Finansielle tjenester","properties":{"name":"Finansielle tjenester","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Finnmark","properties":{"name":"Finnmark","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Fiske","properties":{"name":"Fiske","parent_area":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"subarea_Fiskeri","properties":{"name":"Fiskeri","parent_area":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"subarea_Folkerett","properties":{"name":"Folkerett","parent_area":"Internasjonal rett"}}
+{"type":"LegalArea","key":"subarea_Folketrygdavgift","properties":{"name":"Folketrygdavgift","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Fond","properties":{"name":"Fond","parent_area":"Selskaper, fond og foreninger"}}
+{"type":"LegalArea","key":"subarea_Forbrukerkjøp","properties":{"name":"Forbrukerkjøp","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Forbrukersaker","properties":{"name":"Forbrukersaker","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Foretak","properties":{"name":"Foretak","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Fornybar energi","properties":{"name":"Fornybar energi","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Forsikring","properties":{"name":"Forsikring","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Forskning","properties":{"name":"Forskning","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Forskning og utdanning","properties":{"name":"Forskning og utdanning","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Forsvaret","properties":{"name":"Forsvaret","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Forurensninger","properties":{"name":"Forurensninger","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Fremmedrett","properties":{"name":"Fremmedrett","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Friluftsliv","properties":{"name":"Friluftsliv","parent_area":"Miljøvern, natur og friluftsliv"}}
+{"type":"LegalArea","key":"subarea_Generelt","properties":{"name":"Generelt","parent_area":"Svalbard og biland"}}
+{"type":"LegalArea","key":"subarea_Gjeldsforhandling. Konkurs","properties":{"name":"Gjeldsforhandling. Konkurs","parent_area":"Internasjonal rett"}}
+{"type":"LegalArea","key":"subarea_Gjeldsordning","properties":{"name":"Gjeldsordning","parent_area":"Konkurs, gjeld og pant"}}
+{"type":"LegalArea","key":"subarea_Gjenåpning","properties":{"name":"Gjenåpning","parent_area":"IKT- og medierett"}}
+{"type":"LegalArea","key":"subarea_Grenser","properties":{"name":"Grenser","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Grunnloven","properties":{"name":"Grunnloven","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Handel og tjenester","properties":{"name":"Handel og tjenester","parent_area":"Næringsrett"}}
+{"type":"LegalArea","key":"subarea_Handelsforenklinger","properties":{"name":"Handelsforenklinger","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Havner","properties":{"name":"Havner","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Havrett","properties":{"name":"Havrett","parent_area":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"subarea_Helse","properties":{"name":"Helse","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Helse, miljø og sikkerhet","properties":{"name":"Helse, miljø og sikkerhet","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Helseforetak","properties":{"name":"Helseforetak","parent_area":"Helse- og omsorgsrett"}}
+{"type":"LegalArea","key":"subarea_Helseforskning","properties":{"name":"Helseforskning","parent_area":"Helse- og omsorgsrett"}}
+{"type":"LegalArea","key":"subarea_Helsepersonell","properties":{"name":"Helsepersonell","parent_area":"Helse- og omsorgsrett"}}
+{"type":"LegalArea","key":"subarea_Hotell og servering","properties":{"name":"Hotell og servering","parent_area":"Næringsrett"}}
+{"type":"LegalArea","key":"subarea_Husleie","properties":{"name":"Husleie","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Hvitvasking","properties":{"name":"Hvitvasking","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Håndverk","properties":{"name":"Håndverk","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Idrett. Sport","properties":{"name":"Idrett. Sport","parent_area":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"subarea_Immaterialrett","properties":{"name":"Immaterialrett","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Indre marked og EØS","properties":{"name":"Indre marked og EØS","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Industri","properties":{"name":"Industri","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Industrielt rettsvern","properties":{"name":"Industrielt rettsvern","parent_area":"Immaterialrett"}}
+{"type":"LegalArea","key":"subarea_Informasjonssamfunnet","properties":{"name":"Informasjonssamfunnet","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Inkasso","properties":{"name":"Inkasso","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Inn- og utførsel","properties":{"name":"Inn- og utførsel","parent_area":"Næringsrett"}}
+{"type":"LegalArea","key":"subarea_Inntekts- og formueskatt","properties":{"name":"Inntekts- og formueskatt","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Internasjonal privatrett","properties":{"name":"Internasjonal privatrett","parent_area":"Internasjonal rett"}}
+{"type":"LegalArea","key":"subarea_Internasjonale organisasjoner","properties":{"name":"Internasjonale organisasjoner","parent_area":"Internasjonal rett"}}
+{"type":"LegalArea","key":"subarea_Internasjonale sanksjoner","properties":{"name":"Internasjonale sanksjoner","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Jakt og innlandsfiske","properties":{"name":"Jakt og innlandsfiske","parent_area":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"subarea_Jan Mayen-skatt","properties":{"name":"Jan Mayen-skatt","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Jernbane","properties":{"name":"Jernbane","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Jordskifte","properties":{"name":"Jordskifte","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Justering og tilbakeføring av inngående merverdiavgift","properties":{"name":"Justering og tilbakeføring av inngående merverdiavgift","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Justis og innenriks","properties":{"name":"Justis og innenriks","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Kjøp","properties":{"name":"Kjøp","parent_area":"Forbruker-, kjøps- og konkurranserett"}}
+{"type":"LegalArea","key":"subarea_Klimakvoter","properties":{"name":"Klimakvoter","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Kommunehelsetjeneste","properties":{"name":"Kommunehelsetjeneste","parent_area":"Helse- og omsorgsrett"}}
+{"type":"LegalArea","key":"subarea_Kommuner og fylkeskommuner","properties":{"name":"Kommuner og fylkeskommuner","parent_area":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"subarea_Kongehuset","properties":{"name":"Kongehuset","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Konkurranse","properties":{"name":"Konkurranse","parent_area":"Forbruker-, kjøps- og konkurranserett"}}
+{"type":"LegalArea","key":"subarea_Konkurranse og statsstøtte","properties":{"name":"Konkurranse og statsstøtte","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Konsesjon","properties":{"name":"Konsesjon","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Kontantstøtte","properties":{"name":"Kontantstøtte","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Konvensjoner. Overenskomster","properties":{"name":"Konvensjoner. Overenskomster","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Krenkelse/ rettstridig tilegnelse av forretningshemmeligheter","properties":{"name":"Krenkelse/ rettstridig tilegnelse av forretningshemmeligheter","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Krigspensjon","properties":{"name":"Krigspensjon","parent_area":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"subarea_Kringkasting","properties":{"name":"Kringkasting","parent_area":"IKT- og medierett"}}
+{"type":"LegalArea","key":"subarea_Kulturminner","properties":{"name":"Kulturminner","parent_area":"Kultur, idrett og underholdning"}}
+{"type":"LegalArea","key":"subarea_Kunst","properties":{"name":"Kunst","parent_area":"Kultur, idrett og underholdning"}}
+{"type":"LegalArea","key":"subarea_Landbruk. Dyrehold","properties":{"name":"Landbruk. Dyrehold","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Legemidler. Apotek","properties":{"name":"Legemidler. Apotek","parent_area":"Helse- og omsorgsrett"}}
+{"type":"LegalArea","key":"subarea_Likestilling og diskriminering","properties":{"name":"Likestilling og diskriminering","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Livsforsikring","properties":{"name":"Livsforsikring","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Lokalstyre","properties":{"name":"Lokalstyre","parent_area":"Svalbard og biland"}}
+{"type":"LegalArea","key":"subarea_Lotteri. Pengespill. Innsamlinger","properties":{"name":"Lotteri. Pengespill. Innsamlinger","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Lovens formål og prosessforutsetninger","properties":{"name":"Lovens formål og prosessforutsetninger","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Luftfart","properties":{"name":"Luftfart","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Markedsføring","properties":{"name":"Markedsføring","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Mat og alkohol","properties":{"name":"Mat og alkohol","parent_area":"Næringsrett"}}
+{"type":"LegalArea","key":"subarea_Mat og drikke","properties":{"name":"Mat og drikke","parent_area":"Fiskeri- og fangstrett og havbruk"}}
+{"type":"LegalArea","key":"subarea_Matrikkel","properties":{"name":"Matrikkel","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Mattrygghet","properties":{"name":"Mattrygghet","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Medier","properties":{"name":"Medier","parent_area":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"subarea_Mekling og avklaring","properties":{"name":"Mekling og avklaring","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Merverdiavgift","properties":{"name":"Merverdiavgift","parent_area":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"subarea_Militær strafferett","properties":{"name":"Militær strafferett","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Miljø","properties":{"name":"Miljø","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Miljø og klima","properties":{"name":"Miljø og klima","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Motorferdsel","properties":{"name":"Motorferdsel","parent_area":"Miljøvern, natur og friluftsliv"}}
+{"type":"LegalArea","key":"subarea_Musikk og teater","properties":{"name":"Musikk og teater","parent_area":"Kultur, idrett og underholdning"}}
+{"type":"LegalArea","key":"subarea_Mønster. Design","properties":{"name":"Mønster. Design","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Naborett","properties":{"name":"Naborett","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Narkotika, alkohol og doping","properties":{"name":"Narkotika, alkohol og doping","parent_area":"Strafferett"}}
+{"type":"LegalArea","key":"subarea_Naturmangfold/naturfredning","properties":{"name":"Naturmangfold/naturfredning","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Naturskadeforsikring","properties":{"name":"Naturskadeforsikring","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Obligasjoner","properties":{"name":"Obligasjoner","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Odels- og åsætesrett","properties":{"name":"Odels- og åsætesrett","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Offentlig forvaltning","properties":{"name":"Offentlig forvaltning","parent_area":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"subarea_Offentlige reguleringer","properties":{"name":"Offentlige reguleringer","parent_area":"Forbruker-, kjøps- og konkurranserett"}}
+{"type":"LegalArea","key":"subarea_Offentlige tjenestemenn","properties":{"name":"Offentlige tjenestemenn","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Opphavsrett","properties":{"name":"Opphavsrett","parent_area":"Immaterialrett"}}
+{"type":"LegalArea","key":"subarea_Pant","properties":{"name":"Pant","parent_area":"Konkurs, gjeld og pant"}}
+{"type":"LegalArea","key":"subarea_Pasientrettigheter","properties":{"name":"Pasientrettigheter","parent_area":"Helse- og omsorgsrett"}}
+{"type":"LegalArea","key":"subarea_Patent","properties":{"name":"Patent","parent_area":"Immaterialrett"}}
+{"type":"LegalArea","key":"subarea_Person- og pasientskadeerstatning","properties":{"name":"Person- og pasientskadeerstatning","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Personopplysninger","properties":{"name":"Personopplysninger","parent_area":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"subarea_Personrett. Personvern","properties":{"name":"Personrett. Personvern","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Petroleumsskatt","properties":{"name":"Petroleumsskatt","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Petroleumsvirksomhet","properties":{"name":"Petroleumsvirksomhet","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Politi","properties":{"name":"Politi","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Post","properties":{"name":"Post","parent_area":"Selskaper, fond og foreninger"}}
+{"type":"LegalArea","key":"subarea_Produktansvar","properties":{"name":"Produktansvar","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Psykisk helsevern","properties":{"name":"Psykisk helsevern","parent_area":"Helse- og omsorgsrett"}}
+{"type":"LegalArea","key":"subarea_Redningsetater","properties":{"name":"Redningsetater","parent_area":"HMS og beredskaps- og sikkerhetsrett"}}
+{"type":"LegalArea","key":"subarea_Regnskap","properties":{"name":"Regnskap","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Reindrift","properties":{"name":"Reindrift","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Reiseliv","properties":{"name":"Reiseliv","parent_area":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"subarea_Rettsgebyrloven","properties":{"name":"Rettsgebyrloven","parent_area":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"subarea_Rettshjelploven","properties":{"name":"Rettshjelploven","parent_area":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"subarea_Rettslig handleevne. Vergemål","properties":{"name":"Rettslig handleevne. Vergemål","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Revisjon","properties":{"name":"Revisjon","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Romrett","properties":{"name":"Romrett","parent_area":"Internasjonal rett"}}
+{"type":"LegalArea","key":"subarea_SP","properties":{"name":"SP","parent_area":"Menneskerettigheter"}}
+{"type":"LegalArea","key":"subarea_Saksbehandlingsregler","properties":{"name":"Saksbehandlingsregler","parent_area":"Utlendingsrett"}}
+{"type":"LegalArea","key":"subarea_Salærforskriften","properties":{"name":"Salærforskriften","parent_area":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"subarea_Sameie","properties":{"name":"Sameie","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Samfunnssikkerhet","properties":{"name":"Samfunnssikkerhet","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Samvirkeforetak","properties":{"name":"Samvirkeforetak","parent_area":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"subarea_Schengen","properties":{"name":"Schengen","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Selskaper. Statsforetak","properties":{"name":"Selskaper. Statsforetak","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Selskapsrett","properties":{"name":"Selskapsrett","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Sivilprosess/tvisteloven","properties":{"name":"Sivilprosess/tvisteloven","parent_area":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"subarea_Skadeforsikring","properties":{"name":"Skadeforsikring","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Skadeserstatning","properties":{"name":"Skadeserstatning","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Skatteavtaler","properties":{"name":"Skatteavtaler","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Skattebetaling","properties":{"name":"Skattebetaling","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Skatteforvaltning","properties":{"name":"Skatteforvaltning","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Skattesubjektene og skattepliktens omfang","properties":{"name":"Skattesubjektene og skattepliktens omfang","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Skifte","properties":{"name":"Skifte","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Skipsfart","properties":{"name":"Skipsfart","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Skjønn","properties":{"name":"Skjønn","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Skogbruk","properties":{"name":"Skogbruk","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Skoler. Privatskoler","properties":{"name":"Skoler. Privatskoler","parent_area":"Skoler, universiteter og forskning"}}
+{"type":"LegalArea","key":"subarea_Sosiale tjenester","properties":{"name":"Sosiale tjenester","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Statistikk. Registrering","properties":{"name":"Statistikk. Registrering","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Statsforfatningen","properties":{"name":"Statsforfatningen","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Stiftelser/legater og foreninger","properties":{"name":"Stiftelser/legater og foreninger","parent_area":"Selskaper, fond og foreninger"}}
+{"type":"LegalArea","key":"subarea_Stortinget","properties":{"name":"Stortinget","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Straffegjennomføring","properties":{"name":"Straffegjennomføring","parent_area":"Strafferett"}}
+{"type":"LegalArea","key":"subarea_Straffeprosess/straffeprosessloven","properties":{"name":"Straffeprosess/straffeprosessloven","parent_area":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"subarea_Supplerende stønad til personer med kort butid i Noreg","properties":{"name":"Supplerende stønad til personer med kort butid i Noreg","parent_area":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"subarea_Svalbardskatt","properties":{"name":"Svalbardskatt","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Sykepenger","properties":{"name":"Sykepenger","parent_area":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"subarea_Særavgifter","properties":{"name":"Særavgifter","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Tariffavtaler","properties":{"name":"Tariffavtaler","parent_area":"Arbeidsrett"}}
+{"type":"LegalArea","key":"subarea_Telekommunikasjon","properties":{"name":"Telekommunikasjon","parent_area":"IKT- og medierett"}}
+{"type":"LegalArea","key":"subarea_Tilleggsstønader","properties":{"name":"Tilleggsstønader","parent_area":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"subarea_Tinglysing. Registrering","properties":{"name":"Tinglysing. Registrering","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Tjenester og etablering","properties":{"name":"Tjenester og etablering","parent_area":"Erstatnings- og forsikringsrett"}}
+{"type":"LegalArea","key":"subarea_Toll","properties":{"name":"Toll","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Tomtefeste","properties":{"name":"Tomtefeste","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Trafikk","properties":{"name":"Trafikk","parent_area":"Strafferett"}}
+{"type":"LegalArea","key":"subarea_Transport","properties":{"name":"Transport","parent_area":"Internasjonal rett"}}
+{"type":"LegalArea","key":"subarea_Trossamfunn. Kirken","properties":{"name":"Trossamfunn. Kirken","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Tvangsgrunnlag og tvangskraft","properties":{"name":"Tvangsgrunnlag og tvangskraft","parent_area":"Anskaffelser, avtaler, bygg og entrepriser"}}
+{"type":"LegalArea","key":"subarea_Uføretrygd","properties":{"name":"Uføretrygd","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Underholdning","properties":{"name":"Underholdning","parent_area":"Kultur, idrett og underholdning"}}
+{"type":"LegalArea","key":"subarea_Underholdsbidrag","properties":{"name":"Underholdsbidrag","parent_area":"Familie-, person- og barnerett"}}
+{"type":"LegalArea","key":"subarea_Universiteter og høyskoler","properties":{"name":"Universiteter og høyskoler","parent_area":"Skoler, universiteter og forskning"}}
+{"type":"LegalArea","key":"subarea_Utdanningsstøtte","properties":{"name":"Utdanningsstøtte","parent_area":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"subarea_Utenfor folketrygdloven","properties":{"name":"Utenfor folketrygdloven","parent_area":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"subarea_Utenfor straffeloven","properties":{"name":"Utenfor straffeloven","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Utenrikstjenesten","properties":{"name":"Utenrikstjenesten","parent_area":"Stats-, statsforfatnings- og statsborgerrett"}}
+{"type":"LegalArea","key":"subarea_Utlevering","properties":{"name":"Utlevering","parent_area":"Strafferett"}}
+{"type":"LegalArea","key":"subarea_Vakttjenester","properties":{"name":"Vakttjenester","parent_area":"HMS og beredskaps- og sikkerhetsrett"}}
+{"type":"LegalArea","key":"subarea_Valg","properties":{"name":"Valg","parent_area":"Forvaltnings- og kommunalrett"}}
+{"type":"LegalArea","key":"subarea_Valuta","properties":{"name":"Valuta","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Vannkraft","properties":{"name":"Vannkraft","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Vannressurser","properties":{"name":"Vannressurser","parent_area":"Energirett"}}
+{"type":"LegalArea","key":"subarea_Varemerke. Firma","properties":{"name":"Varemerke. Firma","parent_area":"Fast eiendoms rettsforhold"}}
+{"type":"LegalArea","key":"subarea_Veitrafikk","properties":{"name":"Veitrafikk","parent_area":"Skatte- og avgiftsrett"}}
+{"type":"LegalArea","key":"subarea_Vern av informasjon og informasjonsutveksling","properties":{"name":"Vern av informasjon og informasjonsutveksling","parent_area":"EU/EØS-rett"}}
+{"type":"LegalArea","key":"subarea_Vinning","properties":{"name":"Vinning","parent_area":"Bank, finans og regnskapsrett"}}
+{"type":"LegalArea","key":"subarea_Vold","properties":{"name":"Vold","parent_area":"Strafferett"}}
+{"type":"LegalArea","key":"subarea_Voldgift og selvdømme","properties":{"name":"Voldgift og selvdømme","parent_area":"Sivil- og straffeprosess"}}
+{"type":"LegalArea","key":"subarea_Våpen og eksplosiver","properties":{"name":"Våpen og eksplosiver","parent_area":"Landbruk, jakt og skogbruk"}}
+{"type":"LegalArea","key":"subarea_Yrkesskadetrygd","properties":{"name":"Yrkesskadetrygd","parent_area":"Pensjons- og trygderett"}}
+{"type":"LegalArea","key":"subarea_Ytelser ved sykdom m.m.","properties":{"name":"Ytelser ved sykdom m.m.","parent_area":"Pensjons- og trygderett"}}

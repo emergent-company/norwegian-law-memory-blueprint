@@ -1,0 +1,12 @@
+projectInfo: |
+  # Norwegian Law Assistant
+
+  A knowledge graph of the current Norwegian legal corpus — laws (lover),
+  central regulations (forskrifter), their individual provisions (paragrafer),
+  the ministries that administer them, legal subject areas, and the EU/EEA
+  directives they implement — together with a Norwegian law research agent.
+
+  Data is ingested from public Lovdata datasets (NLOD 2.0) and enriched with
+  EUR-Lex and EuroVoc metadata. Apply this blueprint to a project and the
+  Norwegian Law Assistant agent can answer cited, source-grounded questions
+  about Norwegian law in Norwegian or English.

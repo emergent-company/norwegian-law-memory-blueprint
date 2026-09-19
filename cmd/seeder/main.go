@@ -39,6 +39,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -75,18 +76,19 @@ const (
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 type config struct {
-	serverURL  string
-	token      string
-	projectID  string
-	stateDir   string
-	cacheDir   string
-	limit      int
-	skipEU     bool
-	euLimit    int
-	workers    int
-	batchSz    int
-	ingestOnly bool
-	dataset    string // "laws", "regulations", "both"
+	serverURL   string
+	token       string
+	projectID   string
+	stateDir    string
+	cacheDir    string
+	limit       int
+	skipEU      bool
+	euLimit     int
+	workers     int
+	batchSz     int
+	ingestOnly  bool
+	dataset     string // "laws", "regulations", "both"
+	dumpSeedDir string // "" = upload mode; non-empty = server-free seed export
 }
 
 func envOr(envKey, defaultVal string) string {
@@ -120,6 +122,7 @@ func parseConfig() config {
 	batchSz := flag.Int("batch", 100, "Batch size for bulk API calls (max 100)")
 	ingestOnly := flag.Bool("ingest-only", false, "Skip download; use cached parsed JSON")
 	dataset := flag.String("dataset", "both", `Dataset to import: "laws", "regulations", or "both"`)
+	dumpSeedDir := flag.String("dump-seed", envOr("SEED_DUMP_DIR", ""), "Write a server-free blueprint seed (JSONL) to this directory instead of uploading")
 
 	flag.Parse()
 
@@ -130,18 +133,19 @@ func parseConfig() config {
 	}
 
 	return config{
-		serverURL:  *serverURL,
-		token:      *token,
-		projectID:  *projectID,
-		stateDir:   *stateDir,
-		cacheDir:   *cacheDir,
-		limit:      *limit,
-		skipEU:     *skipEU,
-		euLimit:    *euLimit,
-		workers:    *workers,
-		batchSz:    sz,
-		ingestOnly: *ingestOnly,
-		dataset:    *dataset,
+		serverURL:   *serverURL,
+		token:       *token,
+		projectID:   *projectID,
+		stateDir:    *stateDir,
+		cacheDir:    *cacheDir,
+		limit:       *limit,
+		skipEU:      *skipEU,
+		euLimit:     *euLimit,
+		workers:     *workers,
+		batchSz:     sz,
+		ingestOnly:  *ingestOnly,
+		dataset:     *dataset,
+		dumpSeedDir: *dumpSeedDir,
 	}
 }
 
@@ -1517,10 +1521,37 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 	return directives, concepts
 }
 
+// ─── Seed records (shared between upload + dump) ──────────────────────────────
+
+type seedObjectRecord struct {
+	Type       string
+	Key        string
+	Properties map[string]any
+}
+
+type seedRelationshipRecord struct {
+	Type       string
+	SrcKey     string
+	DstKey     string
+	Properties map[string]any
+}
+
+func sortedMapKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // ─── Object ingestion (Phase 1) ───────────────────────────────────────────────
 
-func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, batchSz, nWorkers int) map[string]string {
-	var items []graph.CreateObjectRequest
+// buildSeedObjectRecords builds the full ordered list of objects as key/property
+// records, independent of any server. Both the upload path (ingestObjects) and
+// the dump path consume these records, so the two can never diverge.
+func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) []seedObjectRecord {
+	var records []seedObjectRecord
 
 	ministries := make(map[string]bool)
 	legalAreas := make(map[string]bool)
@@ -1540,25 +1571,22 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 		}
 	}
 
-	for m := range ministries {
-		k := "ministry_" + m
-		items = append(items, graph.CreateObjectRequest{
-			Type: "Ministry", Key: strPtr(k),
+	for _, m := range sortedMapKeys(ministries) {
+		records = append(records, seedObjectRecord{
+			Type: "Ministry", Key: "ministry_" + m,
 			Properties: map[string]any{"name": m},
 		})
 	}
-	for a := range legalAreas {
-		k := "area_" + a
-		items = append(items, graph.CreateObjectRequest{
-			Type: "LegalArea", Key: strPtr(k),
+	for _, a := range sortedMapKeys(legalAreas) {
+		records = append(records, seedObjectRecord{
+			Type: "LegalArea", Key: "area_" + a,
 			Properties: map[string]any{"name": a},
 		})
 	}
-	for sa, parent := range legalSubAreas {
-		k := "subarea_" + sa
-		items = append(items, graph.CreateObjectRequest{
-			Type: "LegalArea", Key: strPtr(k),
-			Properties: map[string]any{"name": sa, "parent_area": parent},
+	for _, sa := range sortedMapKeys(legalSubAreas) {
+		records = append(records, seedObjectRecord{
+			Type: "LegalArea", Key: "subarea_" + sa,
+			Properties: map[string]any{"name": sa, "parent_area": legalSubAreas[sa]},
 		})
 	}
 
@@ -1603,8 +1631,8 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 		if d.Content != "" {
 			props["content"] = d.Content
 		}
-		items = append(items, graph.CreateObjectRequest{
-			Type: d.DocType, Key: strPtr(k), Properties: props,
+		records = append(records, seedObjectRecord{
+			Type: d.DocType, Key: k, Properties: props,
 		})
 
 		for _, p := range d.Paragraphs {
@@ -1630,8 +1658,8 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 			if p.Title != "" {
 				pProps["title"] = p.Title
 			}
-			items = append(items, graph.CreateObjectRequest{
-				Type: "LegalParagraph", Key: strPtr(pKey), Properties: pProps,
+			records = append(records, seedObjectRecord{
+				Type: "LegalParagraph", Key: pKey, Properties: pProps,
 			})
 		}
 	}
@@ -1671,20 +1699,31 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 		if dir.Content != "" {
 			props["content"] = dir.Content
 		}
-		items = append(items, graph.CreateObjectRequest{
-			Type: "EUDirective", Key: strPtr(k), Properties: props,
+		records = append(records, seedObjectRecord{
+			Type: "EUDirective", Key: k, Properties: props,
 		})
 	}
 
 	for _, ev := range concepts {
-		k := "eurovoc_" + ev.ID
-		items = append(items, graph.CreateObjectRequest{
-			Type: "EuroVocConcept", Key: strPtr(k),
+		records = append(records, seedObjectRecord{
+			Type: "EuroVocConcept", Key: "eurovoc_" + ev.ID,
 			Properties: map[string]any{
 				"name":       ev.LabelEN,
 				"eurovoc_id": ev.ID,
 				"label_en":   ev.LabelEN,
 			},
+		})
+	}
+
+	return records
+}
+
+func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, batchSz, nWorkers int) map[string]string {
+	records := buildSeedObjectRecords(docs, directives, concepts)
+	items := make([]graph.CreateObjectRequest, 0, len(records))
+	for _, r := range records {
+		items = append(items, graph.CreateObjectRequest{
+			Type: r.Type, Key: strPtr(r.Key), Properties: r.Properties,
 		})
 	}
 
@@ -1694,13 +1733,13 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 
 // ─── Relationship ingestion (Phase 2) ─────────────────────────────────────────
 
-func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, idMap map[string]string, batchSz, nWorkers int, stateDir string) (int64, int64) {
-	var items []graph.CreateRelationshipRequest
-
-	knownRefs := make(map[string]bool, len(docs))
-	for _, d := range docs {
-		knownRefs[d.RefID] = true
-	}
+// buildSeedRelationshipRecords builds the full ordered list of relationships as
+// key-based records, independent of any server. `objectKeys` is the set of keys
+// emitted by buildSeedObjectRecords; it plays the role of `knownRefs` for the
+// SEE_ALSO/REFERENCES filter (semantically identical, since those refs are
+// always document RefIDs) and lets the dump path verify endpoint existence.
+func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, objectKeys map[string]bool) []seedRelationshipRecord {
+	var records []seedRelationshipRecord
 
 	dirByID := make(map[string]*EUDirective, len(directives))
 	for _, dir := range directives {
@@ -1709,65 +1748,52 @@ func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDo
 	}
 
 	for _, d := range docs {
-		src, ok := idMap[d.RefID]
-		if !ok {
-			continue
-		}
-
 		if d.Ministry != "" {
-			if dst, ok2 := idMap["ministry_"+d.Ministry]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "ADMINISTERED_BY", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "ADMINISTERED_BY", SrcKey: d.RefID, DstKey: "ministry_" + d.Ministry,
+				Properties: map[string]any{},
+			})
 		}
 		for _, area := range d.AllLegalAreas {
-			if dst, ok2 := idMap["area_"+area]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "IN_LEGAL_AREA", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "IN_LEGAL_AREA", SrcKey: d.RefID, DstKey: "area_" + area,
+				Properties: map[string]any{},
+			})
 		}
 		for _, sub := range d.AllLegalSubAreas {
-			if dst, ok2 := idMap["subarea_"+sub]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "IN_LEGAL_AREA", SrcID: src, DstID: dst, Properties: map[string]any{"level": "sub"},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "IN_LEGAL_AREA", SrcKey: d.RefID, DstKey: "subarea_" + sub,
+				Properties: map[string]any{"level": "sub"},
+			})
 		}
 		for _, ref := range d.AmendsRefs {
-			if dst, ok2 := idMap[ref]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "AMENDS", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "AMENDS", SrcKey: d.RefID, DstKey: ref,
+				Properties: map[string]any{},
+			})
 		}
 		for _, ref := range d.SeeAlsoRefs {
-			if knownRefs[ref] {
-				if dst, ok2 := idMap[ref]; ok2 && dst != src {
-					items = append(items, graph.CreateRelationshipRequest{
-						Type: "SEE_ALSO", SrcID: src, DstID: dst, Properties: map[string]any{},
-					})
-				}
+			if objectKeys[ref] {
+				records = append(records, seedRelationshipRecord{
+					Type: "SEE_ALSO", SrcKey: d.RefID, DstKey: ref,
+					Properties: map[string]any{},
+				})
 			}
 		}
 		for _, ref := range d.References {
-			if knownRefs[ref] {
-				if dst, ok2 := idMap[ref]; ok2 && dst != src {
-					items = append(items, graph.CreateRelationshipRequest{
-						Type: "REFERENCES", SrcID: src, DstID: dst, Properties: map[string]any{},
-					})
-				}
+			if objectKeys[ref] {
+				records = append(records, seedRelationshipRecord{
+					Type: "REFERENCES", SrcKey: d.RefID, DstKey: ref,
+					Properties: map[string]any{},
+				})
 			}
 		}
 		for _, did := range d.EUDirectiveIDs {
 			if dir := dirByID[did]; dir != nil {
-				if dst, ok2 := idMap["eu_"+dir.CelexID]; ok2 && dst != src {
-					items = append(items, graph.CreateRelationshipRequest{
-						Type: "IMPLEMENTS_EEA", SrcID: src, DstID: dst,
-						Properties: map[string]any{"directive_id": did},
-					})
-				}
+				records = append(records, seedRelationshipRecord{
+					Type: "IMPLEMENTS_EEA", SrcKey: d.RefID, DstKey: "eu_" + dir.CelexID,
+					Properties: map[string]any{"directive_id": did},
+				})
 			}
 		}
 		for _, p := range d.Paragraphs {
@@ -1775,12 +1801,10 @@ func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDo
 				continue
 			}
 			pKey := d.RefID + "#" + p.SectionID
-			if dst, ok2 := idMap[pKey]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "HAS_PARAGRAPH", SrcID: src, DstID: dst,
-					Properties: map[string]any{"position": p.Position},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "HAS_PARAGRAPH", SrcKey: d.RefID, DstKey: pKey,
+				Properties: map[string]any{"position": p.Position},
+			})
 		}
 		seenEU := make(map[string]bool)
 		for _, euCode := range d.EUBodyRefs {
@@ -1789,27 +1813,20 @@ func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDo
 				continue
 			}
 			seenEU[euKey] = true
-			if dst, ok2 := idMap[euKey]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "CITES_EU_LAW", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "CITES_EU_LAW", SrcKey: d.RefID, DstKey: euKey,
+				Properties: map[string]any{},
+			})
 		}
 	}
 
 	// AMENDED_BY: separate pass using LastChangedByRef
 	for _, d := range docs {
-		src, ok := idMap[d.RefID]
-		if !ok {
-			continue
-		}
 		if d.LastChangedByRef != "" {
-			if dst, ok2 := idMap[d.LastChangedByRef]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "AMENDED_BY", SrcID: src, DstID: dst,
-					Properties: map[string]any{"effective_date": d.LastChangeInForce},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "AMENDED_BY", SrcKey: d.RefID, DstKey: d.LastChangedByRef,
+				Properties: map[string]any{"effective_date": d.LastChangeInForce},
+			})
 		}
 	}
 
@@ -1821,48 +1838,63 @@ func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDo
 	for _, group := range docsByDocID {
 		for i := 0; i < len(group); i++ {
 			for j := i + 1; j < len(group); j++ {
-				s, ok1 := idMap[group[i].RefID]
-				dt, ok2 := idMap[group[j].RefID]
-				if ok1 && ok2 && s != dt {
-					items = append(items, graph.CreateRelationshipRequest{
-						Type: "HAS_LANGUAGE_VARIANT", SrcID: s, DstID: dt,
-						Properties: map[string]any{
-							"source_language": group[i].Language,
-							"target_language": group[j].Language,
-						},
-					})
-				}
+				records = append(records, seedRelationshipRecord{
+					Type: "HAS_LANGUAGE_VARIANT", SrcKey: group[i].RefID, DstKey: group[j].RefID,
+					Properties: map[string]any{
+						"source_language": group[i].Language,
+						"target_language": group[j].Language,
+					},
+				})
 			}
 		}
 	}
 
 	// EU chain relationships
 	for _, dir := range directives {
-		src, ok := idMap["eu_"+dir.CelexID]
+		srcKey := "eu_" + dir.CelexID
+		for _, cited := range dir.CitedCELEX {
+			records = append(records, seedRelationshipRecord{
+				Type: "EU_CITES", SrcKey: srcKey, DstKey: "eu_" + cited,
+				Properties: map[string]any{},
+			})
+		}
+		for _, mod := range dir.ModifiedByCELEX {
+			records = append(records, seedRelationshipRecord{
+				Type: "EU_MODIFIED_BY", SrcKey: srcKey, DstKey: "eu_" + mod,
+				Properties: map[string]any{},
+			})
+		}
+		for _, evID := range dir.EuroVocIDs {
+			records = append(records, seedRelationshipRecord{
+				Type: "HAS_EUROVOC_DESCRIPTOR", SrcKey: srcKey, DstKey: "eurovoc_" + evID,
+				Properties: map[string]any{},
+			})
+		}
+	}
+
+	return records
+}
+
+func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, idMap map[string]string, batchSz, nWorkers int, stateDir string) (int64, int64) {
+	objectKeys := make(map[string]bool, len(idMap))
+	for k := range idMap {
+		objectKeys[k] = true
+	}
+	records := buildSeedRelationshipRecords(docs, directives, objectKeys)
+
+	var items []graph.CreateRelationshipRequest
+	for _, r := range records {
+		src, ok := idMap[r.SrcKey]
 		if !ok {
 			continue
 		}
-		for _, cited := range dir.CitedCELEX {
-			if dst, ok2 := idMap["eu_"+cited]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "EU_CITES", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+		dst, ok2 := idMap[r.DstKey]
+		if !ok2 || dst == src {
+			continue
 		}
-		for _, mod := range dir.ModifiedByCELEX {
-			if dst, ok2 := idMap["eu_"+mod]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "EU_MODIFIED_BY", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
-		}
-		for _, evID := range dir.EuroVocIDs {
-			if dst, ok2 := idMap["eurovoc_"+evID]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "HAS_EUROVOC_DESCRIPTOR", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
-		}
+		items = append(items, graph.CreateRelationshipRequest{
+			Type: r.Type, SrcID: src, DstID: dst, Properties: r.Properties,
+		})
 	}
 
 	log.Printf("  Uploading %d relationships in batches of %d with %d workers ...", len(items), batchSz, nWorkers)
@@ -2085,34 +2117,162 @@ func bulkUploadRelationships(ctx context.Context, client *graph.Client, items []
 	return succeeded.Load() * int64(batchSz), failed.Load() * int64(batchSz)
 }
 
+// ─── Seed export (server-free JSONL) ──────────────────────────────────────────
+
+type seedObjectLine struct {
+	Type       string         `json:"type"`
+	Key        string         `json:"key"`
+	Properties map[string]any `json:"properties"`
+}
+
+type seedRelationshipLine struct {
+	Type       string         `json:"type"`
+	SrcKey     string         `json:"srcKey"`
+	DstKey     string         `json:"dstKey"`
+	Properties map[string]any `json:"properties,omitempty"`
+}
+
+func writeObjectJSONL(path string, recs []seedObjectRecord) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	buf := bufio.NewWriter(f)
+	defer buf.Flush()
+	for _, r := range recs {
+		data, err := json.Marshal(seedObjectLine{Type: r.Type, Key: r.Key, Properties: r.Properties})
+		if err != nil {
+			return err
+		}
+		buf.Write(data)     //nolint:errcheck
+		buf.WriteByte('\n') //nolint:errcheck
+	}
+	return nil
+}
+
+func writeRelationshipJSONL(path string, recs []seedRelationshipRecord) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	buf := bufio.NewWriter(f)
+	defer buf.Flush()
+	for _, r := range recs {
+		data, err := json.Marshal(seedRelationshipLine{Type: r.Type, SrcKey: r.SrcKey, DstKey: r.DstKey, Properties: r.Properties})
+		if err != nil {
+			return err
+		}
+		buf.Write(data)     //nolint:errcheck
+		buf.WriteByte('\n') //nolint:errcheck
+	}
+	return nil
+}
+
+// dumpSeed writes a portable blueprint seed (JSONL) to <dir>/seed/objects/<Type>.jsonl
+// and <dir>/seed/relationships/<Type>.jsonl. It builds object records first so the
+// relationship pass can enforce the "both endpoints exist" (known-refs) rule and
+// the SrcKey != DstKey self-loop rule without any server round-trip.
+func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) error {
+	objRecords := buildSeedObjectRecords(docs, directives, concepts)
+	objectKeys := make(map[string]bool, len(objRecords))
+	for _, r := range objRecords {
+		objectKeys[r.Key] = true
+	}
+	relRecords := buildSeedRelationshipRecords(docs, directives, objectKeys)
+
+	objByType := make(map[string][]seedObjectRecord)
+	for _, r := range objRecords {
+		objByType[r.Type] = append(objByType[r.Type], r)
+	}
+	relByType := make(map[string][]seedRelationshipRecord)
+	for _, r := range relRecords {
+		if !objectKeys[r.SrcKey] || !objectKeys[r.DstKey] {
+			continue
+		}
+		if r.SrcKey == r.DstKey {
+			continue
+		}
+		relByType[r.Type] = append(relByType[r.Type], r)
+	}
+
+	objDir := filepath.Join(dir, "seed", "objects")
+	relDir := filepath.Join(dir, "seed", "relationships")
+	if err := os.MkdirAll(objDir, 0755); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(relDir, 0755); err != nil {
+		return err
+	}
+
+	objectCount := 0
+	for _, typ := range sortedMapKeys(objByType) {
+		recs := objByType[typ]
+		if err := writeObjectJSONL(filepath.Join(objDir, typ+".jsonl"), recs); err != nil {
+			return err
+		}
+		objectCount += len(recs)
+	}
+
+	relCount := 0
+	for _, typ := range sortedMapKeys(relByType) {
+		recs := relByType[typ]
+		if err := writeRelationshipJSONL(filepath.Join(relDir, typ+".jsonl"), recs); err != nil {
+			return err
+		}
+		relCount += len(recs)
+	}
+
+	log.Printf("Seed export complete: %d objects, %d relationships -> %s", objectCount, relCount, filepath.Join(dir, "seed"))
+	return nil
+}
+
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 func main() {
 	cfg := parseConfig()
-	if err := cfg.validate(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
-		flag.Usage()
-		os.Exit(1)
+
+	dumpMode := cfg.dumpSeedDir != ""
+
+	if !dumpMode {
+		if err := cfg.validate(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
+			flag.Usage()
+			os.Exit(1)
+		}
 	}
 
-	os.MkdirAll(cfg.stateDir, 0755) //nolint:errcheck
 	os.MkdirAll(cfg.cacheDir, 0755) //nolint:errcheck
 
-	client, err := sdk.New(sdk.Config{
-		ServerURL:  cfg.serverURL,
-		ProjectID:  cfg.projectID,
-		HTTPClient: &http.Client{Timeout: 5 * time.Minute},
-		Auth:       sdk.AuthConfig{Mode: "apikey", APIKey: cfg.token},
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	var client *sdk.Client
+	if !dumpMode {
+		os.MkdirAll(cfg.stateDir, 0755) //nolint:errcheck
 
-	log.Printf("Norwegian Law Seeder → %s (project: %s)", cfg.serverURL, cfg.projectID)
-	log.Printf("State directory: %s", cfg.stateDir)
-	log.Printf("Cache directory: %s", cfg.cacheDir)
-	if cfg.limit > 0 {
-		log.Printf("Document limit: %d per dataset", cfg.limit)
+		var err error
+		client, err = sdk.New(sdk.Config{
+			ServerURL:  cfg.serverURL,
+			ProjectID:  cfg.projectID,
+			HTTPClient: &http.Client{Timeout: 5 * time.Minute},
+			Auth:       sdk.AuthConfig{Mode: "apikey", APIKey: cfg.token},
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("Norwegian Law Seeder → %s (project: %s)", cfg.serverURL, cfg.projectID)
+		log.Printf("State directory: %s", cfg.stateDir)
+		log.Printf("Cache directory: %s", cfg.cacheDir)
+		if cfg.limit > 0 {
+			log.Printf("Document limit: %d per dataset", cfg.limit)
+		}
+	} else {
+		log.Printf("Norwegian Law Seeder → server-free seed export")
+		log.Printf("Output directory: %s", cfg.dumpSeedDir)
+		log.Printf("Cache directory: %s", cfg.cacheDir)
+		if cfg.limit > 0 {
+			log.Printf("Document limit: %d per dataset", cfg.limit)
+		}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2209,6 +2369,13 @@ func main() {
 
 	if cfg.limit > 0 && len(allDocs) > cfg.limit*2 {
 		allDocs = allDocs[:cfg.limit*2]
+	}
+
+	if dumpMode {
+		if err := dumpSeed(cfg.dumpSeedDir, allDocs, directives, concepts); err != nil {
+			log.Fatalf("seed export: %v", err)
+		}
+		return
 	}
 
 	state := loadState(cfg.stateDir)

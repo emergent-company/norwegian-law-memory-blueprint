@@ -1,39 +1,104 @@
 # Norwegian Law Memory Blueprint
 
-A standalone Memory blueprint that ingests the full Norwegian legal corpus into a
-[Memory](https://emergent-company.ai) knowledge-graph project.
+A standalone [Memory](https://emergent-company.ai) blueprint that recreates the
+**Norwegian Law Assistant** — a knowledge graph of the full Norwegian legal
+corpus plus an agent that answers cited, source-grounded questions about
+Norwegian law.
+
+Apply it to any Memory project to get the schema, the agent, and the ingested
+legal corpus in one step.
 
 ## What it creates
 
-**7 object types**
+### Agent
+
+| Agent | Description |
+|---|---|
+| `norwegian-law-assistant` | Answers questions about Norwegian statutes, regulations, provisions, ministries, legal areas and EU/EEA directives. Always searches the graph and cites the act (`short_title` + `ref_id`) and section. Answers in Norwegian or English. |
+
+### Object types (7)
 
 | Type | Description |
 |---|---|
-| `Law` | Norwegian laws (`lov/…`) |
-| `Regulation` | Norwegian regulations (`forskrift/…`) |
+| `Law` | Norwegian acts of parliament (`lov/…`) |
+| `Regulation` | Central regulations (`forskrift/…`) |
 | `Ministry` | Government ministries that administer laws |
 | `LegalArea` | Top-level and sub-level legal classification areas |
 | `LegalParagraph` | Individual sections/articles within a law or regulation |
 | `EUDirective` | EU/EEA directives referenced by Norwegian law |
 | `EuroVocConcept` | EuroVoc thesaurus concepts attached to EU directives |
 
-**13 relationship types**
+### Relationship types (13)
 
 | Relationship | Meaning |
 |---|---|
-| `ADMINISTERED_BY` | Law → Ministry |
+| `ADMINISTERED_BY` | Law/Regulation → Ministry |
 | `IN_LEGAL_AREA` | Law/Regulation → LegalArea |
-| `AMENDED_BY` | Law → the law that last amended it |
-| `AMENDS` | Law → laws it amends |
-| `SEE_ALSO` | Cross-reference between laws |
-| `HAS_LANGUAGE_VARIANT` | Norwegian ↔ Nynorsk variants of the same document |
+| `AMENDED_BY` | Law → the act that last amended it |
+| `AMENDS` | Law → acts it amends |
+| `SEE_ALSO` | Non-hierarchical cross-reference |
+| `HAS_LANGUAGE_VARIANT` | Bokmål ↔ Nynorsk variants of the same document |
 | `REFERENCES` | Body hyperlink cross-reference |
-| `IMPLEMENTS_EEA` | Law → EU directive it implements |
+| `IMPLEMENTS_EEA` | Law/Regulation → EU directive it implements |
 | `HAS_PARAGRAPH` | Law/Regulation → LegalParagraph |
 | `CITES_EU_LAW` | Law body inline citation → EU directive |
 | `EU_CITES` | EUDirective → other EU instruments it cites |
 | `EU_MODIFIED_BY` | EUDirective → amending instruments |
 | `HAS_EUROVOC_DESCRIPTOR` | EUDirective → EuroVoc concept |
+
+## Repository layout
+
+```
+norwegian-law-memory-blueprint/
+├── schemas/
+│   └── norwegian-law.yaml          # Memory template pack (object + relationship types)
+├── agents/
+│   └── norwegian-law-assistant.yaml # Norwegian Law Assistant agent definition
+├── seed/
+│   ├── objects/                     # per-type JSONL objects
+│   └── relationships/               # per-type JSONL relationships
+└── cmd/
+    └── seeder/
+        └── main.go                  # standalone Lovdata seeder + seed exporter
+```
+
+A blueprint is applied with the Memory CLI, which loads `schemas/`, `agents/`,
+`seed/objects/` and `seed/relationships/` in that order.
+
+## Apply the blueprint
+
+```bash
+# Preview (no writes)
+memory blueprints inspect ./norwegian-law-memory-blueprint
+
+# Offline validation (no API calls)
+memory blueprints validate ./norwegian-law-memory-blueprint
+
+# Apply to a project
+memory blueprints install ./norwegian-law-memory-blueprint --project <project>
+```
+
+> Note: the command is `memory blueprints install` (older docs said `apply`).
+
+Applying the blueprint creates the schema pack, the agent, and the seed graph.
+Seed application is idempotent by object `key`: existing keys are skipped unless
+`--upgrade` is passed.
+
+## Seed data
+
+`seed/` contains the full parsed corpus as portable JSONL — no server required
+to produce or apply it:
+
+- object line: `{"type":"Law","key":"lov/1687-04-15","properties":{…}}`
+- relationship line: `{"type":"HAS_PARAGRAPH","srcKey":"lov/…","dstKey":"lov/…#…","properties":{…}}`
+
+The bundle is roughly **100k objects / 120k relationships** (laws, regulations,
+provisions, ministries, legal areas and their relationships). `LegalParagraph`
+and the relationship files dominate the size.
+
+Alternatively, `memory blueprints dump <output-dir>` exports any already-populated
+project back into the same `seed/objects/*.jsonl` + `seed/relationships/*.jsonl`
+format.
 
 ## Data sources
 
@@ -43,38 +108,25 @@ A standalone Memory blueprint that ingests the full Norwegian legal corpus into 
 | [EUR-Lex](https://eur-lex.europa.eu) directive metadata | Public |
 | [Publications Office EuroVoc SPARQL](https://publications.europa.eu/webapi/rdf/sparql) | Public |
 
-## Repository layout
+## Regenerating the corpus
 
-```
-norwegian-law-memory-blueprint/
-├── packs/
-│   └── norwegian-law.yaml   # Memory template pack (object + relationship types)
-└── cmd/
-    └── seeder/
-        └── main.go          # Standalone Go seeder (~2 000 lines)
-```
+The seeder runs in two modes.
 
-## Prerequisites
-
-- Go 1.24+
-- A running [Memory](https://emergent-company.ai) server
-- A Memory project with the template pack installed
-
-## Install the template pack
-
-```bash
-memory blueprints apply /path/to/norwegian-law-memory-blueprint --server http://localhost:3012
-```
-
-Or via the admin UI: **Settings → Template Packs → Import**.
-
-## Build & run the seeder
+### Export a portable seed (no Memory server)
 
 ```bash
 go build ./cmd/seeder/
+./seeder --dump-seed . --dataset both
 ```
 
-### Full ingest (downloads ~800 MB of Lovdata archives)
+Downloads and parses the Lovdata archives, optionally enriches EU directive
+metadata, and writes `seed/objects/*.jsonl` + `seed/relationships/*.jsonl`.
+Fully offline with respect to Memory — no token, project or server needed.
+
+Useful flags: `--dataset laws|regulations|both`, `--limit N`, `--skip-eu`,
+`--cache-dir <dir>`, `--ingest-only`.
+
+### Ingest directly into a Memory project
 
 ```bash
 ./seeder \
@@ -83,48 +135,42 @@ go build ./cmd/seeder/
   --project <project-id>
 ```
 
-### Smoke test (50 docs, no EU enrichment, uses cached JSON if present)
+Two-phase, resumable ingestion (objects, then relationships) using the Memory
+SDK: batch size 100, 20 concurrent workers, checkpointing in `--state-dir`
+(`state.json`, `idmap.json`, `rels_failed.jsonl`). Re-run the same command to
+resume after an interruption.
+
+Smoke test (cached data, no EU enrichment):
 
 ```bash
-./seeder \
-  --server     http://localhost:3012 \
-  --token      <token> \
-  --project    <id> \
-  --ingest-only \
-  --limit      50 \
-  --skip-eu
+./seeder --server <url> --token <token> --project <id> \
+  --ingest-only --limit 50 --skip-eu
 ```
 
-## All flags
+## All seeder flags
 
 | Flag | Env var | Default | Description |
 |---|---|---|---|
-| `--server` | `MEMORY_SERVER` | — | Memory server URL (required) |
-| `--token` | `MEMORY_PROJECT_TOKEN` | — | Project API token (required) |
-| `--project` | `MEMORY_PROJECT_ID` | — | Project ID (required) |
+| `--server` | `MEMORY_SERVER` | — | Memory server URL (required unless `--dump-seed`) |
+| `--token` | `MEMORY_PROJECT_TOKEN` | — | Project API token (required unless `--dump-seed`) |
+| `--project` | `MEMORY_PROJECT_ID` | — | Project ID (required unless `--dump-seed`) |
+| `--dump-seed` | `SEED_DUMP_DIR` | — | Export portable seed JSONL to `<dir>/seed/` instead of uploading |
 | `--state-dir` | `MEMORY_STATE_DIR` | `~/.norwegian-law-seed-state` | Checkpoint directory |
-| `--cache-dir` | `LOVDATA_CACHE_DIR` | `/tmp/lovdata_data` | Downloaded archive cache |
-| `--limit` | `SEED_LIMIT` | `0` (no limit) | Max documents per dataset |
+| `--cache-dir` | `LOVDATA_CACHE_DIR` | `/tmp/lovdata_data` | Download cache |
+| `--limit` | `SEED_LIMIT` | `0` (all) | Max documents per dataset |
 | `--skip-eu` | — | false | Skip EUR-Lex / EuroVoc enrichment |
 | `--eu-limit` | — | `0` (all) | Max EU directives to fetch |
 | `--workers` | — | `20` | Parallel upload workers |
-| `--batch` | — | `100` | Batch size for bulk API calls |
-| `--ingest-only` | — | false | Skip download; use cached JSON |
+| `--batch` | — | `100` | Bulk API batch size |
+| `--ingest-only` | — | false | Skip download; use cached archive |
 | `--dataset` | — | `both` | `laws`, `regulations`, or `both` |
 
-## Resumable ingestion
+## Prerequisites
 
-The seeder persists state in `--state-dir`:
-
-- `state.json` — current phase (`objects_pending` → `objects_done` → `rels_pending` → `done`)
-- `idmap.json` — key→UUID mapping (written after all objects are uploaded)
-- `rels_done.txt` — batch indices already uploaded (for relationship resume)
-- `rels_failed.jsonl` — batches that failed permanently
-
-If interrupted, re-run with the same flags — the seeder resumes from the last
-completed phase automatically.
+- Go 1.25+
+- For direct ingestion only: a running Memory server and a project API token
 
 ## License
 
-Source code: MIT.
-Data re-distributed under their original licenses (see Data sources above).
+Source code: MIT. Data is re-distributed under its original licenses (see
+Data sources above).
