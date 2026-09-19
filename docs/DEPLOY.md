@@ -1,6 +1,7 @@
 # Deploy runbook — Norwegian Law Assistant
 
-Target: `m+test@kucharz.net` (instance URL/token to be confirmed — not yet deployed).
+Target: **dev instance** — account `m+test@kucharz.net`, org "Maciej Kucharz's Org".
+Coordinates in §5. **Not yet deployed.**
 
 ## 0. Preconditions
 
@@ -32,6 +33,10 @@ Expected: 1 pack, 7 object types, 13 relationship types, 1 agent,
 memory blueprints install ./norwegian-law-memory-blueprint \
   --project <project-id> \
   --server  <server-url>
+
+# Concrete dev target:
+#   --server http://emergent-dev:3002
+#   --project f131d865-5d9c-43ae-834f-bcb749c3359d   # "test" project
 ```
 
 Re-runs are idempotent by object `key`; existing keys are skipped unless
@@ -67,12 +72,18 @@ If the instance should not take the whole corpus in one shot:
 - Functional: ask the agent a cited question, e.g. "Hva sier arbeidsmiljøloven om
   oppsigelsesfrist?" — expect `short_title` + `ref_id` + paragraf citation.
 
-## 5. Open item before deploying
+## 5. Target (resolved)
 
-Confirm the instance for `m+test@kucharz.net`:
-
-- `mcj-emergent` (http://mcj-emergent:3002) is **offline** (last seen 175d) — needs restarting.
-- Or supply the target server URL + a project API token for that account.
+- Instance: **dev** — internal `http://emergent-dev:3002`, public `https://api.dev.emergent-company.ai`.
+- Account: `m+test@kucharz.net` → user `198d334e-90e8-458f-a826-15779102e975`.
+- Org: "Maciej Kucharz's Org" (`f6b5b71c-8c37-4a2f-9ec6-2761cd477744`), role org_admin.
+- Existing projects: `test` (`f131d865-5d9c-43ae-834f-bcb749c3359d`),
+  `Maciej's Project` (`ed473064-fc14-4289-9cbe-c6269c390324`).
+  No "Norwegian Law" project exists yet — create one, or apply into `test`.
+- `mcj-emergent` is **offline** (last seen 175d) — do not use it.
+- Seeder route only: mint a project API token (`core.api_tokens`), e.g.
+  `memory apitokens create --project <project-id> --server http://emergent-dev:3002`
+  (verify the exact subcommand with `memory apitokens --help`).
 
 ## Rollback
 
