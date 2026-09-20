@@ -181,6 +181,10 @@ go build ./cmd/seedfill/
 # Coerce existing objects' date fields (Law/Regulation/EUDirective) to RFC3339
 ./seedfill --server <url> --token <token> --project <id> --dir . --retype-dates
 
+# Same, but via object upsert (full property replace) — use when by-id graph
+# writes (PATCH /objects/{id}, /objects/bulk-update) are broken on the server
+./seedfill --server <url> --token <token> --project <id> --dir . --retype-via-upsert
+
 # Both passes
 ./seedfill --server <url> --token <token> --project <id> --dir . --retype-and-fill
 ```
@@ -190,6 +194,14 @@ default skips gap-filling unless `--retype-and-fill` is also set. Respects
 `--dry-run`, `--batch` (max 100) and `--workers` (default 4). Env fallbacks:
 `MEMORY_SERVER`, `MEMORY_PROJECT_TOKEN`, `MEMORY_PROJECT_ID`, `SEED_DIR`,
 `SEED_RETYPE_DATES`.
+
+`--retype-via-upsert` re-coerces the same date fields but through
+`PUT /api/graph/objects/upsert` (resolved by `type`+`key`, not by id), which
+still works when by-id writes are down. Upsert **replaces** the object's
+properties, so it sends each object's complete seed property set and passes
+through the live labels. It is likewise idempotent and skips gap-filling unless
+`--retype-and-fill` is also set. Env fallback: `SEED_RETYPE_VIA_UPSERT`.
+
 
 ## Prerequisites
 

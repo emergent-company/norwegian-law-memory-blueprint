@@ -16,12 +16,15 @@ package main
 //
 // It also has a --retype-dates mode that coerces existing objects' date-typed
 // properties into the server's canonical RFC3339 form (after the schema pack
-// changed those properties from `string` to `date`).
+// changed those properties from `string` to `date`), plus a --retype-via-upsert
+// mode that does the same via object upsert (full property replace) for when
+// by-id writes (bulk-update / PATCH) are broken on the target server.
 //
 // Usage:
 //   ./seedfill --server http://localhost:3012 --token <token> --project <id>
 //   ./seedfill --server <url> --token <t> --project <id> --dry-run   # diff only
 //   ./seedfill --server <url> --token <t> --project <id> --retype-dates --dry-run
+//   ./seedfill --server <url> --token <t> --project <id> --retype-via-upsert --dry-run
 //
 // Environment variables (all overridable by flags):
 //   MEMORY_SERVER          server URL
@@ -29,6 +32,7 @@ package main
 //   MEMORY_PROJECT_ID      project ID
 //   SEED_DIR               blueprint directory containing seed/ (default ".")
 //   SEED_RETYPE_DATES      "1"/"true" to enable --retype-dates
+//   SEED_RETYPE_VIA_UPSERT "1"/"true" to enable --retype-via-upsert
 
 import (
 	"bufio"
@@ -81,6 +85,7 @@ type config struct {
 	relationshipsOnly bool
 	retypeDates       bool
 	retypeAndFill     bool
+	retypeViaUpsert   bool
 }
 
 func envOr(envKey, defaultVal string) string {
@@ -123,6 +128,7 @@ func parseConfig() config {
 	relationshipsOnly := flag.Bool("relationships-only", false, "Only fill missing relationships (skip object creation)")
 	retypeDates := flag.Bool("retype-dates", envBoolOr("SEED_RETYPE_DATES", false), "Coerce existing objects' date-typed properties to canonical RFC3339 (skips gap-filling unless --retype-and-fill)")
 	retypeAndFill := flag.Bool("retype-and-fill", false, "Run --retype-dates, then the gap-fill pass")
+	retypeViaUpsert := flag.Bool("retype-via-upsert", envBoolOr("SEED_RETYPE_VIA_UPSERT", false), "Coerce date-typed properties to canonical RFC3339 via upsert (full property replace); use when bulk-update/by-id patch is broken")
 
 	flag.Parse()
 
@@ -151,6 +157,7 @@ func parseConfig() config {
 		relationshipsOnly: *relationshipsOnly,
 		retypeDates:       *retypeDates,
 		retypeAndFill:     *retypeAndFill,
+		retypeViaUpsert:   *retypeViaUpsert,
 	}
 }
 
@@ -504,14 +511,16 @@ func normalizeID(anyIDToEntity map[string]string, id string) string {
 // enumerateObjects pages ListObjects per seed type until exhausted, returning the
 // live key→entityID map plus an any-ID→entityID map used to canonicalise
 // relationship endpoints. When captureProps is set it also returns each object's
-// Properties keyed by object key. Pagination terminates on an empty page or a nil
-// NextCursor.
-func enumerateObjects(ctx context.Context, client *graph.Client, types []string, captureProps bool) (map[string]string, map[string]string, map[string]map[string]any, error) {
+// Properties and Labels keyed by object key. Pagination terminates on an empty
+// page or a nil NextCursor.
+func enumerateObjects(ctx context.Context, client *graph.Client, types []string, captureProps bool) (map[string]string, map[string]string, map[string]map[string]any, map[string][]string, error) {
 	keyToID := make(map[string]string)
 	anyIDToEntity := make(map[string]string)
 	var keyToProps map[string]map[string]any
+	var keyToLabels map[string][]string
 	if captureProps {
 		keyToProps = make(map[string]map[string]any)
+		keyToLabels = make(map[string][]string)
 	}
 
 	for _, typ := range types {
@@ -533,12 +542,12 @@ func enumerateObjects(ctx context.Context, client *graph.Client, types []string,
 				log.Printf("  enumerate objects: type=%s page=%d error: %v - retry %d/5 in %s", typ, page+1, err, attempt, backoff)
 				select {
 				case <-ctx.Done():
-					return nil, nil, nil, ctx.Err()
+					return nil, nil, nil, nil, ctx.Err()
 				case <-time.After(backoff):
 				}
 			}
 			if err != nil {
-				return nil, nil, nil, fmt.Errorf("ListObjects(%s): %w", typ, err)
+				return nil, nil, nil, nil, fmt.Errorf("ListObjects(%s): %w", typ, err)
 			}
 			page++
 			for _, o := range resp.Items {
@@ -547,6 +556,7 @@ func enumerateObjects(ctx context.Context, client *graph.Client, types []string,
 					keyToID[*o.Key] = eid
 					if captureProps {
 						keyToProps[*o.Key] = o.Properties
+						keyToLabels[*o.Key] = o.Labels
 					}
 				}
 				anyIDToEntity[eid] = eid
@@ -577,7 +587,7 @@ func enumerateObjects(ctx context.Context, client *graph.Client, types []string,
 			cursor = *resp.NextCursor
 		}
 	}
-	return keyToID, anyIDToEntity, keyToProps, nil
+	return keyToID, anyIDToEntity, keyToProps, keyToLabels, nil
 }
 
 // enumerateRelationships pages ListRelationships per seed type and returns the set
@@ -1024,7 +1034,7 @@ func runRetypeDates(ctx context.Context, client *graph.Client, cfg config, objec
 	}
 
 	// Enumerate live objects for the date-typed types, capturing properties.
-	keyToID, _, keyToProps, err := enumerateObjects(ctx, client, dateTypeList(), true)
+	keyToID, _, keyToProps, _, err := enumerateObjects(ctx, client, dateTypeList(), true)
 	if err != nil {
 		return fmt.Errorf("enumerate objects: %w", err)
 	}
@@ -1066,6 +1076,191 @@ func runRetypeDates(ctx context.Context, client *graph.Client, cfg config, objec
 	return nil
 }
 
+// ─── Date retyping via upsert ─────────────────────────────────────────────────
+
+// retypeCandidate is one object whose date-typed properties still need
+// canonicalization. It carries the seed object (for the full property set, type,
+// and key) plus the live labels to pass through the upsert.
+type retypeCandidate struct {
+	o            seedObjectLine
+	labels       []string
+	nonCanonical []string // non-canonical field names (dry-run reporting)
+}
+
+// dateFieldCanonical reports whether the live value of a date-typed field is
+// already the server's canonical RFC3339 form of the seed's YYYY-MM-DD. Reuses
+// dateValuesEqual, which requires the live value to be RFC3339.
+func dateFieldCanonical(liveVal, seedDate any) bool {
+	return dateValuesEqual(liveVal, seedDate)
+}
+
+// findRetypeCandidates returns the seed objects whose live date-typed properties
+// are not yet canonical (and thus need an upsert) plus the number of objects
+// scanned. The raw companion (date_in_force_raw) is compared with plain equality,
+// not the date rule. Idempotent: once coerced, a second run yields no candidates.
+func findRetypeCandidates(objects []seedObjectLine, keyToID map[string]string, keyToProps map[string]map[string]any, keyToLabels map[string][]string) ([]retypeCandidate, int) {
+	var candidates []retypeCandidate
+	scanned := 0
+	for _, o := range objects {
+		fields := dateFieldsByType[o.Type]
+		if fields == nil || keyToID[o.Key] == "" {
+			continue
+		}
+		scanned++
+		liveProps := keyToProps[o.Key]
+		var nonCanonical []string
+		for _, f := range fields {
+			if seedVal, ok := o.Properties[f.name]; ok && isDateValue(seedVal) {
+				// Date field: the live value must already be RFC3339-canonical.
+				if !dateFieldCanonical(liveProps[f.name], seedVal) {
+					nonCanonical = append(nonCanonical, f.name)
+				}
+				continue
+			}
+			// No valid date in the seed → the raw companion carries the value.
+			if f.raw == "" {
+				continue
+			}
+			raw, ok := o.Properties[f.raw]
+			if !ok {
+				continue
+			}
+			// Desired: date field absent, raw field set to `raw`.
+			if _, has := liveProps[f.name]; has {
+				nonCanonical = append(nonCanonical, f.name) // stale date to delete
+			}
+			if lv, ok := liveProps[f.raw]; !ok || lv != raw {
+				nonCanonical = append(nonCanonical, f.raw) // raw missing or differs
+			}
+		}
+		if len(nonCanonical) > 0 {
+			candidates = append(candidates, retypeCandidate{o: o, labels: keyToLabels[o.Key], nonCanonical: nonCanonical})
+		}
+	}
+	return candidates, scanned
+}
+
+// upsertObjects applies full-property upserts for the candidate objects across
+// workers, retrying transient failures with backoff. Returns upserted/failed.
+func upsertObjects(ctx context.Context, client *graph.Client, cfg config, candidates []retypeCandidate) (upserted, failed int) {
+	if len(candidates) == 0 {
+		return 0, 0
+	}
+
+	type workItem struct {
+		idx int
+		c   retypeCandidate
+	}
+	type result struct {
+		idx int
+		key string
+		err error
+	}
+
+	work := make(chan workItem, cfg.workers*2)
+	results := make(chan result, cfg.workers*2)
+
+	var wg sync.WaitGroup
+	for i := 0; i < cfg.workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for wi := range work {
+				if ctx.Err() != nil {
+					return
+				}
+				key := wi.c.o.Key
+				req := &graph.CreateObjectRequest{
+					Type:       wi.c.o.Type,
+					Key:        &key,
+					Properties: wi.c.o.Properties,
+					Labels:     wi.c.labels,
+				}
+				_, err := client.UpsertObject(ctx, req)
+				attempts := 0
+				for err != nil && attempts < 10 {
+					attempts++
+					if !retryable(err) {
+						break
+					}
+					backoff := retryBackoff(attempts)
+					log.Printf("  [retype-upsert] key=%s error: %v - retry %d/10 in %s", wi.c.o.Key, err, attempts, backoff)
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(backoff):
+					}
+					_, err = client.UpsertObject(ctx, req)
+				}
+				results <- result{idx: wi.idx, key: wi.c.o.Key, err: err}
+			}
+		}()
+	}
+	go func() { wg.Wait(); close(results) }()
+
+	go func() {
+		for i, c := range candidates {
+			if ctx.Err() != nil {
+				break
+			}
+			work <- workItem{idx: i, c: c}
+		}
+		close(work)
+	}()
+
+	var upsertedCount, failedCount atomic.Int64
+	var logged atomic.Int64
+
+	for r := range results {
+		if r.err == nil {
+			upsertedCount.Add(1)
+			continue
+		}
+		failedCount.Add(1)
+		if logged.Add(1) <= maxLoggedItemErrors {
+			log.Printf("  [retype-upsert] key=%s failed: %v", r.key, r.err)
+		}
+	}
+
+	return int(upsertedCount.Load()), int(failedCount.Load())
+}
+
+// runRetypeViaUpsert coerces existing objects' date-typed properties to
+// canonical RFC3339 via UpsertObject (full property replace) instead of
+// bulk-update, for servers where by-id writes are broken. Each upsert sends the
+// complete seed property set and the live labels. Idempotent: a second run
+// reports zero candidates.
+func runRetypeViaUpsert(ctx context.Context, client *graph.Client, cfg config, objects []seedObjectLine) error {
+	// Enumerate live objects for the date-typed types, capturing properties and labels.
+	keyToID, _, keyToProps, keyToLabels, err := enumerateObjects(ctx, client, dateTypeList(), true)
+	if err != nil {
+		return fmt.Errorf("enumerate objects: %w", err)
+	}
+
+	candidates, scanned := findRetypeCandidates(objects, keyToID, keyToProps, keyToLabels)
+
+	log.Printf("retype-via-upsert: objects scanned=%d candidates=%d", scanned, len(candidates))
+
+	if cfg.dryRun {
+		for i, c := range candidates {
+			if i < 3 {
+				log.Printf("  [dry-run] would upsert key=%s non-canonical=%v", c.o.Key, c.nonCanonical)
+			}
+		}
+		if len(candidates) > 3 {
+			log.Printf("  [dry-run] ...and %d more", len(candidates)-3)
+		}
+		log.Printf("  [dry-run] would upsert %d objects (nothing written)", len(candidates))
+		return nil
+	}
+
+	upserted, failed := upsertObjects(ctx, client, cfg, candidates)
+	log.Printf("──────────────────────────────────────────────")
+	log.Printf("retype-via-upsert: objects scanned=%d candidates=%d upserted=%d failed=%d",
+		scanned, len(candidates), upserted, failed)
+	return nil
+}
+
 // ─── Main flow ────────────────────────────────────────────────────────────────
 
 func main() {
@@ -1098,12 +1293,21 @@ func main() {
 	}
 	log.Printf("Seed: %d objects, %d relationships in %s", len(objects), len(rels), cfg.dir)
 
-	// Determine which passes run: --retype-dates alone skips gap-filling;
-	// --retype-and-fill runs both.
-	runRetype := cfg.retypeDates || cfg.retypeAndFill
-	runFill := !cfg.retypeDates || cfg.retypeAndFill
+	// Determine which passes run. --retype-via-upsert is an alternative retype
+	// path (used when bulk-update/by-id patch is broken); it takes precedence
+	// over --retype-dates. Either retype mode alone skips gap-filling;
+	// --retype-and-fill runs the delta retype then the gap-fill.
+	runRetypeUpsert := cfg.retypeViaUpsert
+	runRetypeDelta := (cfg.retypeDates || cfg.retypeAndFill) && !cfg.retypeViaUpsert
+	runFill := (!cfg.retypeDates && !cfg.retypeViaUpsert) || cfg.retypeAndFill
 
-	if runRetype {
+	if runRetypeUpsert {
+		if err := runRetypeViaUpsert(ctx, client, cfg, objects); err != nil {
+			log.Fatalf("retype-via-upsert: %v", err)
+		}
+	}
+
+	if runRetypeDelta {
 		if err := runRetypeDates(ctx, client, cfg, objects); err != nil {
 			log.Fatalf("retype-dates: %v", err)
 		}
@@ -1112,7 +1316,7 @@ func main() {
 	if runFill {
 		// 1. Enumerate live objects (needed for object diff and endpoint resolution).
 		objTypes := collectObjectTypes(objects)
-		keyToID, anyIDToEntity, _, err := enumerateObjects(ctx, client, objTypes, false)
+		keyToID, anyIDToEntity, _, _, err := enumerateObjects(ctx, client, objTypes, false)
 		if err != nil {
 			log.Fatalf("enumerate objects: %v", err)
 		}
