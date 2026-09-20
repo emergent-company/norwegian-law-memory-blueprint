@@ -51,7 +51,7 @@ func requireCreds(t *testing.T) (string, string) {
 // token. The emt_* token embeds the project ID, so org/project context is empty.
 func newGraphClient(t *testing.T, base, token string) *graph.Client {
 	t.Helper()
-	httpClient := &http.Client{Timeout: 2 * time.Minute}
+	httpClient := &http.Client{Timeout: 5 * time.Minute}
 	return graph.NewClient(httpClient, base, auth.NewAPITokenProvider(token), "", "")
 }
 
@@ -75,10 +75,12 @@ func blueprintDir() string {
 // AwaitRequest.
 func runAgent(t *testing.T, base, token, question string) string {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Minute)
 	defer cancel()
 
-	client := sdkacp.NewClient(base, token)
+	// A real agent run (model + tool calls) can take minutes, so the SDK's
+	// default 30s HTTP timeout is far too short.
+	client := sdkacp.NewClientWithHTTP(base, token, &http.Client{Timeout: 11 * time.Minute})
 	run, err := client.CreateRun(ctx, "norwegian-law-assistant", sdkacp.CreateRunRequest{
 		Message: []sdkacp.MessagePart{{ContentType: "text/plain", Content: question}},
 		Mode:    "sync",
