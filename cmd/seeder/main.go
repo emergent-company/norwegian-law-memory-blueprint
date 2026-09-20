@@ -1536,6 +1536,39 @@ type seedRelationshipRecord struct {
 	Properties map[string]any
 }
 
+// dedupeSeedObjects drops records that reuse an already-emitted object key.
+// Lovdata publishes some acts in several language versions sharing one RefID
+// (and thus one key), which would otherwise produce duplicate objects and a
+// hard 409 conflict on install. First occurrence wins.
+func dedupeSeedObjects(in []seedObjectRecord) []seedObjectRecord {
+	seen := make(map[string]bool, len(in))
+	out := make([]seedObjectRecord, 0, len(in))
+	for _, r := range in {
+		if seen[r.Key] {
+			continue
+		}
+		seen[r.Key] = true
+		out = append(out, r)
+	}
+	return out
+}
+
+// dedupeSeedRelationships drops duplicate (type, srcKey, dstKey) edges, which
+// arise from the same language-variant duplication fixed in dedupeSeedObjects.
+func dedupeSeedRelationships(in []seedRelationshipRecord) []seedRelationshipRecord {
+	seen := make(map[string]bool, len(in))
+	out := make([]seedRelationshipRecord, 0, len(in))
+	for _, r := range in {
+		k := r.Type + "\x00" + r.SrcKey + "\x00" + r.DstKey
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		out = append(out, r)
+	}
+	return out
+}
+
 func sortedMapKeys[V any](m map[string]V) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -1715,7 +1748,7 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		})
 	}
 
-	return records
+	return dedupeSeedObjects(records)
 }
 
 func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, batchSz, nWorkers int) map[string]string {
@@ -1872,7 +1905,7 @@ func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, obje
 		}
 	}
 
-	return records
+	return dedupeSeedRelationships(records)
 }
 
 func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, idMap map[string]string, batchSz, nWorkers int, stateDir string) (int64, int64) {

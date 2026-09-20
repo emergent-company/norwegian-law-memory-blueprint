@@ -18,9 +18,6 @@
 {"type":"IN_LEGAL_AREA","srcKey":"lov/1814-05-17","dstKey":"area_Stats-, statsforfatnings- og statsborgerrett"}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/1814-05-17","dstKey":"subarea_Grunnloven","properties":{"level":"sub"}}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/1814-05-17","dstKey":"subarea_Stortinget","properties":{"level":"sub"}}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/1814-05-17","dstKey":"area_Stats-, statsforfatnings- og statsborgerrett"}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/1814-05-17","dstKey":"subarea_Grunnloven","properties":{"level":"sub"}}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/1814-05-17","dstKey":"subarea_Stortinget","properties":{"level":"sub"}}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/1845-06-07","dstKey":"area_Fiskeri- og fangstrett og havbruk"}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/1845-06-07","dstKey":"subarea_Fiskeri","properties":{"level":"sub"}}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/1884-06-14-3","dstKey":"area_IKT- og medierett"}
