@@ -1578,6 +1578,72 @@ func sortedMapKeys[V any](m map[string]V) []string {
 	return keys
 }
 
+// seedDateProps lists the object types whose properties are date-typed in the
+// blueprint schema pack, and the property names that must be emitted as valid
+// YYYY-MM-DD dates (never an empty/invalid string, which the server rejects
+// with a 400 for the whole object).
+var seedDateProps = map[string][]string{
+	"Law":         {"date_in_force", "last_change_in_force", "date_of_publication"},
+	"Regulation":  {"date_in_force", "last_change_in_force", "date_of_publication"},
+	"EUDirective": {"date_of_document", "date_of_effect"},
+}
+
+// normalizeDateValue parses a property value using the same formats the server's
+// coerceToDate accepts, returning the normalized YYYY-MM-DD form, or ok=false if
+// the value is empty, non-string, or not a parseable date.
+func normalizeDateValue(v any) (string, bool) {
+	s, ok := v.(string)
+	if !ok {
+		return "", false
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", false
+	}
+	formats := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02",
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04:05",
+		"01/02/2006",
+		"02-01-2006",
+	}
+	for _, f := range formats {
+		if t, err := time.Parse(f, s); err == nil {
+			return t.Format("2006-01-02"), true
+		}
+	}
+	return "", false
+}
+
+// normalizeDateProps normalizes the date-typed properties of an object record
+// in place: parseable dates are rewritten to YYYY-MM-DD, unparseable/empty ones
+// are dropped, and an unparseable non-empty date_in_force is preserved as
+// date_in_force_raw so the information is not lost.
+func normalizeDateProps(objType string, props map[string]any, normCounts map[string]int, rawMoved *int) {
+	for _, key := range seedDateProps[objType] {
+		raw, present := props[key]
+		if !present {
+			continue
+		}
+		if norm, ok := normalizeDateValue(raw); ok {
+			props[key] = norm
+			normCounts[key]++
+			continue
+		}
+		delete(props, key)
+		if key == "date_in_force" {
+			if s, isStr := raw.(string); isStr && strings.TrimSpace(s) != "" {
+				if _, exists := props["date_in_force_raw"]; !exists {
+					props["date_in_force_raw"] = s
+					(*rawMoved)++
+				}
+			}
+		}
+	}
+}
+
 // ─── Object ingestion (Phase 1) ───────────────────────────────────────────────
 
 // buildSeedObjectRecords builds the full ordered list of objects as key/property
@@ -1585,6 +1651,9 @@ func sortedMapKeys[V any](m map[string]V) []string {
 // the dump path consume these records, so the two can never diverge.
 func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) []seedObjectRecord {
 	var records []seedObjectRecord
+
+	normCounts := make(map[string]int)
+	rawMoved := 0
 
 	ministries := make(map[string]bool)
 	legalAreas := make(map[string]bool)
@@ -1664,6 +1733,7 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		if d.Content != "" {
 			props["content"] = d.Content
 		}
+		normalizeDateProps(d.DocType, props, normCounts, &rawMoved)
 		records = append(records, seedObjectRecord{
 			Type: d.DocType, Key: k, Properties: props,
 		})
@@ -1732,6 +1802,7 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		if dir.Content != "" {
 			props["content"] = dir.Content
 		}
+		normalizeDateProps("EUDirective", props, normCounts, &rawMoved)
 		records = append(records, seedObjectRecord{
 			Type: "EUDirective", Key: k, Properties: props,
 		})
@@ -1747,6 +1818,12 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 			},
 		})
 	}
+
+	normParts := make([]string, 0, len(normCounts))
+	for _, k := range sortedMapKeys(normCounts) {
+		normParts = append(normParts, fmt.Sprintf("%s=%d", k, normCounts[k]))
+	}
+	log.Printf("  Date normalization: normalized [%s], date_in_force→_raw: %d", strings.Join(normParts, " "), rawMoved)
 
 	return dedupeSeedObjects(records)
 }

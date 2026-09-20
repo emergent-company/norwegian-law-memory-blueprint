@@ -14,15 +14,21 @@ package main
 // This tool instead (a) enumerates the existing keys/edges in bulk and (b) bulk-
 // creates only the gaps.
 //
+// It also has a --retype-dates mode that coerces existing objects' date-typed
+// properties into the server's canonical RFC3339 form (after the schema pack
+// changed those properties from `string` to `date`).
+//
 // Usage:
 //   ./seedfill --server http://localhost:3012 --token <token> --project <id>
 //   ./seedfill --server <url> --token <t> --project <id> --dry-run   # diff only
+//   ./seedfill --server <url> --token <t> --project <id> --retype-dates --dry-run
 //
 // Environment variables (all overridable by flags):
 //   MEMORY_SERVER          server URL
 //   MEMORY_PROJECT_TOKEN   project API token
 //   MEMORY_PROJECT_ID      project ID
 //   SEED_DIR               blueprint directory containing seed/ (default ".")
+//   SEED_RETYPE_DATES      "1"/"true" to enable --retype-dates
 
 import (
 	"bufio"
@@ -73,6 +79,8 @@ type config struct {
 	dryRun            bool
 	objectsOnly       bool
 	relationshipsOnly bool
+	retypeDates       bool
+	retypeAndFill     bool
 }
 
 func envOr(envKey, defaultVal string) string {
@@ -91,6 +99,18 @@ func envIntOr(envKey string, defaultVal int) int {
 	return defaultVal
 }
 
+func envBoolOr(envKey string, defaultVal bool) bool {
+	if v := os.Getenv(envKey); v != "" {
+		if v == "1" || v == "true" || v == "TRUE" {
+			return true
+		}
+		if v == "0" || v == "false" || v == "FALSE" {
+			return false
+		}
+	}
+	return defaultVal
+}
+
 func parseConfig() config {
 	serverURL := flag.String("server", envOr("MEMORY_SERVER", ""), "Memory server URL (required)")
 	token := flag.String("token", envOr("MEMORY_PROJECT_TOKEN", ""), "Project API token (required)")
@@ -101,6 +121,8 @@ func parseConfig() config {
 	dryRun := flag.Bool("dry-run", false, "Compute the diff and print the summary without writing anything")
 	objectsOnly := flag.Bool("objects-only", false, "Only fill missing objects (skip relationships)")
 	relationshipsOnly := flag.Bool("relationships-only", false, "Only fill missing relationships (skip object creation)")
+	retypeDates := flag.Bool("retype-dates", envBoolOr("SEED_RETYPE_DATES", false), "Coerce existing objects' date-typed properties to canonical RFC3339 (skips gap-filling unless --retype-and-fill)")
+	retypeAndFill := flag.Bool("retype-and-fill", false, "Run --retype-dates, then the gap-fill pass")
 
 	flag.Parse()
 
@@ -127,6 +149,8 @@ func parseConfig() config {
 		dryRun:            *dryRun,
 		objectsOnly:       *objectsOnly,
 		relationshipsOnly: *relationshipsOnly,
+		retypeDates:       *retypeDates,
+		retypeAndFill:     *retypeAndFill,
 	}
 }
 
@@ -163,6 +187,152 @@ type seedRelationshipLine struct {
 	SrcKey     string         `json:"srcKey"`
 	DstKey     string         `json:"dstKey"`
 	Properties map[string]any `json:"properties,omitempty"`
+}
+
+// ─── Date retyping ────────────────────────────────────────────────────────────
+
+// dateField describes one date-typed property to coerce, plus an optional raw
+// companion (only date_in_force has date_in_force_raw).
+type dateField struct {
+	name string
+	raw  string // companion raw field name, empty if none
+}
+
+// dateFieldsByType lists the object types whose properties changed from string
+// to date in the schema pack, in the order they should be considered. Matches
+// cmd/seeder seedDateProps.
+var dateFieldsByType = map[string][]dateField{
+	"Law": {
+		{name: "date_in_force", raw: "date_in_force_raw"},
+		{name: "last_change_in_force"},
+		{name: "date_of_publication"},
+	},
+	"Regulation": {
+		{name: "date_in_force", raw: "date_in_force_raw"},
+		{name: "last_change_in_force"},
+		{name: "date_of_publication"},
+	},
+	"EUDirective": {
+		{name: "date_of_document"},
+		{name: "date_of_effect"},
+	},
+}
+
+func dateTypeList() []string {
+	keys := make([]string, 0, len(dateFieldsByType))
+	for k := range dateFieldsByType {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// isDateValue reports whether v is a valid YYYY-MM-DD date string.
+func isDateValue(v any) bool {
+	s, ok := v.(string)
+	if !ok {
+		return false
+	}
+	s = strings.TrimSpace(s)
+	if len(s) != 10 || s[4] != '-' || s[7] != '-' {
+		return false
+	}
+	_, err := time.Parse("2006-01-02", s)
+	return err == nil
+}
+
+// dateKey returns the YYYY-MM-DD prefix of a date-like string, or "" if it does
+// not begin with one. Used to treat "2006-01-01" and "2006-01-01T00:00:00Z" as
+// the same date.
+func dateKey(s string) string {
+	if len(s) < 10 {
+		return ""
+	}
+	d := s[:10]
+	if len(d) == 10 && d[4] == '-' && d[7] == '-' {
+		return d
+	}
+	return ""
+}
+
+// dateValuesEqual reports whether a live value already represents the desired
+// date. "2006-01-01" and its RFC3339 midnight form are treated as equal so a
+// second run reports zero patches.
+func dateValuesEqual(cur, want any) bool {
+	cs, cok := cur.(string)
+	ws, wok := want.(string)
+	if !cok || !wok {
+		return false
+	}
+	if cs == ws {
+		return true
+	}
+	c := dateKey(cs)
+	w := dateKey(ws)
+	return c != "" && w != "" && c == w
+}
+
+// buildDesiredProps returns the desired date-property state for a seed object, or
+// nil if it carries no date-typed fields. A nil value means "delete the key"
+// (used by the date_in_force → date_in_force_raw replacement).
+func buildDesiredProps(o seedObjectLine) map[string]any {
+	fields := dateFieldsByType[o.Type]
+	if fields == nil {
+		return nil
+	}
+	desired := make(map[string]any)
+	for _, f := range fields {
+		if v, ok := o.Properties[f.name]; ok {
+			if isDateValue(v) {
+				desired[f.name] = v
+			}
+			continue
+		}
+		if f.raw != "" {
+			if raw, ok := o.Properties[f.raw]; ok {
+				desired[f.name] = nil // delete stale date field
+				desired[f.raw] = raw  // set raw companion
+			}
+		}
+	}
+	if len(desired) == 0 {
+		return nil
+	}
+	return desired
+}
+
+// computeDelta returns the minimal property patch to bring a live object in line
+// with the desired state, or nil if nothing needs changing. A nil value in the
+// returned map means "delete this key".
+func computeDelta(liveProps, desired map[string]any) map[string]any {
+	patch := make(map[string]any)
+	for field, wantVal := range desired {
+		curVal, curExists := liveProps[field]
+		switch {
+		case !curExists && wantVal == nil:
+			// already absent; nothing to do
+		case !curExists:
+			patch[field] = wantVal
+		case wantVal == nil:
+			patch[field] = nil // delete
+		case dateValuesEqual(curVal, wantVal):
+			// already canonical; nothing to do
+		default:
+			patch[field] = wantVal
+		}
+	}
+	if len(patch) == 0 {
+		return nil
+	}
+	return patch
+}
+
+func deltaJSON(delta map[string]any) string {
+	b, err := json.Marshal(delta)
+	if err != nil {
+		return fmt.Sprintf("%v", delta)
+	}
+	return string(b)
 }
 
 // ─── Seed loading ─────────────────────────────────────────────────────────────
@@ -315,11 +485,16 @@ func normalizeID(anyIDToEntity map[string]string, id string) string {
 
 // enumerateObjects pages ListObjects per seed type until exhausted, returning the
 // live key→entityID map plus an any-ID→entityID map used to canonicalise
-// relationship endpoints. Pagination terminates on an empty page or a nil
+// relationship endpoints. When captureProps is set it also returns each object's
+// Properties keyed by object key. Pagination terminates on an empty page or a nil
 // NextCursor.
-func enumerateObjects(ctx context.Context, client *graph.Client, types []string) (map[string]string, map[string]string, error) {
+func enumerateObjects(ctx context.Context, client *graph.Client, types []string, captureProps bool) (map[string]string, map[string]string, map[string]map[string]any, error) {
 	keyToID := make(map[string]string)
 	anyIDToEntity := make(map[string]string)
+	var keyToProps map[string]map[string]any
+	if captureProps {
+		keyToProps = make(map[string]map[string]any)
+	}
 
 	for _, typ := range types {
 		cursor := ""
@@ -340,18 +515,21 @@ func enumerateObjects(ctx context.Context, client *graph.Client, types []string)
 				log.Printf("  enumerate objects: type=%s page=%d error: %v - retry %d/5 in %s", typ, page+1, err, attempt, backoff)
 				select {
 				case <-ctx.Done():
-					return nil, nil, ctx.Err()
+					return nil, nil, nil, ctx.Err()
 				case <-time.After(backoff):
 				}
 			}
 			if err != nil {
-				return nil, nil, fmt.Errorf("ListObjects(%s): %w", typ, err)
+				return nil, nil, nil, fmt.Errorf("ListObjects(%s): %w", typ, err)
 			}
 			page++
 			for _, o := range resp.Items {
 				eid := resolveEntityID(o)
 				if o.Key != nil && *o.Key != "" {
 					keyToID[*o.Key] = eid
+					if captureProps {
+						keyToProps[*o.Key] = o.Properties
+					}
 				}
 				anyIDToEntity[eid] = eid
 				if o.ID != "" {
@@ -381,7 +559,7 @@ func enumerateObjects(ctx context.Context, client *graph.Client, types []string)
 			cursor = *resp.NextCursor
 		}
 	}
-	return keyToID, anyIDToEntity, nil
+	return keyToID, anyIDToEntity, keyToProps, nil
 }
 
 // enumerateRelationships pages ListRelationships per seed type and returns the set
@@ -686,6 +864,179 @@ func bulkCreateRelationships(ctx context.Context, client *graph.Client, cfg conf
 	return int(createdCount.Load()), int(failedCount.Load())
 }
 
+// ─── Date retyping pass ───────────────────────────────────────────────────────
+
+// retypePatch is one object's date-coercion patch to apply.
+type retypePatch struct {
+	key   string
+	id    string
+	delta map[string]any
+}
+
+// bulkUpdateObjects applies property patches via BulkUpdateObjects in batches
+// across workers, retrying a failed batch with backoff. Returns applied/failed
+// counts.
+func bulkUpdateObjects(ctx context.Context, client *graph.Client, cfg config, patches []retypePatch) (applied, failed int) {
+	if len(patches) == 0 {
+		return 0, 0
+	}
+
+	type workItem struct {
+		idx   int
+		batch []retypePatch
+	}
+	type result struct {
+		batch []retypePatch
+		res   *graph.BulkUpdateObjectsResponse
+	}
+
+	var batches []workItem
+	for i := 0; i < len(patches); i += cfg.batchSz {
+		end := i + cfg.batchSz
+		if end > len(patches) {
+			end = len(patches)
+		}
+		batches = append(batches, workItem{idx: len(batches), batch: patches[i:end]})
+	}
+
+	work := make(chan workItem, cfg.workers*2)
+	results := make(chan result, cfg.workers*2)
+
+	var wg sync.WaitGroup
+	for i := 0; i < cfg.workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for wi := range work {
+				if ctx.Err() != nil {
+					return
+				}
+				items := make([]graph.BulkUpdateObjectItem, len(wi.batch))
+				for j, p := range wi.batch {
+					items[j] = graph.BulkUpdateObjectItem{ID: p.id, Properties: p.delta}
+				}
+				res, err := client.BulkUpdateObjects(ctx, &graph.BulkUpdateObjectsRequest{Items: items})
+				attempts := 0
+				for err != nil && attempts < 4 {
+					attempts++
+					if !retryable(err) {
+						break
+					}
+					backoff := time.Duration(attempts) * 2 * time.Second
+					log.Printf("  [retype] batch %d error: %v - retry %d/4 in %s", wi.idx, err, attempts, backoff)
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(backoff):
+					}
+					res, err = client.BulkUpdateObjects(ctx, &graph.BulkUpdateObjectsRequest{Items: items})
+				}
+				if err != nil {
+					log.Printf("  [retype] batch %d failed permanently: %v", wi.idx, err)
+					results <- result{wi.batch, nil}
+					continue
+				}
+				results <- result{wi.batch, res}
+			}
+		}()
+	}
+	go func() { wg.Wait(); close(results) }()
+
+	go func() {
+		for _, wi := range batches {
+			if ctx.Err() != nil {
+				break
+			}
+			work <- wi
+		}
+		close(work)
+	}()
+
+	var appliedCount, failedCount atomic.Int64
+	var logged atomic.Int64
+
+	for r := range results {
+		if r.res == nil {
+			failedCount.Add(int64(len(r.batch)))
+			continue
+		}
+		for i, item := range r.res.Results {
+			if item.Success {
+				appliedCount.Add(1)
+				continue
+			}
+			failedCount.Add(1)
+			key := ""
+			if i < len(r.batch) {
+				key = r.batch[i].key
+			}
+			if item.Error != nil && logged.Add(1) <= maxLoggedItemErrors {
+				log.Printf("  [retype] item error key=%s: %s", key, *item.Error)
+			}
+		}
+	}
+
+	return int(appliedCount.Load()), int(failedCount.Load())
+}
+
+// runRetypeDates coerces existing objects' date-typed properties into canonical
+// RFC3339 form. It is idempotent: a second run computes zero patches.
+func runRetypeDates(ctx context.Context, client *graph.Client, cfg config, objects []seedObjectLine) error {
+	// Desired per-key date state, from the seed.
+	desiredByKey := make(map[string]map[string]any)
+	for _, o := range objects {
+		if d := buildDesiredProps(o); d != nil {
+			desiredByKey[o.Key] = d
+		}
+	}
+	if len(desiredByKey) == 0 {
+		log.Printf("retype-dates: no date-typed fields carried in seed")
+		return nil
+	}
+
+	// Enumerate live objects for the date-typed types, capturing properties.
+	keyToID, _, keyToProps, err := enumerateObjects(ctx, client, dateTypeList(), true)
+	if err != nil {
+		return fmt.Errorf("enumerate objects: %w", err)
+	}
+
+	scanned := 0
+	var patches []retypePatch
+	for key, desired := range desiredByKey {
+		id := keyToID[key]
+		if id == "" {
+			continue // object not live; gap-fill's job, not retyping's
+		}
+		scanned++
+		delta := computeDelta(keyToProps[key], desired)
+		if delta == nil {
+			continue
+		}
+		patches = append(patches, retypePatch{key: key, id: id, delta: delta})
+	}
+
+	log.Printf("retype-dates: objects scanned=%d needing patch=%d", scanned, len(patches))
+
+	if cfg.dryRun {
+		for i, p := range patches {
+			if i < 5 {
+				log.Printf("  [dry-run] would patch key=%s delta=%s", p.key, deltaJSON(p.delta))
+			}
+		}
+		if len(patches) > 5 {
+			log.Printf("  [dry-run] ...and %d more", len(patches)-5)
+		}
+		log.Printf("  [dry-run] would apply %d patches (nothing written)", len(patches))
+		return nil
+	}
+
+	applied, failed := bulkUpdateObjects(ctx, client, cfg, patches)
+	log.Printf("──────────────────────────────────────────────")
+	log.Printf("retype-dates: objects scanned=%d needing patch=%d applied=%d failed=%d",
+		scanned, len(patches), applied, failed)
+	return nil
+}
+
 // ─── Main flow ────────────────────────────────────────────────────────────────
 
 func main() {
@@ -718,81 +1069,95 @@ func main() {
 	}
 	log.Printf("Seed: %d objects, %d relationships in %s", len(objects), len(rels), cfg.dir)
 
-	// 1. Enumerate live objects (needed for object diff and endpoint resolution).
-	objTypes := collectObjectTypes(objects)
-	keyToID, anyIDToEntity, err := enumerateObjects(ctx, client, objTypes)
-	if err != nil {
-		log.Fatalf("enumerate objects: %v", err)
-	}
-	log.Printf("Live objects enumerated: %d", len(keyToID))
+	// Determine which passes run: --retype-dates alone skips gap-filling;
+	// --retype-and-fill runs both.
+	runRetype := cfg.retypeDates || cfg.retypeAndFill
+	runFill := !cfg.retypeDates || cfg.retypeAndFill
 
-	// 2. Enumerate live relationships (needed to skip existing edges; idempotent
-	//    re-runs). Skipped entirely under --objects-only.
-	var liveRels map[string]struct{}
-	if !cfg.objectsOnly {
-		relTypes := collectRelTypes(rels)
-		liveRels, err = enumerateRelationships(ctx, client, relTypes, anyIDToEntity)
+	if runRetype {
+		if err := runRetypeDates(ctx, client, cfg, objects); err != nil {
+			log.Fatalf("retype-dates: %v", err)
+		}
+	}
+
+	if runFill {
+		// 1. Enumerate live objects (needed for object diff and endpoint resolution).
+		objTypes := collectObjectTypes(objects)
+		keyToID, anyIDToEntity, _, err := enumerateObjects(ctx, client, objTypes, false)
 		if err != nil {
-			log.Fatalf("enumerate relationships: %v", err)
+			log.Fatalf("enumerate objects: %v", err)
 		}
-		log.Printf("Live relationships enumerated: %d", len(liveRels))
+		log.Printf("Live objects enumerated: %d", len(keyToID))
+
+		// 2. Enumerate live relationships (needed to skip existing edges; idempotent
+		//    re-runs). Skipped entirely under --objects-only.
+		var liveRels map[string]struct{}
+		if !cfg.objectsOnly {
+			relTypes := collectRelTypes(rels)
+			liveRels, err = enumerateRelationships(ctx, client, relTypes, anyIDToEntity)
+			if err != nil {
+				log.Fatalf("enumerate relationships: %v", err)
+			}
+			log.Printf("Live relationships enumerated: %d", len(liveRels))
+		}
+
+		// 3. Compute and (unless dry-run / relationships-only) fill missing objects.
+		var objCreated, objFailed int
+		if !cfg.relationshipsOnly {
+			var missing []graph.CreateObjectRequest
+			for _, o := range objects {
+				if keyToID[o.Key] == "" {
+					key := o.Key
+					missing = append(missing, graph.CreateObjectRequest{Type: o.Type, Key: &key, Properties: o.Properties})
+				}
+			}
+			log.Printf("Missing objects: %d / %d", len(missing), len(objects))
+			if cfg.dryRun {
+				log.Printf("  [dry-run] would create %d objects", len(missing))
+			} else {
+				log.Printf("  Creating %d objects in batches of %d with %d workers...", len(missing), cfg.batchSz, cfg.workers)
+				objCreated, objFailed = bulkCreateObjects(ctx, client, cfg, missing, keyToID)
+			}
+		}
+		objFound := len(objects) - objCreated - objFailed
+
+		// 4. Compute and (unless dry-run / objects-only) fill missing relationships.
+		var relCreated, relFailed, relSkipped int
+		if !cfg.objectsOnly {
+			var missing []graph.CreateRelationshipRequest
+			for _, r := range rels {
+				if r.SrcKey == r.DstKey {
+					relSkipped++
+					continue
+				}
+				srcID := keyToID[r.SrcKey]
+				dstID := keyToID[r.DstKey]
+				if srcID == "" || dstID == "" || srcID == dstID {
+					relSkipped++
+					continue
+				}
+				if _, ok := liveRels[r.Type+setSep+srcID+setSep+dstID]; ok {
+					continue // already exists
+				}
+				missing = append(missing, graph.CreateRelationshipRequest{Type: r.Type, SrcID: srcID, DstID: dstID, Properties: r.Properties})
+			}
+			log.Printf("Missing relationships: %d / %d", len(missing), len(rels))
+			if cfg.dryRun {
+				log.Printf("  [dry-run] would create %d relationships", len(missing))
+			} else {
+				log.Printf("  Creating %d relationships in batches of %d with %d workers...", len(missing), cfg.batchSz, cfg.workers)
+				relCreated, relFailed = bulkCreateRelationships(ctx, client, cfg, missing)
+			}
+		}
+		relFound := len(rels) - relCreated - relFailed - relSkipped
+
+		// 5. Summary.
+		log.Printf("──────────────────────────────────────────────")
+		log.Printf("objects:      expected=%d found=%d created=%d failed=%d",
+			len(objects), objFound, objCreated, objFailed)
+		log.Printf("relationships: expected=%d found=%d created=%d failed=%d skipped_unresolvable=%d",
+			len(rels), relFound, relCreated, relFailed, relSkipped)
 	}
 
-	// 3. Compute and (unless dry-run / relationships-only) fill missing objects.
-	var objCreated, objFailed int
-	if !cfg.relationshipsOnly {
-		var missing []graph.CreateObjectRequest
-		for _, o := range objects {
-			if keyToID[o.Key] == "" {
-				key := o.Key
-				missing = append(missing, graph.CreateObjectRequest{Type: o.Type, Key: &key, Properties: o.Properties})
-			}
-		}
-		log.Printf("Missing objects: %d / %d", len(missing), len(objects))
-		if cfg.dryRun {
-			log.Printf("  [dry-run] would create %d objects", len(missing))
-		} else {
-			log.Printf("  Creating %d objects in batches of %d with %d workers...", len(missing), cfg.batchSz, cfg.workers)
-			objCreated, objFailed = bulkCreateObjects(ctx, client, cfg, missing, keyToID)
-		}
-	}
-	objFound := len(objects) - objCreated - objFailed
-
-	// 4. Compute and (unless dry-run / objects-only) fill missing relationships.
-	var relCreated, relFailed, relSkipped int
-	if !cfg.objectsOnly {
-		var missing []graph.CreateRelationshipRequest
-		for _, r := range rels {
-			if r.SrcKey == r.DstKey {
-				relSkipped++
-				continue
-			}
-			srcID := keyToID[r.SrcKey]
-			dstID := keyToID[r.DstKey]
-			if srcID == "" || dstID == "" || srcID == dstID {
-				relSkipped++
-				continue
-			}
-			if _, ok := liveRels[r.Type+setSep+srcID+setSep+dstID]; ok {
-				continue // already exists
-			}
-			missing = append(missing, graph.CreateRelationshipRequest{Type: r.Type, SrcID: srcID, DstID: dstID, Properties: r.Properties})
-		}
-		log.Printf("Missing relationships: %d / %d", len(missing), len(rels))
-		if cfg.dryRun {
-			log.Printf("  [dry-run] would create %d relationships", len(missing))
-		} else {
-			log.Printf("  Creating %d relationships in batches of %d with %d workers...", len(missing), cfg.batchSz, cfg.workers)
-			relCreated, relFailed = bulkCreateRelationships(ctx, client, cfg, missing)
-		}
-	}
-	relFound := len(rels) - relCreated - relFailed - relSkipped
-
-	// 5. Summary.
-	log.Printf("──────────────────────────────────────────────")
-	log.Printf("objects:      expected=%d found=%d created=%d failed=%d",
-		len(objects), objFound, objCreated, objFailed)
-	log.Printf("relationships: expected=%d found=%d created=%d failed=%d skipped_unresolvable=%d",
-		len(rels), relFound, relCreated, relFailed, relSkipped)
 	log.Printf("elapsed: %s", time.Since(start).Round(time.Millisecond))
 }

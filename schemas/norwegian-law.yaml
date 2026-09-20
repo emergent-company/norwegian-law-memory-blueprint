@@ -1,5 +1,5 @@
 name: norwegian-law
-version: "1.0.0"
+version: "1.1.0"
 description: Norwegian law knowledge graph — laws, regulations, ministries, legal areas, EU directives, and EuroVoc concepts
 author: Emergent Company
 license: MIT
@@ -32,8 +32,11 @@ objectTypes:
         type: string
         description: Document language code (nb, nn, etc.)
       date_in_force:
-        type: string
+        type: date
         description: Date the law entered into force (YYYY-MM-DD)
+      date_in_force_raw:
+        type: string
+        description: Raw Lovdata "in force" text when it is not an ISO date (e.g. "Inntektsåret 1989")
       year_in_force:
         type: number
         description: Year the law entered into force
@@ -41,10 +44,10 @@ objectTypes:
         type: string
         description: "Decade the law entered into force, e.g. 2000s"
       last_change_in_force:
-        type: string
+        type: date
         description: Date of last amendment in force (YYYY-MM-DD)
       date_of_publication:
-        type: string
+        type: date
         description: Date of official publication (YYYY-MM-DD)
       applies_to:
         type: string
@@ -82,8 +85,11 @@ objectTypes:
         type: string
         description: Document language code (nb, nn, etc.)
       date_in_force:
-        type: string
+        type: date
         description: Date the regulation entered into force (YYYY-MM-DD)
+      date_in_force_raw:
+        type: string
+        description: Raw Lovdata "in force" text when it is not an ISO date (e.g. "Inntektsåret 1989")
       year_in_force:
         type: number
         description: Year the regulation entered into force
@@ -91,10 +97,10 @@ objectTypes:
         type: string
         description: "Decade the regulation entered into force, e.g. 2000s"
       last_change_in_force:
-        type: string
+        type: date
         description: Date of last amendment in force (YYYY-MM-DD)
       date_of_publication:
-        type: string
+        type: date
         description: Date of official publication (YYYY-MM-DD)
       applies_to:
         type: string
@@ -174,10 +180,10 @@ objectTypes:
         type: string
         description: Legal form (Directive, Regulation, Decision, etc.)
       date_of_document:
-        type: string
+        type: date
         description: Date of adoption
       date_of_effect:
-        type: string
+        type: date
         description: Date of entry into force
       author:
         type: string

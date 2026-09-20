@@ -165,6 +165,32 @@ Smoke test (cached data, no EU enrichment):
 | `--ingest-only` | — | false | Skip download; use cached archive |
 | `--dataset` | — | `both` | `laws`, `regulations`, or `both` |
 
+## Reconciling a live project (`seedfill`)
+
+`cmd/seedfill` reconciles an already-ingested project against the committed seed
+data, creating only the missing objects/relationships (useful after a partial
+ingest). It can also re-coerce date properties into the server's canonical
+RFC3339 form after the schema pack changed them from `string` to `date`.
+
+```bash
+go build ./cmd/seedfill/
+
+# Diff + fill gaps (dry-run previews only)
+./seedfill --server <url> --token <token> --project <id> --dir . --dry-run
+
+# Coerce existing objects' date fields (Law/Regulation/EUDirective) to RFC3339
+./seedfill --server <url> --token <token> --project <id> --dir . --retype-dates
+
+# Both passes
+./seedfill --server <url> --token <token> --project <id> --dir . --retype-and-fill
+```
+
+`--retype-dates` is idempotent — a second run reports zero patches — and by
+default skips gap-filling unless `--retype-and-fill` is also set. Respects
+`--dry-run`, `--batch` (max 100) and `--workers` (default 4). Env fallbacks:
+`MEMORY_SERVER`, `MEMORY_PROJECT_TOKEN`, `MEMORY_PROJECT_ID`, `SEED_DIR`,
+`SEED_RETYPE_DATES`.
+
 ## Prerequisites
 
 - Go 1.25+
