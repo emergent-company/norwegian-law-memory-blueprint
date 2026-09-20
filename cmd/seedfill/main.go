@@ -651,6 +651,17 @@ func retryable(err error) bool {
 	return false
 }
 
+// retryBackoff returns an exponential-ish backoff capped at 30s. The dev server
+// is redeployed frequently; a restart typically takes tens of seconds, so the
+// retry budget must outlast it.
+func retryBackoff(attempt int) time.Duration {
+	d := time.Duration(attempt) * 2 * time.Second
+	if d > 30*time.Second {
+		d = 30 * time.Second
+	}
+	return d
+}
+
 // bulkCreateObjects bulk-creates objects in batches across workers, retrying a
 // failed batch once. On a per-item conflict it resolves the existing object's ID
 // via a key lookup (so it is neither "created" nor "failed"). Returns counts.
@@ -691,13 +702,13 @@ func bulkCreateObjects(ctx context.Context, client *graph.Client, cfg config, it
 				}
 				res, err := client.BulkCreateObjects(ctx, &graph.BulkCreateObjectsRequest{Items: wi.batch})
 				attempts := 0
-				for err != nil && attempts < 4 {
+				for err != nil && attempts < 10 {
 					attempts++
 					if !retryable(err) {
 						break
 					}
-					backoff := time.Duration(attempts) * 2 * time.Second
-					log.Printf("  [objects] batch %d error: %v - retry %d/4 in %s", wi.idx, err, attempts, backoff)
+					backoff := retryBackoff(attempts)
+					log.Printf("  [objects] batch %d error: %v - retry %d/10 in %s", wi.idx, err, attempts, backoff)
 					select {
 					case <-ctx.Done():
 						return
@@ -824,13 +835,13 @@ func bulkCreateRelationships(ctx context.Context, client *graph.Client, cfg conf
 				}
 				res, err := client.BulkCreateRelationships(ctx, &graph.BulkCreateRelationshipsRequest{Items: wi.batch})
 				attempts := 0
-				for err != nil && attempts < 4 {
+				for err != nil && attempts < 10 {
 					attempts++
 					if !retryable(err) {
 						break
 					}
-					backoff := time.Duration(attempts) * 2 * time.Second
-					log.Printf("  [rels] batch %d error: %v - retry %d/4 in %s", wi.idx, err, attempts, backoff)
+					backoff := retryBackoff(attempts)
+					log.Printf("  [rels] batch %d error: %v - retry %d/10 in %s", wi.idx, err, attempts, backoff)
 					select {
 					case <-ctx.Done():
 						return
@@ -935,13 +946,13 @@ func bulkUpdateObjects(ctx context.Context, client *graph.Client, cfg config, pa
 				}
 				res, err := client.BulkUpdateObjects(ctx, &graph.BulkUpdateObjectsRequest{Items: items})
 				attempts := 0
-				for err != nil && attempts < 4 {
+				for err != nil && attempts < 10 {
 					attempts++
 					if !retryable(err) {
 						break
 					}
-					backoff := time.Duration(attempts) * 2 * time.Second
-					log.Printf("  [retype] batch %d error: %v - retry %d/4 in %s", wi.idx, err, attempts, backoff)
+					backoff := retryBackoff(attempts)
+					log.Printf("  [retype] batch %d error: %v - retry %d/10 in %s", wi.idx, err, attempts, backoff)
 					select {
 					case <-ctx.Done():
 						return
