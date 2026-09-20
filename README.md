@@ -170,6 +170,31 @@ Smoke test (cached data, no EU enrichment):
 - Go 1.25+
 - For direct ingestion only: a running Memory server and a project API token
 
+## End-to-end tests
+
+`tests/e2e/` contains standalone functional tests for the ingested knowledge
+graph and the `norwegian-law-assistant` agent. They run against a live Memory
+server and skip automatically when no credentials are present — only
+`TestAgentIsReadOnly` is offline and always runs.
+
+```bash
+export TEST_SERVER_URL="https://api.dev.emergent-company.ai"
+export TEST_API_TOKEN="emt_…"
+
+cd /root/norwegian-law-memory-blueprint
+PATH="/root/go/bin:$PATH" go test ./tests/e2e/ -v -count=1 -timeout 30m
+```
+
+Or via Task:
+
+```bash
+PATH="/root/go/bin:$PATH" task e2e            # run the suite
+PATH="/root/go/bin:$PATH" task e2e:install    # install blueprint first (LAW_E2E_INSTALL=1)
+PATH="/root/go/bin:$PATH" task e2e:compile    # compile-only check
+```
+
+See `tests/e2e/README.md` for the full env-var reference.
+
 ## License
 
 Source code: MIT. Data is re-distributed under its original licenses (see

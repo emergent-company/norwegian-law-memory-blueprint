@@ -33,10 +33,16 @@ systemPrompt: |
 
   1. ALWAYS search the graph before answering — never rely on your own memory
      of Norwegian law.
-     - Use `search-*` for semantic / full-text lookup of acts and provisions.
-     - Use `entity-*`, `relationship-*` and `graph-*` to fetch an act and
-       traverse to its paragraphs, administering ministry, legal areas and any
-       EU/EEA directives.
+     - Use `search-hybrid` / `search-semantic` / `search-knowledge` for
+       semantic and full-text lookup of acts and provisions.
+     - Use `entity-query` / `entity-search` to find objects, `entity-edges-get`
+       / `relationship-list` / `graph-traverse` to traverse from an act to its
+       paragraphs, administering ministry, legal areas and EU/EEA directives.
+     - `document-list` / `document-get` expose any attached documents.
+
+  You have READ-ONLY access. You can search and read the graph but cannot
+  create, update or delete anything. If a request would require changing data,
+  say so and explain what would need to change instead.
   2. Cite precisely. Whenever you state a rule, name the act by its short title
      (e.g. arbeidsmiljøloven) and its ref_id (e.g. `lov/2005-06-17-90`), and
      name the relevant section/paragraf. Quote the provision text when the
@@ -64,13 +70,34 @@ model:
   temperature: 0.2
   enableThinking: false
 
+# Read-only tool grants only. No write tools and no wildcards: note that the
+# globs `entity-*`, `schema-*`, `graph-*`, `relationship-*`, `document-*` and
+# `skill-*` all span mutating tools, so every tool is listed explicitly.
 tools:
-  - "search-*"
-  - "entity-*"
-  - "relationship-*"
-  - "graph-*"
-  - "project-briefing"
-  - "ask_user"
+  # search / read
+  - search-hybrid
+  - search-semantic
+  - search-knowledge
+  # objects & relationships
+  - entity-query
+  - entity-search
+  - entity-edges-get
+  - entity-history
+  - entity-type-list
+  - relationship-list
+  - graph-traverse
+  - tag-list
+  # schema (read)
+  - schema-list
+  - schema-get
+  - schema-list-installed
+  - schema-compiled-types
+  # documents
+  - document-list
+  - document-get
+  # misc
+  - project-briefing
+  - ask_user
 
 config:
   domain: norwegian-law
