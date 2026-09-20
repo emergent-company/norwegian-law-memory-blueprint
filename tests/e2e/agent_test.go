@@ -8,7 +8,7 @@ import (
 )
 
 // TestAgentBasicQueries drives the norwegian-law-assistant through a set of
-// synchronous ACP runs and asserts on the returned answers.
+// synchronous A2A messages and asserts on the returned answers.
 func TestAgentBasicQueries(t *testing.T) {
 	base, token := requireCreds(t)
 

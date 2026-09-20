@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	sdkacp "github.com/emergent-company/emergent.memory/apps/server/pkg/sdk/acp"
+	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk/a2a"
 	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk/auth"
 	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk/graph"
 )
@@ -69,10 +70,17 @@ func blueprintDir() string {
 	return filepath.Dir(filepath.Dir(filepath.Dir(file)))
 }
 
-// runAgent runs a single synchronous ACP run against the given agent and returns
-// the concatenated text of all output parts. It fails the test on a transport
-// error, a non-completed status, a non-nil run error, or a human-in-the-loop
-// AwaitRequest.
+// agentSkillID is the A2A skill id that routes a message to the
+// norwegian-law-assistant. A2A's SendMessageRequest has no skill selector, so
+// the target agent is chosen via message.metadata["skillId"], which the server
+// resolves as the agent definition's RFC 1123 slug (acpslug.FromName of the
+// agent name). See apps/server/domain/agents/a2a_message.go resolveA2AAgent.
+const agentSkillID = "norwegian-law-assistant"
+
+// runAgent sends a single synchronous A2A message to the norwegian-law-assistant
+// skill and returns the concatenated text of the assistant's answer. It fails
+// the test on a transport error, a non-completed task state, a failed/cancelled
+// task, or a human-in-the-loop (input-required) pause.
 func runAgent(t *testing.T, base, token, question string) string {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Minute)
@@ -80,28 +88,85 @@ func runAgent(t *testing.T, base, token, question string) string {
 
 	// A real agent run (model + tool calls) can take minutes, so the SDK's
 	// default 30s HTTP timeout is far too short.
-	client := sdkacp.NewClientWithHTTP(base, token, &http.Client{Timeout: 11 * time.Minute})
-	run, err := client.CreateRun(ctx, "norwegian-law-assistant", sdkacp.CreateRunRequest{
-		Message: []sdkacp.MessagePart{{ContentType: "text/plain", Content: question}},
-		Mode:    "sync",
+	client := a2a.NewClientWithHTTP(base, token, &http.Client{Timeout: 11 * time.Minute})
+	resp, err := client.SendMessage(ctx, a2a.SendMessageRequest{
+		Message: a2a.Message{
+			MessageID: fmt.Sprintf("e2e-%d", time.Now().UnixNano()),
+			Role:      a2a.RoleUser,
+			Parts:     []a2a.Part{a2a.TextPart(question)},
+			Metadata:  map[string]any{"skillId": agentSkillID},
+		},
 	})
 	if err != nil {
-		t.Fatalf("CreateRun failed: %v", err)
+		t.Fatalf("SendMessage failed: %v", err)
 	}
-	if run.AwaitRequest != nil {
-		t.Fatalf("agent asked for clarification instead of answering (%q): %q", question, run.AwaitRequest.Question)
+
+	if resp.Task != nil {
+		return extractTaskAnswer(t, resp.Task, question)
 	}
-	if run.Error != nil {
-		t.Fatalf("run error: %s: %s", run.Error.Code, run.Error.Message)
+	if resp.Message != nil {
+		return extractMessageText(resp.Message)
 	}
-	if run.Status != "completed" {
-		t.Fatalf("expected status completed, got %q", run.Status)
+	t.Fatalf("SendMessage returned neither a task nor a message")
+	return ""
+}
+
+// extractTaskAnswer validates the task's terminal state and returns the final
+// assistant text. The synchronous A2A path returns a Task whose first artifact
+// ("result") carries the final assistant text; we fall back to history when the
+// artifacts are empty.
+func extractTaskAnswer(t *testing.T, task *a2a.Task, question string) string {
+	t.Helper()
+	switch task.Status.State {
+	case a2a.TaskStateCompleted:
+		// success
+	case a2a.TaskStateInputRequired:
+		t.Fatalf("agent asked for clarification instead of answering (%q): %s", question, taskStatusText(task))
+	case a2a.TaskStateFailed, a2a.TaskStateCanceled:
+		t.Fatalf("task ended in state %s: %s", task.Status.State, taskStatusText(task))
+	default:
+		t.Fatalf("expected task state %s, got %s", a2a.TaskStateCompleted, task.Status.State)
 	}
 
 	var sb strings.Builder
-	for _, m := range run.Output {
+	for _, art := range task.Artifacts {
+		for _, p := range art.Parts {
+			if p.Text != nil {
+				sb.WriteString(*p.Text)
+			}
+		}
+	}
+	if sb.Len() > 0 {
+		return sb.String()
+	}
+	// Fall back to history (agent-authored text parts).
+	for _, m := range task.History {
 		for _, p := range m.Parts {
-			sb.WriteString(p.Content)
+			if p.Text != nil {
+				sb.WriteString(*p.Text)
+			}
+		}
+	}
+	return sb.String()
+}
+
+// taskStatusText returns the human-readable text of a task's status message, or
+// the bare state when no message is present.
+func taskStatusText(task *a2a.Task) string {
+	if task.Status.Message != nil {
+		if s := extractMessageText(task.Status.Message); s != "" {
+			return s
+		}
+	}
+	return string(task.Status.State)
+}
+
+// extractMessageText concatenates the text parts of a bare A2A message.
+func extractMessageText(m *a2a.Message) string {
+	var sb strings.Builder
+	for _, p := range m.Parts {
+		if p.Text != nil {
+			sb.WriteString(*p.Text)
 		}
 	}
 	return sb.String()

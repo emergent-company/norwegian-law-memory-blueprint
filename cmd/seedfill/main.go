@@ -265,11 +265,29 @@ func dateValuesEqual(cur, want any) bool {
 		return false
 	}
 	if cs == ws {
-		return true
+		// Identical strings still need re-patching when the live value is not
+		// canonical, so the server coerces it to RFC3339.
+		return isCanonicalDate(cs)
+	}
+	// Only treat the values as equal when the LIVE value is already canonical
+	// (RFC3339). A bare "2006-01-01" must be re-patched so the server coerces it
+	// to "2006-01-01T00:00:00Z" and the representation is uniform graph-wide.
+	if !isCanonicalDate(cs) {
+		return false
 	}
 	c := dateKey(cs)
 	w := dateKey(ws)
 	return c != "" && w != "" && c == w
+}
+
+// isCanonicalDate reports whether s is already in the server's canonical date
+// form (RFC3339, e.g. "2006-01-01T00:00:00Z") rather than a bare YYYY-MM-DD.
+func isCanonicalDate(s string) bool {
+	if !strings.Contains(s, "T") {
+		return false
+	}
+	_, err := time.Parse(time.RFC3339, s)
+	return err == nil
 }
 
 // buildDesiredProps returns the desired date-property state for a seed object, or
