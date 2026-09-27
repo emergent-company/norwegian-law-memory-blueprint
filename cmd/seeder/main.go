@@ -49,6 +49,7 @@ import (
 
 	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk"
 	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk/graph"
+	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk/projects"
 	"golang.org/x/net/html"
 )
 
@@ -76,19 +77,23 @@ const (
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 type config struct {
-	serverURL   string
-	token       string
-	projectID   string
-	stateDir    string
-	cacheDir    string
-	limit       int
-	skipEU      bool
-	euLimit     int
-	workers     int
-	batchSz     int
-	ingestOnly  bool
-	dataset     string // "laws", "regulations", "both"
-	dumpSeedDir string // "" = upload mode; non-empty = server-free seed export
+	serverURL    string
+	token        string
+	projectID    string
+	orgID        string
+	projectName  string
+	stateDir     string
+	cacheDir     string
+	limit        int
+	skipEU       bool
+	euLimit      int
+	workers      int
+	batchSz      int
+	ingestOnly   bool
+	downloadOnly bool
+	cleanup      bool
+	dataset      string // "laws", "regulations", "both"
+	dumpSeedDir  string // "" = upload mode; non-empty = server-free seed export
 }
 
 func envOr(envKey, defaultVal string) string {
@@ -112,7 +117,9 @@ func parseConfig() config {
 
 	serverURL := flag.String("server", envOr("MEMORY_SERVER", ""), "Memory server URL (required)")
 	token := flag.String("token", envOr("MEMORY_PROJECT_TOKEN", ""), "Project API token (required)")
-	projectID := flag.String("project", envOr("MEMORY_PROJECT_ID", ""), "Project ID (required)")
+	projectID := flag.String("project", envOr("MEMORY_PROJECT_ID", ""), "Project ID (optional; overrides name-based auto-resolve)")
+	orgID := flag.String("org-id", envOr("MEMORY_ORG_ID", ""), "Organisation ID for project creation (default: user's org)")
+	projectName := flag.String("project-name", envOr("NORWEGIAN_LAW_PROJECT_NAME", "Norwegian Law"), "Project name to find or create")
 	stateDir := flag.String("state-dir", envOr("MEMORY_STATE_DIR", defaultStateDir), "Checkpoint directory")
 	cacheDir := flag.String("cache-dir", envOr("LOVDATA_CACHE_DIR", defaultCacheDir), "Data cache directory")
 	limit := flag.Int("limit", envIntOr("SEED_LIMIT", 0), "Max documents per dataset (0 = no limit)")
@@ -121,6 +128,8 @@ func parseConfig() config {
 	workers := flag.Int("workers", 20, "Parallel upload workers")
 	batchSz := flag.Int("batch", 100, "Batch size for bulk API calls (max 100)")
 	ingestOnly := flag.Bool("ingest-only", false, "Skip download; use cached parsed JSON")
+	downloadOnly := flag.Bool("download-only", false, "Download and parse to cache, skip ingestion")
+	cleanup := flag.Bool("cleanup", false, "Delete the target project after the run")
 	dataset := flag.String("dataset", "both", `Dataset to import: "laws", "regulations", or "both"`)
 	dumpSeedDir := flag.String("dump-seed", envOr("SEED_DUMP_DIR", ""), "Write a server-free blueprint seed (JSONL) to this directory instead of uploading")
 
@@ -133,19 +142,23 @@ func parseConfig() config {
 	}
 
 	return config{
-		serverURL:   *serverURL,
-		token:       *token,
-		projectID:   *projectID,
-		stateDir:    *stateDir,
-		cacheDir:    *cacheDir,
-		limit:       *limit,
-		skipEU:      *skipEU,
-		euLimit:     *euLimit,
-		workers:     *workers,
-		batchSz:     sz,
-		ingestOnly:  *ingestOnly,
-		dataset:     *dataset,
-		dumpSeedDir: *dumpSeedDir,
+		serverURL:    *serverURL,
+		token:        *token,
+		projectID:    *projectID,
+		orgID:        *orgID,
+		projectName:  *projectName,
+		stateDir:     *stateDir,
+		cacheDir:     *cacheDir,
+		limit:        *limit,
+		skipEU:       *skipEU,
+		euLimit:      *euLimit,
+		workers:      *workers,
+		batchSz:      sz,
+		ingestOnly:   *ingestOnly,
+		downloadOnly: *downloadOnly,
+		cleanup:      *cleanup,
+		dataset:      *dataset,
+		dumpSeedDir:  *dumpSeedDir,
 	}
 }
 
@@ -156,9 +169,6 @@ func (c *config) validate() error {
 	}
 	if c.token == "" {
 		missing = append(missing, "--token / MEMORY_PROJECT_TOKEN")
-	}
-	if c.projectID == "" {
-		missing = append(missing, "--project / MEMORY_PROJECT_ID")
 	}
 	if len(missing) > 0 {
 		return fmt.Errorf("missing required parameters: %s", strings.Join(missing, ", "))
@@ -317,6 +327,10 @@ var (
 	directivePattern = regexp.MustCompile(`\b(\d{4}/[\d]+/(?:EF|EØF|EU|EEC|EC|EØF))\b`)
 	celexPattern     = regexp.MustCompile(`\b(3\d{7}[A-Z]\d+)\b`)
 	eurovocPattern   = regexp.MustCompile(`eurovoc\.europa\.eu/(\d+)`)
+	// romanOnlyPattern matches a bare Roman numeral (I, II, III, …). Lovdata
+	// uses such <h2> headings as section dividers, not chapter titles, so they
+	// must not be rendered as "## Kapittel <n>. <roman>".
+	romanOnlyPattern = regexp.MustCompile(`(?i)^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$`)
 )
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
@@ -397,8 +411,37 @@ func stripAnchor(s string) string {
 
 func strPtr(s string) *string { return &s }
 
+// isBodyArticleClass reports whether an <article> element's class marks it as a
+// § (article) container, as opposed to a bare paragraph. Lovdata has two names
+// for the same thing depending on document vintage.
+func isBodyArticleClass(cls string) bool {
+	return cls == "legalArticle" || cls == "futureLegalArticle"
+}
+
+// isParagraphClass reports whether a node's class marks it as a body paragraph.
+func isParagraphClass(cls string) bool {
+	switch cls {
+	case "legalP", "numberedLegalP", "defaultP", "centeredP":
+		return true
+	}
+	return false
+}
+
 // ─── Body extraction ──────────────────────────────────────────────────────────
 
+// extractBody walks <main id="dokument"> and returns the full body Markdown, one
+// LegalParagraph chunk per § article, and any EU cross-reference codes.
+//
+// The Lovdata HTML class taxonomy follows the proven reference parser
+// https://github.com/sondreskarsten/norwegian-laws
+// (lovdata-loader/src/lovdata_loader/parser.py, MIT): a § is an
+// <article class="legalArticle"> (or the newer "futureLegalArticle"), while its
+// body paragraphs are <article>/<p> elements carrying class "legalP",
+// "numberedLegalP", "defaultP" or "centeredP" (plus the legacy
+// "legalPfortsettelse"/"leddfortsettelse" continuation variants). Short
+// delegation regulations skip the legalArticle wrapper entirely and place
+// <article class="legalP"> directly under <section>; those are captured by the
+// top-level legalP fallback below.
 func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagraph, euBodyRefs []string) {
 	var sb strings.Builder
 	euRefSet := make(map[string]bool)
@@ -482,7 +525,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 			switch cls {
 			case "legalArticleHeader":
 				continue
-			case "numberedLegalP", "legalP", "legalPfortsettelse", "leddfortsettelse":
+			case "numberedLegalP", "legalP", "defaultP", "centeredP", "legalPfortsettelse", "leddfortsettelse":
 				text := strings.TrimSpace(extractPlainText(c))
 				if text != "" {
 					asb.WriteString(text + "\n\n")
@@ -538,7 +581,10 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 					break
 				}
 			}
-			if chNum != "" || chTitle != "" {
+			// A bare Roman numeral heading ("I", "II", …) is a section divider,
+			// not a chapter title — suppress the bogus "## Kapittel <n>. <roman>".
+			isRomanOnly := chTitle != "" && romanOnlyPattern.MatchString(chTitle)
+			if !isRomanOnly && (chNum != "" || chTitle != "") {
 				heading := "## Kapittel " + chNum
 				if chTitle != "" {
 					heading += ". " + chTitle
@@ -549,7 +595,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 				walk(c)
 			}
 
-		case n.Data == "article" && cls == "legalArticle":
+		case n.Data == "article" && isBodyArticleClass(cls):
 			position++
 			sectionID := aid
 
@@ -595,6 +641,28 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 				})
 			}
 
+		case n.Data == "article" && isParagraphClass(cls):
+			// Top-level paragraph fallback: short/delegation regulations put body
+			// text in <article class="legalP"> directly under <section>, with no
+			// enclosing legalArticle. Capture the text into the body and, where an
+			// id exists, emit it as a LegalParagraph chunk keyed by that id.
+			position++
+			text := strings.TrimSpace(extractPlainText(n))
+			if text != "" {
+				sb.WriteString(text + "\n\n")
+			}
+			collectEURefs(n)
+			if text != "" && aid != "" {
+				paragraphs = append(paragraphs, LovParagraph{
+					SectionID:    aid,
+					ChapterID:    currentChapterID,
+					ParagraphNum: "",
+					Title:        "",
+					Content:      text,
+					Position:     position,
+				})
+			}
+
 		case n.Data == "ol":
 			sb.WriteString(renderOL(n))
 
@@ -617,6 +685,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 	for code := range euRefSet {
 		euBodyRefs = append(euBodyRefs, code)
 	}
+	sort.Strings(euBodyRefs)
 	return fullMarkdown, paragraphs, euBodyRefs
 }
 
@@ -766,6 +835,7 @@ func parseDocument(content []byte, docType string) *LovDoc {
 	for ref := range refSet {
 		doc.References = append(doc.References, ref)
 	}
+	sort.Strings(doc.References)
 
 	if doc.RefID == "" {
 		return nil
@@ -1583,65 +1653,118 @@ func sortedMapKeys[V any](m map[string]V) []string {
 // YYYY-MM-DD dates (never an empty/invalid string, which the server rejects
 // with a 400 for the whole object).
 var seedDateProps = map[string][]string{
-	"Law":         {"date_in_force", "last_change_in_force", "date_of_publication"},
-	"Regulation":  {"date_in_force", "last_change_in_force", "date_of_publication"},
+	"Law":         {"date_in_force", "last_change_in_force"},
+	"Regulation":  {"date_in_force", "last_change_in_force"},
 	"EUDirective": {"date_of_document", "date_of_effect"},
 }
 
-// normalizeDateValue parses a property value using the same formats the server's
-// coerceToDate accepts, returning the normalized YYYY-MM-DD form, or ok=false if
-// the value is empty, non-string, or not a parseable date.
-func normalizeDateValue(v any) (string, bool) {
-	s, ok := v.(string)
-	if !ok {
-		return "", false
-	}
+// seedDateTimeProps lists the properties the schema types as `datetime`: the
+// Lovdata source carries a clock time (e.g. "2024-07-09 14:55"), so they are
+// normalized to RFC3339 rather than truncated to a bare date.
+var seedDateTimeProps = map[string][]string{
+	"Law":        {"date_of_publication"},
+	"Regulation": {"date_of_publication"},
+}
+
+// seedDateRawProps maps a date/datetime property to the companion raw-text field
+// where an unparseable non-empty value is preserved instead of being dropped.
+var seedDateRawProps = map[string]string{
+	"date_in_force":       "date_in_force_raw",
+	"date_of_publication": "date_of_publication_raw",
+}
+
+// parseDateValue parses s with every accepted date/datetime layout and applies
+// the "year > 2050" typo guard (values like "2051-01-01" are treated as
+// deferred/typo, per the reference parser). It returns the parsed time, or
+// ok=false if s is empty, malformed, or carries an implausible year.
+func parseDateValue(s string) (time.Time, bool) {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return "", false
+		return time.Time{}, false
 	}
 	formats := []string{
 		time.RFC3339,
 		time.RFC3339Nano,
 		"2006-01-02",
+		"2006-01-02 15:04",
 		"2006-01-02 15:04:05",
 		"2006-01-02T15:04:05",
 		"01/02/2006",
 		"02-01-2006",
+		"02.01.2006",
+		"02.01.2006 15:04",
 	}
 	for _, f := range formats {
 		if t, err := time.Parse(f, s); err == nil {
-			return t.Format("2006-01-02"), true
+			if t.Year() > 2050 {
+				return time.Time{}, false
+			}
+			return t, true
 		}
 	}
-	return "", false
+	return time.Time{}, false
 }
 
-// normalizeDateProps normalizes the date-typed properties of an object record
-// in place: parseable dates are rewritten to YYYY-MM-DD, unparseable/empty ones
-// are dropped, and an unparseable non-empty date_in_force is preserved as
-// date_in_force_raw so the information is not lost.
+// normalizeDateValue parses a property value and returns the normalized
+// YYYY-MM-DD form, or ok=false if the value is empty, non-string, or not a
+// parseable date.
+func normalizeDateValue(v any) (string, bool) {
+	s, ok := v.(string)
+	if !ok {
+		return "", false
+	}
+	t, ok := parseDateValue(s)
+	if !ok {
+		return "", false
+	}
+	return t.Format("2006-01-02"), true
+}
+
+// normalizeDateTimeValue parses a property value and returns the normalized
+// RFC3339 datetime form (preserving any clock time), or ok=false if the value
+// is empty, non-string, or not parseable.
+func normalizeDateTimeValue(v any) (string, bool) {
+	s, ok := v.(string)
+	if !ok {
+		return "", false
+	}
+	t, ok := parseDateValue(s)
+	if !ok {
+		return "", false
+	}
+	return t.Format(time.RFC3339), true
+}
+
+// normalizeDateProps normalizes the date- and datetime-typed properties of an
+// object record in place: parseable values are rewritten to their canonical form,
+// unparseable/empty ones are dropped, and an unparseable non-empty value is
+// preserved in its raw companion field (date_in_force_raw /
+// date_of_publication_raw) so the information is never silently lost.
 func normalizeDateProps(objType string, props map[string]any, normCounts map[string]int, rawMoved *int) {
-	for _, key := range seedDateProps[objType] {
-		raw, present := props[key]
-		if !present {
-			continue
-		}
-		if norm, ok := normalizeDateValue(raw); ok {
-			props[key] = norm
-			normCounts[key]++
-			continue
-		}
-		delete(props, key)
-		if key == "date_in_force" {
-			if s, isStr := raw.(string); isStr && strings.TrimSpace(s) != "" {
-				if _, exists := props["date_in_force_raw"]; !exists {
-					props["date_in_force_raw"] = s
-					(*rawMoved)++
+	normalizeFields := func(keys []string, normFn func(any) (string, bool)) {
+		for _, key := range keys {
+			raw, present := props[key]
+			if !present {
+				continue
+			}
+			if norm, ok := normFn(raw); ok {
+				props[key] = norm
+				normCounts[key]++
+				continue
+			}
+			delete(props, key)
+			if rawKey := seedDateRawProps[key]; rawKey != "" {
+				if s, isStr := raw.(string); isStr && strings.TrimSpace(s) != "" {
+					if _, exists := props[rawKey]; !exists {
+						props[rawKey] = s
+						(*rawMoved)++
+					}
 				}
 			}
 		}
 	}
+	normalizeFields(seedDateProps[objType], normalizeDateValue)
+	normalizeFields(seedDateTimeProps[objType], normalizeDateTimeValue)
 }
 
 // ─── Object ingestion (Phase 1) ───────────────────────────────────────────────
@@ -1747,6 +1870,11 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 			if p.Title != "" {
 				pName += " " + p.Title
 			}
+			if strings.TrimSpace(pName) == "" {
+				// Top-level legalP chunks carry no § number/title; fall back to
+				// the section id so the object never has an empty name.
+				pName = p.SectionID
+			}
 			pProps := map[string]any{
 				"name":          pName,
 				"content":       p.Content,
@@ -1823,7 +1951,7 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 	for _, k := range sortedMapKeys(normCounts) {
 		normParts = append(normParts, fmt.Sprintf("%s=%d", k, normCounts[k]))
 	}
-	log.Printf("  Date normalization: normalized [%s], date_in_force→_raw: %d", strings.Join(normParts, " "), rawMoved)
+	log.Printf("  Date normalization: normalized [%s], raw-preserved: %d", strings.Join(normParts, " "), rawMoved)
 
 	return dedupeSeedObjects(records)
 }
@@ -2242,42 +2370,126 @@ type seedRelationshipLine struct {
 	Properties map[string]any `json:"properties,omitempty"`
 }
 
-func writeObjectJSONL(path string, recs []seedObjectRecord) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
+// dumpSplitSize is the per-file byte threshold for seed JSONL splitting. It
+// matches the Memory CLI blueprint dumper's 50 MB split so files stay under
+// GitHub's 100 MB hard limit while the blueprint loader (which reads all
+// *.jsonl files, including *.001.jsonl, *.002.jsonl, …) reassembles them.
+var dumpSplitSize int64 = 50 * 1024 * 1024
+
+// splitJSONLWriter writes JSONL lines to a sequence of files, splitting at
+// dumpSplitSize bytes. Files are named <typeName>.jsonl for the first file, then
+// <typeName>.001.jsonl, <typeName>.002.jsonl, … once splitting occurs — the same
+// convention as the Memory CLI blueprint dumper.
+type splitJSONLWriter struct {
+	dir      string
+	typeName string
+	file     *os.File
+	buf      *bufio.Writer
+	written  int64
+	part     int // 0 = unsplit; 1+ = split sequence
+}
+
+func (w *splitJSONLWriter) fileName() string {
+	if w.part == 0 {
+		return filepath.Join(w.dir, w.typeName+".jsonl")
 	}
-	defer f.Close()
-	buf := bufio.NewWriter(f)
-	defer buf.Flush()
-	for _, r := range recs {
-		data, err := json.Marshal(seedObjectLine{Type: r.Type, Key: r.Key, Properties: r.Properties})
-		if err != nil {
+	return filepath.Join(w.dir, fmt.Sprintf("%s.%03d.jsonl", w.typeName, w.part))
+}
+
+func (w *splitJSONLWriter) openNext() error {
+	if w.file != nil {
+		if err := w.buf.Flush(); err != nil {
 			return err
 		}
-		buf.Write(data)     //nolint:errcheck
-		buf.WriteByte('\n') //nolint:errcheck
+		if err := w.file.Close(); err != nil {
+			return err
+		}
 	}
+	if w.part == 0 && w.file == nil {
+		// First file: keep the plain name.
+	} else if w.part == 0 {
+		// First split: rename the plain file to .001.jsonl, then continue at .002.
+		oldName := filepath.Join(w.dir, w.typeName+".jsonl")
+		w.part = 1
+		if err := os.Rename(oldName, w.fileName()); err != nil {
+			return fmt.Errorf("rename split file: %w", err)
+		}
+		w.part++
+	} else {
+		w.part++
+	}
+	w.written = 0
+
+	f, err := os.Create(w.fileName())
+	if err != nil {
+		return fmt.Errorf("create file %s: %w", w.fileName(), err)
+	}
+	w.file = f
+	w.buf = bufio.NewWriter(f)
 	return nil
 }
 
-func writeRelationshipJSONL(path string, recs []seedRelationshipRecord) error {
-	f, err := os.Create(path)
-	if err != nil {
+func (w *splitJSONLWriter) writeLine(line []byte) error {
+	needed := int64(len(line)) + 1 // +1 for newline
+	if w.written > 0 && w.written+needed > dumpSplitSize {
+		if err := w.openNext(); err != nil {
+			return err
+		}
+	}
+	if _, err := w.buf.Write(line); err != nil {
 		return err
 	}
-	defer f.Close()
-	buf := bufio.NewWriter(f)
-	defer buf.Flush()
+	if err := w.buf.WriteByte('\n'); err != nil {
+		return err
+	}
+	w.written += needed
+	return nil
+}
+
+func (w *splitJSONLWriter) close() error {
+	if w.file == nil {
+		return nil
+	}
+	if err := w.buf.Flush(); err != nil {
+		return err
+	}
+	return w.file.Close()
+}
+
+func writeObjectJSONL(dir, typ string, recs []seedObjectRecord) error {
+	w := &splitJSONLWriter{dir: dir, typeName: typ}
+	if err := w.openNext(); err != nil {
+		return err
+	}
+	for _, r := range recs {
+		data, err := json.Marshal(seedObjectLine{Type: r.Type, Key: r.Key, Properties: r.Properties})
+		if err != nil {
+			w.close() //nolint:errcheck
+			return err
+		}
+		if err := w.writeLine(data); err != nil {
+			return err
+		}
+	}
+	return w.close()
+}
+
+func writeRelationshipJSONL(dir, typ string, recs []seedRelationshipRecord) error {
+	w := &splitJSONLWriter{dir: dir, typeName: typ}
+	if err := w.openNext(); err != nil {
+		return err
+	}
 	for _, r := range recs {
 		data, err := json.Marshal(seedRelationshipLine{Type: r.Type, SrcKey: r.SrcKey, DstKey: r.DstKey, Properties: r.Properties})
 		if err != nil {
+			w.close() //nolint:errcheck
 			return err
 		}
-		buf.Write(data)     //nolint:errcheck
-		buf.WriteByte('\n') //nolint:errcheck
+		if err := w.writeLine(data); err != nil {
+			return err
+		}
 	}
-	return nil
+	return w.close()
 }
 
 // dumpSeed writes a portable blueprint seed (JSONL) to <dir>/seed/objects/<Type>.jsonl
@@ -2319,7 +2531,7 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 	objectCount := 0
 	for _, typ := range sortedMapKeys(objByType) {
 		recs := objByType[typ]
-		if err := writeObjectJSONL(filepath.Join(objDir, typ+".jsonl"), recs); err != nil {
+		if err := writeObjectJSONL(objDir, typ, recs); err != nil {
 			return err
 		}
 		objectCount += len(recs)
@@ -2328,7 +2540,7 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 	relCount := 0
 	for _, typ := range sortedMapKeys(relByType) {
 		recs := relByType[typ]
-		if err := writeRelationshipJSONL(filepath.Join(relDir, typ+".jsonl"), recs); err != nil {
+		if err := writeRelationshipJSONL(relDir, typ, recs); err != nil {
 			return err
 		}
 		relCount += len(recs)
@@ -2336,6 +2548,38 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 
 	log.Printf("Seed export complete: %d objects, %d relationships -> %s", objectCount, relCount, filepath.Join(dir, "seed"))
 	return nil
+}
+
+// ─── Project helpers ──────────────────────────────────────────────────────────
+
+// ensureProject finds a project by name within the organisation (or the user's
+// accessible projects when orgID is empty) and returns its ID; if none exists it
+// creates one. Mirrors the CLI's `lovdataEnsureProject`.
+func ensureProject(ctx context.Context, client *sdk.Client, orgID, name string) (string, error) {
+	list, err := client.Projects.List(ctx, &projects.ListOptions{OrgID: orgID})
+	if err != nil {
+		return "", fmt.Errorf("list projects: %w", err)
+	}
+	for _, p := range list {
+		if p.Name == name {
+			log.Printf("  Found existing project %q (ID: %s)", name, p.ID)
+			return p.ID, nil
+		}
+	}
+	proj, err := client.Projects.Create(ctx, &projects.CreateProjectRequest{
+		Name:  name,
+		OrgID: orgID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("create project %q: %w", name, err)
+	}
+	log.Printf("  Created project %q (ID: %s)", proj.Name, proj.ID)
+	return proj.ID, nil
+}
+
+// deleteProject deletes a project by ID (used by --cleanup).
+func deleteProject(ctx context.Context, client *sdk.Client, projectID string) error {
+	return client.Projects.Delete(ctx, projectID)
 }
 
 // ─── main ─────────────────────────────────────────────────────────────────────
@@ -2363,6 +2607,7 @@ func main() {
 		client, err = sdk.New(sdk.Config{
 			ServerURL:  cfg.serverURL,
 			ProjectID:  cfg.projectID,
+			OrgID:      cfg.orgID,
 			HTTPClient: &http.Client{Timeout: 5 * time.Minute},
 			Auth:       sdk.AuthConfig{Mode: "apikey", APIKey: cfg.token},
 		})
@@ -2370,7 +2615,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		log.Printf("Norwegian Law Seeder → %s (project: %s)", cfg.serverURL, cfg.projectID)
 		log.Printf("State directory: %s", cfg.stateDir)
 		log.Printf("Cache directory: %s", cfg.cacheDir)
 		if cfg.limit > 0 {
@@ -2395,6 +2639,20 @@ func main() {
 		log.Printf("Received signal %s — shutting down gracefully (state preserved)", sig)
 		cancel()
 	}()
+
+	// Resolve the target project: --project overrides; otherwise find-or-create
+	// by name within the org.
+	if !dumpMode {
+		if cfg.projectID == "" {
+			resolved, err := ensureProject(ctx, client, cfg.orgID, cfg.projectName)
+			if err != nil {
+				log.Fatalf("resolve project: %v", err)
+			}
+			cfg.projectID = resolved
+		}
+		client.SetContext(cfg.orgID, cfg.projectID)
+		log.Printf("Norwegian Law Seeder → %s (project: %s)", cfg.serverURL, cfg.projectID)
+	}
 
 	var allDocs []LovDoc
 	var directives []*EUDirective
@@ -2475,6 +2733,11 @@ func main() {
 		if bConc, err := json.MarshalIndent(concepts, "", "  "); err == nil {
 			os.WriteFile(cachePathConcepts, bConc, 0644) //nolint:errcheck
 		}
+
+		if cfg.downloadOnly {
+			log.Println("Data downloaded and cached successfully. Exiting (--download-only).")
+			return
+		}
 	}
 
 	if cfg.limit > 0 && len(allDocs) > cfg.limit*2 {
@@ -2537,4 +2800,11 @@ func main() {
 	state.Phase = phaseDone
 	saveState(cfg.stateDir, state)
 	log.Println("Done.")
+
+	if cfg.cleanup {
+		log.Printf("Cleaning up project %s ...", cfg.projectID)
+		if err := deleteProject(ctx, client, cfg.projectID); err != nil {
+			log.Printf("WARN: cleanup failed: %v", err)
+		}
+	}
 }

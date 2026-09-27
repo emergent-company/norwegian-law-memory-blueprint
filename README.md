@@ -92,9 +92,11 @@ to produce or apply it:
 - object line: `{"type":"Law","key":"lov/1687-04-15","properties":{…}}`
 - relationship line: `{"type":"HAS_PARAGRAPH","srcKey":"lov/…","dstKey":"lov/…#…","properties":{…}}`
 
-The bundle is roughly **100k objects / 120k relationships** (laws, regulations,
+The bundle is roughly **144k objects / 165k relationships** (laws, regulations,
 provisions, ministries, legal areas and their relationships). `LegalParagraph`
-and the relationship files dominate the size.
+and the relationship files dominate the size. Large types are split at 50 MB
+into `<Type>.001.jsonl`, `<Type>.002.jsonl`, … (the Memory CLI's blueprint
+loader reassembles them transparently).
 
 Alternatively, `memory blueprints dump <output-dir>` exports any already-populated
 project back into the same `seed/objects/*.jsonl` + `seed/relationships/*.jsonl`
@@ -124,16 +126,21 @@ metadata, and writes `seed/objects/*.jsonl` + `seed/relationships/*.jsonl`.
 Fully offline with respect to Memory — no token, project or server needed.
 
 Useful flags: `--dataset laws|regulations|both`, `--limit N`, `--skip-eu`,
-`--cache-dir <dir>`, `--ingest-only`.
+`--cache-dir <dir>`, `--ingest-only`, `--download-only` (download + parse to
+cache, skip export).
 
 ### Ingest directly into a Memory project
 
 ```bash
 ./seeder \
-  --server  http://localhost:3012 \
-  --token   <project-api-token> \
-  --project <project-id>
+  --server http://localhost:3012 \
+  --token  <project-api-token>
 ```
+
+The target project is resolved by name (`--project-name`, default
+`"Norwegian Law"`): the seeder finds an existing project of that name in the
+org (`--org-id`, or the user's accessible projects when unset) and creates it if
+missing. Pass `--project <id>` to skip the lookup and target a specific project.
 
 Two-phase, resumable ingestion (objects, then relationships) using the Memory
 SDK: batch size 100, 20 concurrent workers, checkpointing in `--state-dir`
@@ -153,7 +160,9 @@ Smoke test (cached data, no EU enrichment):
 |---|---|---|---|
 | `--server` | `MEMORY_SERVER` | — | Memory server URL (required unless `--dump-seed`) |
 | `--token` | `MEMORY_PROJECT_TOKEN` | — | Project API token (required unless `--dump-seed`) |
-| `--project` | `MEMORY_PROJECT_ID` | — | Project ID (required unless `--dump-seed`) |
+| `--project` | `MEMORY_PROJECT_ID` | — | Project ID (optional; overrides name-based auto-resolve) |
+| `--org-id` | `MEMORY_ORG_ID` | — | Organisation ID for project creation (default: user's org) |
+| `--project-name` | `NORWEGIAN_LAW_PROJECT_NAME` | `Norwegian Law` | Project name to find or create |
 | `--dump-seed` | `SEED_DUMP_DIR` | — | Export portable seed JSONL to `<dir>/seed/` instead of uploading |
 | `--state-dir` | `MEMORY_STATE_DIR` | `~/.norwegian-law-seed-state` | Checkpoint directory |
 | `--cache-dir` | `LOVDATA_CACHE_DIR` | `/tmp/lovdata_data` | Download cache |
@@ -163,6 +172,8 @@ Smoke test (cached data, no EU enrichment):
 | `--workers` | — | `20` | Parallel upload workers |
 | `--batch` | — | `100` | Bulk API batch size |
 | `--ingest-only` | — | false | Skip download; use cached archive |
+| `--download-only` | — | false | Download + parse to cache, skip ingestion |
+| `--cleanup` | — | false | Delete the target project after the run |
 | `--dataset` | — | `both` | `laws`, `regulations`, or `both` |
 
 ## Reconciling a live project (`seedfill`)

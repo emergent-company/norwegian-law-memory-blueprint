@@ -2,6 +2,14 @@ version: '3'
 tasks:
   build:       { cmds: [go build ./cmd/seeder/] }
   test:        { cmds: [go test ./...] }
+  vet:         { cmds: [go vet ./...] }
+  # Regenerate the committed seed/ from the Lovdata archives (server-free dump).
+  # Supports the same flags as ./seeder: --dataset, --limit, --skip-eu,
+  # --cache-dir, --ingest-only, --download-only.
+  seed:        { desc: "Regenerate seed/ from Lovdata archives (server-free dump)", cmds: ["go build -o seeder ./cmd/seeder/", "./seeder --dump-seed . --dataset both"] }
+  # Ingest directly into a Memory project (project resolved by --project-name,
+  # default \"Norwegian Law\"; override with --project <id>).
+  ingest:      { desc: "Ingest into a Memory project (project resolved by name)", cmds: ["go build -o seeder ./cmd/seeder/", "./seeder --server {{.SERVER}} --token {{.TOKEN}}"] }
   e2e:         { desc: "Run e2e (requires TEST_SERVER_URL + TEST_API_TOKEN)", cmds: [go test ./tests/e2e/ -v -count=1 -timeout 30m] }
   e2e:install: { desc: "Install blueprint then run all e2e", cmds: ["LAW_E2E_INSTALL=1 go test ./tests/e2e/ -v -count=1 -timeout 60m"] }
   e2e:compile: { desc: "Compile e2e tests only", cmds: [go test ./tests/e2e/ -run XXX_NONE -count=1] }
