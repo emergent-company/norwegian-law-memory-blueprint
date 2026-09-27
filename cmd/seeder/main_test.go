@@ -157,6 +157,26 @@ func TestRomanOnlyHeadingWithPeriodSuppressed(t *testing.T) {
 	}
 }
 
+// dotHeadingFixture uses a lone "." as the <h2>. It is not a Roman numeral, so
+// it must NOT be swallowed by the roman-only divider suppression.
+const dotHeadingFixture = `<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2024-01-01-2</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<section class="section" id="kapittel-1"><h2>.</h2><article class="legalArticle" id="kapittel-1-paragraf-1"><h3 class="legalArticleHeader"><span class="legalArticleValue">§ 1</span><span class="legalArticleTitle">Formål</span></h3><article class="legalP">Body.</article></article></section>
+</main></body></html>`
+
+func TestLonePeriodHeadingNotSuppressedAsRoman(t *testing.T) {
+	doc := parseDocument([]byte(dotHeadingFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if !strings.Contains(doc.Content, "Kapittel") {
+		t.Fatalf("lone '.' heading must not be suppressed as roman-only: %q", doc.Content)
+	}
+}
+
 func TestNormalizeDateValue(t *testing.T) {
 	cases := []struct {
 		name string

@@ -327,11 +327,13 @@ var (
 	directivePattern = regexp.MustCompile(`\b(\d{4}/[\d]+/(?:EF|EØF|EU|EEC|EC|EØF))\b`)
 	celexPattern     = regexp.MustCompile(`\b(3\d{7}[A-Z]\d+)\b`)
 	eurovocPattern   = regexp.MustCompile(`eurovoc\.europa\.eu/(\d+)`)
-	// romanOnlyPattern matches a bare Roman numeral (I, II, III, …) with an
-	// optional trailing period ("I."), after trimming surrounding whitespace.
-	// Lovdata uses such <h2> headings as section dividers, not chapter titles,
-	// so they must not be rendered as "## Kapittel <n>. <roman>".
-	romanOnlyPattern = regexp.MustCompile(`(?i)^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\.?$`)
+	// romanOnlyPattern matches a bare Roman numeral (I, II, III, …). Callers
+	// strip a trailing period ("I.") before matching. The pattern deliberately
+	// has no optional-period suffix: with an all-optional Roman expression that
+	// would also match "." alone. Lovdata uses such <h2> headings as section
+	// dividers, not chapter titles, so they must not be rendered as
+	// "## Kapittel <n>. <roman>".
+	romanOnlyPattern = regexp.MustCompile(`(?i)^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$`)
 )
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
@@ -582,9 +584,11 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 					break
 				}
 			}
-			// A bare Roman numeral heading ("I", "II", …) is a section divider,
+			// A bare Roman numeral heading ("I", "II", "I.") is a section divider,
 			// not a chapter title — suppress the bogus "## Kapittel <n>. <roman>".
-			isRomanOnly := chTitle != "" && romanOnlyPattern.MatchString(chTitle)
+			// Strip one trailing period first so a lone "." is not treated as Roman.
+			romanCore := strings.TrimSuffix(chTitle, ".")
+			isRomanOnly := romanCore != "" && romanOnlyPattern.MatchString(romanCore)
 			if !isRomanOnly && (chNum != "" || chTitle != "") {
 				heading := "## Kapittel " + chNum
 				if chTitle != "" {
