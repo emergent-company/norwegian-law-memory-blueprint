@@ -47,11 +47,11 @@ objectTypes:
         type: date
         description: Date of last amendment in force (YYYY-MM-DD)
       date_of_publication:
-        type: datetime
-        description: Date and time of official publication (RFC3339; source carries a clock time)
+        type: date
+        description: Date of official publication (RFC3339; source carries a clock time)
       date_of_publication_raw:
         type: string
-        description: Raw Lovdata publication text when it is not a parseable datetime
+        description: Raw Lovdata publication text when it is not a parseable date
       applies_to:
         type: string
         description: Territorial scope (e.g. hele landet)
@@ -103,11 +103,11 @@ objectTypes:
         type: date
         description: Date of last amendment in force (YYYY-MM-DD)
       date_of_publication:
-        type: datetime
-        description: Date and time of official publication (RFC3339; source carries a clock time)
+        type: date
+        description: Date of official publication (RFC3339; source carries a clock time)
       date_of_publication_raw:
         type: string
-        description: Raw Lovdata publication text when it is not a parseable datetime
+        description: Raw Lovdata publication text when it is not a parseable date
       applies_to:
         type: string
         description: Territorial scope

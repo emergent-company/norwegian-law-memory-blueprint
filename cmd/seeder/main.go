@@ -1658,9 +1658,10 @@ var seedDateProps = map[string][]string{
 	"EUDirective": {"date_of_document", "date_of_effect"},
 }
 
-// seedDateTimeProps lists the properties the schema types as `datetime`: the
-// Lovdata source carries a clock time (e.g. "2024-07-09 14:55"), so they are
-// normalized to RFC3339 rather than truncated to a bare date.
+// seedDateTimeProps lists the date-typed properties whose Lovdata source carries
+// a clock time (e.g. "2024-07-09 14:55"). They are normalized to RFC3339 rather
+// than truncated to a bare date; the server's `coerceToDate` accepts RFC3339
+// datetime values, so the time is preserved under a `type: date` field.
 var seedDateTimeProps = map[string][]string{
 	"Law":        {"date_of_publication"},
 	"Regulation": {"date_of_publication"},
