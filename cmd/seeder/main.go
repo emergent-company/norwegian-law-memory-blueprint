@@ -94,6 +94,7 @@ type config struct {
 	cleanup      bool
 	dataset      string // "laws", "regulations", "both"
 	dumpSeedDir  string // "" = upload mode; non-empty = server-free seed export
+	minCoverage  float64
 }
 
 func envOr(envKey, defaultVal string) string {
@@ -132,6 +133,7 @@ func parseConfig() config {
 	cleanup := flag.Bool("cleanup", false, "Delete the target project after the run")
 	dataset := flag.String("dataset", "both", `Dataset to import: "laws", "regulations", or "both"`)
 	dumpSeedDir := flag.String("dump-seed", envOr("SEED_DUMP_DIR", ""), "Write a server-free blueprint seed (JSONL) to this directory instead of uploading")
+	minCoverage := flag.Float64("min-coverage", 0, "Fail the dump when the mean source-token coverage is below this threshold (0 = report-only; a threshold near 0.99–1.0 is meaningful)")
 
 	flag.Parse()
 
@@ -159,6 +161,7 @@ func parseConfig() config {
 		cleanup:      *cleanup,
 		dataset:      *dataset,
 		dumpSeedDir:  *dumpSeedDir,
+		minCoverage:  *minCoverage,
 	}
 }
 
@@ -284,6 +287,7 @@ type LovDoc struct {
 	Paragraphs        []LovParagraph
 	EUBodyRefs        []string // eu/XXXXXXXX hrefs from body → CITES_EU_LAW edges
 	SourceSHA256      string   // SHA-256 of the raw source XML bytes (change-detection key)
+	Coverage          float64  // token-bag coverage of rendered Content vs source body (not emitted to JSONL)
 }
 
 type LovParagraph struct {
@@ -463,12 +467,6 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 	euRefSet := make(map[string]bool)
 	position := 0
 	currentChapterID := ""
-
-	skipClasses := map[string]bool{
-		"changesToParent": true,
-		"footnotes":       true,
-		"tocSubUl":        true,
-	}
 
 	var extractPlainText func(*html.Node) string
 	extractPlainText = func(n *html.Node) string {
@@ -888,6 +886,7 @@ func parseDocument(content []byte, docType string) *LovDoc {
 	if main := findMain(root); main != nil {
 		walkRefs(main)
 		doc.Content, doc.Paragraphs, doc.EUBodyRefs = extractBody(main)
+		doc.Coverage = tokenCoverage(main, docModelText(doc))
 	}
 	for ref := range refSet {
 		doc.References = append(doc.References, ref)
@@ -2629,13 +2628,28 @@ func removeJSONLFiles(dir string) error {
 // and <dir>/seed/relationships/<Type>.jsonl. It builds object records first so the
 // relationship pass can enforce the "both endpoints exist" (known-refs) rule and
 // the SrcKey != DstKey self-loop rule without any server round-trip.
-func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, archives []sourceArchive, dataset string) error {
+func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, archives []sourceArchive, dataset string, minCoverage float64) error {
 	// Deterministic emission: sort the EU inputs so the seed bytes are stable
 	// across regenerations regardless of fetch/cache ordering (the cached
 	// directives bypass fetchAllEUData's sort, so sort again at the single
 	// choke point for seed export).
 	sortDirectives(directives)
 	sortConcepts(concepts)
+
+	// Coverage summary + gate, evaluated BEFORE anything is written so a failing
+	// gate leaves no misleading partial output (no objects, no manifest).
+	//
+	// With the boundary-aware tokeniser and the title-inclusive model, coverage
+	// is now calibrated so well-captured documents sit at ~1.0 and a threshold
+	// near 0.99–1.0 is a meaningful regression signal (report-only by default).
+	cov := computeCoverage(docs)
+	log.Printf("  [coverage] docs=%d mean=%.4f min=%.4f below_0.99=%d below_0.95=%d", cov.Docs, cov.Mean, cov.Min, cov.DocsBelow099, cov.DocsBelow095)
+	for _, w := range worstCoverage(docs, 10) {
+		log.Printf("  [coverage]   worst: %s %.4f", w.RefID, w.Coverage)
+	}
+	if minCoverage > 0 && cov.Mean < minCoverage {
+		return fmt.Errorf("coverage gate: mean coverage %.4f is below --min-coverage %.4f (docs=%d); refusing to write seed", cov.Mean, minCoverage, cov.Docs)
+	}
 
 	objRecords := buildSeedObjectRecords(docs, directives, concepts)
 	objectKeys := make(map[string]bool, len(objRecords))
@@ -2701,7 +2715,7 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 	log.Printf("Seed export complete: %d objects, %d relationships -> %s", objectCount, relCount, filepath.Join(dir, "seed"))
 
 	// Build the change-detection manifest and diff against any prior one.
-	mf := buildManifest(docs, archives, dataset, objectCount, relCount, objByTypeCounts)
+	mf := buildManifest(docs, archives, dataset, objectCount, relCount, objByTypeCounts, cov)
 	manifestPath := filepath.Join(dir, "seed", "manifest.json")
 	if old, ok, err := loadManifest(manifestPath); err != nil {
 		log.Printf("  [manifest] cannot read existing manifest: %v", err)
@@ -2927,7 +2941,7 @@ func main() {
 	}
 
 	if dumpMode {
-		if err := dumpSeed(cfg.dumpSeedDir, allDocs, directives, concepts, sourceArchives, cfg.dataset); err != nil {
+		if err := dumpSeed(cfg.dumpSeedDir, allDocs, directives, concepts, sourceArchives, cfg.dataset, cfg.minCoverage); err != nil {
 			log.Fatalf("seed export: %v", err)
 		}
 		return
