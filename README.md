@@ -57,9 +57,13 @@ norwegian-law-memory-blueprint/
 ├── seed/
 │   ├── objects/                     # per-type JSONL objects
 │   └── relationships/               # per-type JSONL relationships
+├── internal/
+│   └── lovcite/                     # citation index + resolver + verifier (unit-tested)
 └── cmd/
-    └── seeder/
-        └── main.go                  # standalone Lovdata seeder + seed exporter
+    ├── seeder/
+    │   └── main.go                  # standalone Lovdata seeder + seed exporter
+    └── lovcite/
+        └── main.go                  # offline citation/quote verification CLI
 ```
 
 A blueprint is applied with the Memory CLI, which loads `schemas/`, `agents/`,
@@ -213,6 +217,111 @@ properties, so it sends each object's complete seed property set and passes
 through the live labels. It is likewise idempotent and skips gap-filling unless
 `--retype-and-fill` is also set. Env fallback: `SEED_RETYPE_VIA_UPSERT`.
 
+## Citation verification (`lovcite`)
+
+`cmd/lovcite` is a fully offline CLI that validates citations and quotes against
+the committed seed corpus. It never touches the network and produces
+deterministic output (map keys are always sorted before printing).
+
+```bash
+go run ./cmd/lovcite audit --seed seed
+go run ./cmd/lovcite validate-ref --seed seed 'lov/2005-06-17-62#§1-1'
+go run ./cmd/lovcite verify-quote --seed seed --ref 'lov/2005-06-17-62#§1-1' --quote 'å sikre et arbeidsmiljø'
+```
+
+### `audit` — scan the corpus for unresolvable citations
+
+```bash
+lovcite audit --seed <dir> [--json] [--max-unresolved N] [--samples K]
+```
+
+Loads `objects/` (+ `relationships/` for endpoint checks) and scans the
+`content` of every `Law` and `Regulation` object for two kinds of citation:
+
+- **Explicit act refs** — `lov/…`, `forskrift/…` — resolved by checking that the
+  corresponding `Law`/`Regulation` object key exists.
+- **Section refs** — `§ N` / `§ N-M` — resolved within the *owning document's*
+  paragraph index (`law_ref_id → paragraph_num → section_id`).
+
+It prints totals per kind plus the overall resolution rate and up to `K` sample
+unresolved references with `file:key` context. `--json` emits the same summary
+as JSON. By default `--max-unresolved` is the maximum int value (report-only);
+pass a number to exit non-zero when unresolved exceeds it:
+
+```bash
+# fail only if more than 1000 citations are unresolvable
+lovcite audit --seed seed --max-unresolved 1000
+```
+
+### `validate-ref` — resolve a single reference
+
+```bash
+lovcite validate-ref --seed <dir> <ref>
+```
+
+Accepts an act reference, a section reference, or a section-id reference and
+prints the resolved provision(s), exiting 1 when unresolved:
+
+```bash
+lovcite validate-ref --seed seed 'lov/2005-06-17-62'                      # whole act (all provisions)
+lovcite validate-ref --seed seed 'lov/2005-06-17-62#§1-1'                 # by printed number
+lovcite validate-ref --seed seed 'lov/2005-06-17-62#kapittel-1-paragraf-1' # by section id
+```
+
+### `verify-quote` — assert a quote is in a provision
+
+```bash
+lovcite verify-quote --seed <dir> --ref <ref> --quote "<text>"
+```
+
+Resolves `<ref>` to a provision and asserts `<quote>` is a substring after
+whitespace normalisation (runs of whitespace collapse to a single space; the
+match is case-sensitive). Exits 0 with the matched location on success, 1 with
+the closest provision and a context excerpt on mismatch.
+
+### Resolution rules and limitations
+
+- **Scope.** Only `Law` and `Regulation` `content` is scanned. `LegalParagraph`
+  content is not scanned separately — `Law`/`Regulation` content already embeds
+  every paragraph body, so scanning both would double-count. `EUDirective`
+  content uses article numbering rather than `§` and is not scanned.
+- **Headings are not citations.** Markdown heading lines (`### § 1-1 — …`) are
+  structural section titles and are skipped.
+- **`§§` (plural) is out of scope.** `§§ 40, 41` and `§§ 6-12` denote ranges or
+  lists, which the resolver does not expand; only single `§ N` / `§ N-M` refs are
+  checked.
+- **Number forms.** Both flat (`§ 22`) and chapterised (`§ 1-3`) numbering are
+  supported; the range separator may be `-`, `–` or `—`. A letter suffix is only
+  recognised when directly attached (`§ 1-3a`). A space-separated letter
+  (`§ 1-1 a`) is treated as prose — a trailing single letter is ambiguous in
+  Norwegian (`i` = "in", `å` = "to") — so such a ref resolves to the base
+  section `§ 1-1` if present.
+- **Cross-act attribution (conservative rule).** A `§` ref resolves against the
+  owning document, *unless* an explicit act ref (`lov/…` / `forskrift/…`) appears
+  on the same line before it — with no other `§` in between and within 80 bytes —
+  in which case it resolves against that act. Human-readable act names
+  (`tvisteloven § 6-10`, `Grundloven § 75`, `lov om hittegods … §§ 6-12`) are
+  **not** mapped to acts (the corpus has no name→key index), so they fall back to
+  the owning document and typically come out unresolved.
+- **Endpoint checks.** A `#section-id` fragment is confirmed against the
+  `HAS_PARAGRAPH` relationships, not only the object index.
+
+### Known corpus gaps (honest baseline)
+
+Running `go run ./cmd/lovcite audit --seed seed` against the committed seed
+reports a **~36%** section-ref resolution rate. This is expected and is not a
+parser defect. The dominant causes of unresolved refs, in order:
+
+1. **Documents without parsed `§` numbering.** ~4,183 of 5,661 laws/regulations
+   have *zero* paragraphs with a non-empty `paragraph_num` (historic acts such as
+   `lov/1687-04-15` and many regulations use `ledd`/chapter numbering the seeder
+   did not convert to `§ N`). Their inline `§` refs cannot be resolved.
+2. **References to non-ingested sections.** Some laws reference sections of
+   themselves that are absent from the seed (e.g. `lov/1999-03-26-14`
+   (skatteloven) body text cites `§ 14-41`, but chapter 14 was not ingested).
+3. **Cross-act references by name** (see the conservative rule above).
+
+Explicit act refs are rare in the corpus (four occurrences, all resolving).
 
 ## Prerequisites
 
