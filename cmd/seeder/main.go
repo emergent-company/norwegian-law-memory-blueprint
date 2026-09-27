@@ -334,6 +334,18 @@ var (
 	// dividers, not chapter titles, so they must not be rendered as
 	// "## Kapittel <n>. <roman>".
 	romanOnlyPattern = regexp.MustCompile(`(?i)^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$`)
+	// delPattern matches a "Del" (part) heading, including the spelled-out
+	// ordinal forms ("Første del", "Andre del", …) and the definite form
+	// ("delen", "Første delen"). Lovdata labels parts as chapters in <section>
+	// wrappers, but the title is a part, not a chapter, so it must be kept as
+	// authored rather than prefixed with "Kapittel".
+	//
+	// The boundary is a negated letter class rather than \b: Go's \b is
+	// ASCII-only, so it would treat "å" as a non-word char and wrongly match
+	// non-part titles like "Delårsregnskap". Requiring the following char to be
+	// a non-letter (or end-of-string) rejects "Delårsregnskap"/"Deling"/
+	// "Delegering"/"Deltakelse" while still matching "Del I."/"Første delen".
+	delPattern = regexp.MustCompile(`(?i)^(del(en)?|(første|andre|tredje|fjerde|femte|sjette|sjuende|syvende|åttende|niende|tiende|ellevte|tolvte)\s+del(en)?)([^a-zA-ZæøåÆØÅ]|$)`)
 )
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
@@ -572,6 +584,9 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 
 		switch {
 		case n.Data == "section":
+			// Capture/restore the current chapter id so nested <section> elements
+			// don't leak their inner id to siblings that follow after they close.
+			prevChapterID := currentChapterID
 			currentChapterID = aid
 			chNum := ""
 			if parts := strings.Split(aid, "-"); len(parts) >= 2 {
@@ -590,15 +605,28 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 			romanCore := strings.TrimSuffix(chTitle, ".")
 			isRomanOnly := romanCore != "" && romanOnlyPattern.MatchString(romanCore)
 			if !isRomanOnly && (chNum != "" || chTitle != "") {
-				heading := "## Kapittel " + chNum
-				if chTitle != "" {
-					heading += ". " + chTitle
+				lower := strings.ToLower(chTitle)
+				switch {
+				case chTitle != "" && strings.HasPrefix(lower, "kapittel"):
+					// Title already carries the "Kapittel" prefix — emit as-is to
+					// avoid "## Kapittel 1. Kapittel 1. …" duplication.
+					sb.WriteString("\n## " + chTitle + "\n\n")
+				case chTitle != "" && delPattern.MatchString(chTitle):
+					// "Del"/"Første del" headings are parts, not chapters — keep
+					// them as authored instead of mislabeling them as chapters.
+					sb.WriteString("\n## " + chTitle + "\n\n")
+				default:
+					heading := "## Kapittel " + chNum
+					if chTitle != "" {
+						heading += ". " + chTitle
+					}
+					sb.WriteString("\n" + heading + "\n\n")
 				}
-				sb.WriteString("\n" + heading + "\n\n")
 			}
 			for c := n.FirstChild; c != nil; c = c.NextSibling {
 				walk(c)
 			}
+			currentChapterID = prevChapterID
 
 		case n.Data == "article" && isBodyArticleClass(cls):
 			position++
@@ -1528,6 +1556,7 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 	for id := range allIDs {
 		ids = append(ids, id)
 	}
+	sort.Strings(ids)
 	if euLimit > 0 && len(ids) > euLimit {
 		ids = ids[:euLimit]
 	}
@@ -1558,6 +1587,7 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 		}(id)
 	}
 	wg.Wait()
+	sortDirectives(directives)
 
 	evIDs := make(map[string]bool)
 	for _, dir := range directives {
@@ -1569,6 +1599,7 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 	for id := range evIDs {
 		evList = append(evList, id)
 	}
+	sort.Strings(evList)
 	log.Printf("  Fetching %d EuroVoc concept labels via SPARQL ...", len(evList))
 
 	evLabels := make(map[string]string)
@@ -1592,8 +1623,32 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 	for id, label := range evLabels {
 		concepts = append(concepts, &EuroVocConcept{ID: id, LabelEN: label})
 	}
+	sortConcepts(concepts)
 	log.Printf("  Fetched %d/%d EuroVoc labels", len(concepts), len(evList))
 	return directives, concepts
+}
+
+// sortDirectives orders directives by DirectiveID (falling back to CelexID when
+// the DirectiveID is empty) so the EU seed is emitted deterministically.
+func sortDirectives(dirs []*EUDirective) {
+	sort.SliceStable(dirs, func(i, j int) bool {
+		ki := dirs[i].DirectiveID
+		if ki == "" {
+			ki = dirs[i].CelexID
+		}
+		kj := dirs[j].DirectiveID
+		if kj == "" {
+			kj = dirs[j].CelexID
+		}
+		return ki < kj
+	})
+}
+
+// sortConcepts orders concepts by ID so the EuroVoc seed is deterministic.
+func sortConcepts(concepts []*EuroVocConcept) {
+	sort.SliceStable(concepts, func(i, j int) bool {
+		return concepts[i].ID < concepts[j].ID
+	})
 }
 
 // ─── Seed records (shared between upload + dump) ──────────────────────────────
@@ -1704,6 +1759,45 @@ func parseDateValue(s string) (time.Time, bool) {
 	return time.Time{}, false
 }
 
+// yearFromLooseDate extracts a plausible year from a date-like string that may
+// be free text (e.g. "Inntektsåret 1998", "Kongen bestemmer, 2004-01-01,
+// 2005-01-01"). It first tries the strict s[:4] prefix, then scans for 4-digit
+// runs and returns the first one in 1000..2050. The range is deliberately not
+// limited to (19|20) — the corpus contains pre-1900 acts (e.g. 1814). Returns
+// ok=false when no plausible year is found.
+func yearFromLooseDate(s string) (int, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, false
+	}
+	if len(s) >= 4 {
+		if yr, err := strconv.Atoi(s[:4]); err == nil {
+			return yr, true
+		}
+	}
+	for i := 0; i+4 <= len(s); i++ {
+		run := s[i : i+4]
+		isDigits := true
+		for j := 0; j < 4; j++ {
+			if run[j] < '0' || run[j] > '9' {
+				isDigits = false
+				break
+			}
+		}
+		if !isDigits {
+			continue
+		}
+		yr, err := strconv.Atoi(run)
+		if err != nil {
+			continue
+		}
+		if yr >= 1000 && yr <= 2050 {
+			return yr, true
+		}
+	}
+	return 0, false
+}
+
 // normalizeDateValue parses a property value and returns the normalized
 // YYYY-MM-DD form, or ok=false if the value is empty, non-string, or not a
 // parseable date.
@@ -1744,6 +1838,10 @@ func normalizeDateProps(objType string, props map[string]any, normCounts map[str
 						(*rawMoved)++
 					}
 				}
+			} else if s, isStr := raw.(string); isStr && strings.TrimSpace(s) != "" {
+				// No raw companion is configured for this key, so a non-empty
+				// unparseable value would vanish with no trace — warn loudly.
+				log.Printf("  [date] dropping unparseable %s.%s=%q (no raw companion configured)", objType, key, s)
 			}
 		}
 	}
@@ -1817,11 +1915,9 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		}
 		if d.DateInForce != "" {
 			props["date_in_force"] = d.DateInForce
-			if len(d.DateInForce) >= 4 {
-				if yr, err := strconv.Atoi(d.DateInForce[:4]); err == nil {
-					props["year_in_force"] = yr
-					props["decade_in_force"] = fmt.Sprintf("%ds", (yr/10)*10)
-				}
+			if yr, ok := yearFromLooseDate(d.DateInForce); ok {
+				props["year_in_force"] = yr
+				props["decade_in_force"] = fmt.Sprintf("%ds", (yr/10)*10)
 			}
 		}
 		if d.LastChangeInForce != "" {
@@ -2497,6 +2593,13 @@ func removeJSONLFiles(dir string) error {
 // relationship pass can enforce the "both endpoints exist" (known-refs) rule and
 // the SrcKey != DstKey self-loop rule without any server round-trip.
 func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) error {
+	// Deterministic emission: sort the EU inputs so the seed bytes are stable
+	// across regenerations regardless of fetch/cache ordering (the cached
+	// directives bypass fetchAllEUData's sort, so sort again at the single
+	// choke point for seed export).
+	sortDirectives(directives)
+	sortConcepts(concepts)
+
 	objRecords := buildSeedObjectRecords(docs, directives, concepts)
 	objectKeys := make(map[string]bool, len(objRecords))
 	for _, r := range objRecords {
