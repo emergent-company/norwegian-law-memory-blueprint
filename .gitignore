@@ -4,10 +4,11 @@
 /seeder
 /cmd/seeder/seeder
 
-# State files
-*.jsonl
+# Seeder state files (the tracked blueprint seed data lives in seed/ and is NOT ignored)
 idmap.json
 state.json
+rels_done.txt
+rels_failed.jsonl
 
 # Temporary data cache
 /tmp/

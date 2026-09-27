@@ -1,6 +1,6 @@
 module github.com/emergent-company/norwegian-law-memory-blueprint
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/emergent-company/emergent.memory/apps/server/pkg/sdk v0.0.0

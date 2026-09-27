@@ -39,6 +39,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -48,6 +49,7 @@ import (
 
 	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk"
 	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk/graph"
+	"github.com/emergent-company/emergent.memory/apps/server/pkg/sdk/projects"
 	"golang.org/x/net/html"
 )
 
@@ -75,18 +77,23 @@ const (
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 type config struct {
-	serverURL  string
-	token      string
-	projectID  string
-	stateDir   string
-	cacheDir   string
-	limit      int
-	skipEU     bool
-	euLimit    int
-	workers    int
-	batchSz    int
-	ingestOnly bool
-	dataset    string // "laws", "regulations", "both"
+	serverURL    string
+	token        string
+	projectID    string
+	orgID        string
+	projectName  string
+	stateDir     string
+	cacheDir     string
+	limit        int
+	skipEU       bool
+	euLimit      int
+	workers      int
+	batchSz      int
+	ingestOnly   bool
+	downloadOnly bool
+	cleanup      bool
+	dataset      string // "laws", "regulations", "both"
+	dumpSeedDir  string // "" = upload mode; non-empty = server-free seed export
 }
 
 func envOr(envKey, defaultVal string) string {
@@ -110,7 +117,9 @@ func parseConfig() config {
 
 	serverURL := flag.String("server", envOr("MEMORY_SERVER", ""), "Memory server URL (required)")
 	token := flag.String("token", envOr("MEMORY_PROJECT_TOKEN", ""), "Project API token (required)")
-	projectID := flag.String("project", envOr("MEMORY_PROJECT_ID", ""), "Project ID (required)")
+	projectID := flag.String("project", envOr("MEMORY_PROJECT_ID", ""), "Project ID (optional; overrides name-based auto-resolve)")
+	orgID := flag.String("org-id", envOr("MEMORY_ORG_ID", ""), "Organisation ID for project creation (default: user's org)")
+	projectName := flag.String("project-name", envOr("NORWEGIAN_LAW_PROJECT_NAME", "Norwegian Law"), "Project name to find or create")
 	stateDir := flag.String("state-dir", envOr("MEMORY_STATE_DIR", defaultStateDir), "Checkpoint directory")
 	cacheDir := flag.String("cache-dir", envOr("LOVDATA_CACHE_DIR", defaultCacheDir), "Data cache directory")
 	limit := flag.Int("limit", envIntOr("SEED_LIMIT", 0), "Max documents per dataset (0 = no limit)")
@@ -119,7 +128,10 @@ func parseConfig() config {
 	workers := flag.Int("workers", 20, "Parallel upload workers")
 	batchSz := flag.Int("batch", 100, "Batch size for bulk API calls (max 100)")
 	ingestOnly := flag.Bool("ingest-only", false, "Skip download; use cached parsed JSON")
+	downloadOnly := flag.Bool("download-only", false, "Download and parse to cache, skip ingestion")
+	cleanup := flag.Bool("cleanup", false, "Delete the target project after the run")
 	dataset := flag.String("dataset", "both", `Dataset to import: "laws", "regulations", or "both"`)
+	dumpSeedDir := flag.String("dump-seed", envOr("SEED_DUMP_DIR", ""), "Write a server-free blueprint seed (JSONL) to this directory instead of uploading")
 
 	flag.Parse()
 
@@ -130,18 +142,23 @@ func parseConfig() config {
 	}
 
 	return config{
-		serverURL:  *serverURL,
-		token:      *token,
-		projectID:  *projectID,
-		stateDir:   *stateDir,
-		cacheDir:   *cacheDir,
-		limit:      *limit,
-		skipEU:     *skipEU,
-		euLimit:    *euLimit,
-		workers:    *workers,
-		batchSz:    sz,
-		ingestOnly: *ingestOnly,
-		dataset:    *dataset,
+		serverURL:    *serverURL,
+		token:        *token,
+		projectID:    *projectID,
+		orgID:        *orgID,
+		projectName:  *projectName,
+		stateDir:     *stateDir,
+		cacheDir:     *cacheDir,
+		limit:        *limit,
+		skipEU:       *skipEU,
+		euLimit:      *euLimit,
+		workers:      *workers,
+		batchSz:      sz,
+		ingestOnly:   *ingestOnly,
+		downloadOnly: *downloadOnly,
+		cleanup:      *cleanup,
+		dataset:      *dataset,
+		dumpSeedDir:  *dumpSeedDir,
 	}
 }
 
@@ -152,9 +169,6 @@ func (c *config) validate() error {
 	}
 	if c.token == "" {
 		missing = append(missing, "--token / MEMORY_PROJECT_TOKEN")
-	}
-	if c.projectID == "" {
-		missing = append(missing, "--project / MEMORY_PROJECT_ID")
 	}
 	if len(missing) > 0 {
 		return fmt.Errorf("missing required parameters: %s", strings.Join(missing, ", "))
@@ -313,6 +327,10 @@ var (
 	directivePattern = regexp.MustCompile(`\b(\d{4}/[\d]+/(?:EF|EØF|EU|EEC|EC|EØF))\b`)
 	celexPattern     = regexp.MustCompile(`\b(3\d{7}[A-Z]\d+)\b`)
 	eurovocPattern   = regexp.MustCompile(`eurovoc\.europa\.eu/(\d+)`)
+	// romanOnlyPattern matches a bare Roman numeral (I, II, III, …). Lovdata
+	// uses such <h2> headings as section dividers, not chapter titles, so they
+	// must not be rendered as "## Kapittel <n>. <roman>".
+	romanOnlyPattern = regexp.MustCompile(`(?i)^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$`)
 )
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
@@ -393,8 +411,37 @@ func stripAnchor(s string) string {
 
 func strPtr(s string) *string { return &s }
 
+// isBodyArticleClass reports whether an <article> element's class marks it as a
+// § (article) container, as opposed to a bare paragraph. Lovdata has two names
+// for the same thing depending on document vintage.
+func isBodyArticleClass(cls string) bool {
+	return cls == "legalArticle" || cls == "futureLegalArticle"
+}
+
+// isParagraphClass reports whether a node's class marks it as a body paragraph.
+func isParagraphClass(cls string) bool {
+	switch cls {
+	case "legalP", "numberedLegalP", "defaultP", "centeredP":
+		return true
+	}
+	return false
+}
+
 // ─── Body extraction ──────────────────────────────────────────────────────────
 
+// extractBody walks <main id="dokument"> and returns the full body Markdown, one
+// LegalParagraph chunk per § article, and any EU cross-reference codes.
+//
+// The Lovdata HTML class taxonomy follows the proven reference parser
+// https://github.com/sondreskarsten/norwegian-laws
+// (lovdata-loader/src/lovdata_loader/parser.py, MIT): a § is an
+// <article class="legalArticle"> (or the newer "futureLegalArticle"), while its
+// body paragraphs are <article>/<p> elements carrying class "legalP",
+// "numberedLegalP", "defaultP" or "centeredP" (plus the legacy
+// "legalPfortsettelse"/"leddfortsettelse" continuation variants). Short
+// delegation regulations skip the legalArticle wrapper entirely and place
+// <article class="legalP"> directly under <section>; those are captured by the
+// top-level legalP fallback below.
 func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagraph, euBodyRefs []string) {
 	var sb strings.Builder
 	euRefSet := make(map[string]bool)
@@ -478,7 +525,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 			switch cls {
 			case "legalArticleHeader":
 				continue
-			case "numberedLegalP", "legalP", "legalPfortsettelse", "leddfortsettelse":
+			case "numberedLegalP", "legalP", "defaultP", "centeredP", "legalPfortsettelse", "leddfortsettelse":
 				text := strings.TrimSpace(extractPlainText(c))
 				if text != "" {
 					asb.WriteString(text + "\n\n")
@@ -534,7 +581,10 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 					break
 				}
 			}
-			if chNum != "" || chTitle != "" {
+			// A bare Roman numeral heading ("I", "II", …) is a section divider,
+			// not a chapter title — suppress the bogus "## Kapittel <n>. <roman>".
+			isRomanOnly := chTitle != "" && romanOnlyPattern.MatchString(chTitle)
+			if !isRomanOnly && (chNum != "" || chTitle != "") {
 				heading := "## Kapittel " + chNum
 				if chTitle != "" {
 					heading += ". " + chTitle
@@ -545,7 +595,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 				walk(c)
 			}
 
-		case n.Data == "article" && cls == "legalArticle":
+		case n.Data == "article" && isBodyArticleClass(cls):
 			position++
 			sectionID := aid
 
@@ -591,6 +641,28 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 				})
 			}
 
+		case n.Data == "article" && isParagraphClass(cls):
+			// Top-level paragraph fallback: short/delegation regulations put body
+			// text in <article class="legalP"> directly under <section>, with no
+			// enclosing legalArticle. Capture the text into the body and, where an
+			// id exists, emit it as a LegalParagraph chunk keyed by that id.
+			position++
+			text := strings.TrimSpace(extractPlainText(n))
+			if text != "" {
+				sb.WriteString(text + "\n\n")
+			}
+			collectEURefs(n)
+			if text != "" && aid != "" {
+				paragraphs = append(paragraphs, LovParagraph{
+					SectionID:    aid,
+					ChapterID:    currentChapterID,
+					ParagraphNum: "",
+					Title:        "",
+					Content:      text,
+					Position:     position,
+				})
+			}
+
 		case n.Data == "ol":
 			sb.WriteString(renderOL(n))
 
@@ -613,6 +685,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 	for code := range euRefSet {
 		euBodyRefs = append(euBodyRefs, code)
 	}
+	sort.Strings(euBodyRefs)
 	return fullMarkdown, paragraphs, euBodyRefs
 }
 
@@ -762,6 +835,7 @@ func parseDocument(content []byte, docType string) *LovDoc {
 	for ref := range refSet {
 		doc.References = append(doc.References, ref)
 	}
+	sort.Strings(doc.References)
 
 	if doc.RefID == "" {
 		return nil
@@ -1517,10 +1591,193 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 	return directives, concepts
 }
 
+// ─── Seed records (shared between upload + dump) ──────────────────────────────
+
+type seedObjectRecord struct {
+	Type       string
+	Key        string
+	Properties map[string]any
+}
+
+type seedRelationshipRecord struct {
+	Type       string
+	SrcKey     string
+	DstKey     string
+	Properties map[string]any
+}
+
+// dedupeSeedObjects drops records that reuse an already-emitted object key.
+// Lovdata publishes some acts in several language versions sharing one RefID
+// (and thus one key), which would otherwise produce duplicate objects and a
+// hard 409 conflict on install. First occurrence wins.
+func dedupeSeedObjects(in []seedObjectRecord) []seedObjectRecord {
+	seen := make(map[string]bool, len(in))
+	out := make([]seedObjectRecord, 0, len(in))
+	for _, r := range in {
+		if seen[r.Key] {
+			continue
+		}
+		seen[r.Key] = true
+		out = append(out, r)
+	}
+	return out
+}
+
+// dedupeSeedRelationships drops duplicate (type, srcKey, dstKey) edges, which
+// arise from the same language-variant duplication fixed in dedupeSeedObjects.
+func dedupeSeedRelationships(in []seedRelationshipRecord) []seedRelationshipRecord {
+	seen := make(map[string]bool, len(in))
+	out := make([]seedRelationshipRecord, 0, len(in))
+	for _, r := range in {
+		k := r.Type + "\x00" + r.SrcKey + "\x00" + r.DstKey
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		out = append(out, r)
+	}
+	return out
+}
+
+func sortedMapKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// seedDateProps lists the object types whose properties are date-typed in the
+// blueprint schema pack, and the property names that must be emitted as valid
+// YYYY-MM-DD dates (never an empty/invalid string, which the server rejects
+// with a 400 for the whole object).
+var seedDateProps = map[string][]string{
+	"Law":         {"date_in_force", "last_change_in_force"},
+	"Regulation":  {"date_in_force", "last_change_in_force"},
+	"EUDirective": {"date_of_document", "date_of_effect"},
+}
+
+// seedDateTimeProps lists the date-typed properties whose Lovdata source carries
+// a clock time (e.g. "2024-07-09 14:55"). They are normalized to RFC3339 rather
+// than truncated to a bare date; the server's `coerceToDate` accepts RFC3339
+// datetime values, so the time is preserved under a `type: date` field.
+var seedDateTimeProps = map[string][]string{
+	"Law":        {"date_of_publication"},
+	"Regulation": {"date_of_publication"},
+}
+
+// seedDateRawProps maps a date/datetime property to the companion raw-text field
+// where an unparseable non-empty value is preserved instead of being dropped.
+var seedDateRawProps = map[string]string{
+	"date_in_force":       "date_in_force_raw",
+	"date_of_publication": "date_of_publication_raw",
+}
+
+// parseDateValue parses s with every accepted date/datetime layout and applies
+// the "year > 2050" typo guard (values like "2051-01-01" are treated as
+// deferred/typo, per the reference parser). It returns the parsed time, or
+// ok=false if s is empty, malformed, or carries an implausible year.
+func parseDateValue(s string) (time.Time, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return time.Time{}, false
+	}
+	formats := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02",
+		"2006-01-02 15:04",
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04:05",
+		"01/02/2006",
+		"02-01-2006",
+		"02.01.2006",
+		"02.01.2006 15:04",
+	}
+	for _, f := range formats {
+		if t, err := time.Parse(f, s); err == nil {
+			if t.Year() > 2050 {
+				return time.Time{}, false
+			}
+			return t, true
+		}
+	}
+	return time.Time{}, false
+}
+
+// normalizeDateValue parses a property value and returns the normalized
+// YYYY-MM-DD form, or ok=false if the value is empty, non-string, or not a
+// parseable date.
+func normalizeDateValue(v any) (string, bool) {
+	s, ok := v.(string)
+	if !ok {
+		return "", false
+	}
+	t, ok := parseDateValue(s)
+	if !ok {
+		return "", false
+	}
+	return t.Format("2006-01-02"), true
+}
+
+// normalizeDateTimeValue parses a property value and returns the normalized
+// RFC3339 datetime form (preserving any clock time), or ok=false if the value
+// is empty, non-string, or not parseable.
+func normalizeDateTimeValue(v any) (string, bool) {
+	s, ok := v.(string)
+	if !ok {
+		return "", false
+	}
+	t, ok := parseDateValue(s)
+	if !ok {
+		return "", false
+	}
+	return t.Format(time.RFC3339), true
+}
+
+// normalizeDateProps normalizes the date- and datetime-typed properties of an
+// object record in place: parseable values are rewritten to their canonical form,
+// unparseable/empty ones are dropped, and an unparseable non-empty value is
+// preserved in its raw companion field (date_in_force_raw /
+// date_of_publication_raw) so the information is never silently lost.
+func normalizeDateProps(objType string, props map[string]any, normCounts map[string]int, rawMoved *int) {
+	normalizeFields := func(keys []string, normFn func(any) (string, bool)) {
+		for _, key := range keys {
+			raw, present := props[key]
+			if !present {
+				continue
+			}
+			if norm, ok := normFn(raw); ok {
+				props[key] = norm
+				normCounts[key]++
+				continue
+			}
+			delete(props, key)
+			if rawKey := seedDateRawProps[key]; rawKey != "" {
+				if s, isStr := raw.(string); isStr && strings.TrimSpace(s) != "" {
+					if _, exists := props[rawKey]; !exists {
+						props[rawKey] = s
+						(*rawMoved)++
+					}
+				}
+			}
+		}
+	}
+	normalizeFields(seedDateProps[objType], normalizeDateValue)
+	normalizeFields(seedDateTimeProps[objType], normalizeDateTimeValue)
+}
+
 // ─── Object ingestion (Phase 1) ───────────────────────────────────────────────
 
-func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, batchSz, nWorkers int) map[string]string {
-	var items []graph.CreateObjectRequest
+// buildSeedObjectRecords builds the full ordered list of objects as key/property
+// records, independent of any server. Both the upload path (ingestObjects) and
+// the dump path consume these records, so the two can never diverge.
+func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) []seedObjectRecord {
+	var records []seedObjectRecord
+
+	normCounts := make(map[string]int)
+	rawMoved := 0
 
 	ministries := make(map[string]bool)
 	legalAreas := make(map[string]bool)
@@ -1540,25 +1797,22 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 		}
 	}
 
-	for m := range ministries {
-		k := "ministry_" + m
-		items = append(items, graph.CreateObjectRequest{
-			Type: "Ministry", Key: strPtr(k),
+	for _, m := range sortedMapKeys(ministries) {
+		records = append(records, seedObjectRecord{
+			Type: "Ministry", Key: "ministry_" + m,
 			Properties: map[string]any{"name": m},
 		})
 	}
-	for a := range legalAreas {
-		k := "area_" + a
-		items = append(items, graph.CreateObjectRequest{
-			Type: "LegalArea", Key: strPtr(k),
+	for _, a := range sortedMapKeys(legalAreas) {
+		records = append(records, seedObjectRecord{
+			Type: "LegalArea", Key: "area_" + a,
 			Properties: map[string]any{"name": a},
 		})
 	}
-	for sa, parent := range legalSubAreas {
-		k := "subarea_" + sa
-		items = append(items, graph.CreateObjectRequest{
-			Type: "LegalArea", Key: strPtr(k),
-			Properties: map[string]any{"name": sa, "parent_area": parent},
+	for _, sa := range sortedMapKeys(legalSubAreas) {
+		records = append(records, seedObjectRecord{
+			Type: "LegalArea", Key: "subarea_" + sa,
+			Properties: map[string]any{"name": sa, "parent_area": legalSubAreas[sa]},
 		})
 	}
 
@@ -1603,8 +1857,9 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 		if d.Content != "" {
 			props["content"] = d.Content
 		}
-		items = append(items, graph.CreateObjectRequest{
-			Type: d.DocType, Key: strPtr(k), Properties: props,
+		normalizeDateProps(d.DocType, props, normCounts, &rawMoved)
+		records = append(records, seedObjectRecord{
+			Type: d.DocType, Key: k, Properties: props,
 		})
 
 		for _, p := range d.Paragraphs {
@@ -1615,6 +1870,11 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 			pName := p.ParagraphNum
 			if p.Title != "" {
 				pName += " " + p.Title
+			}
+			if strings.TrimSpace(pName) == "" {
+				// Top-level legalP chunks carry no § number/title; fall back to
+				// the section id so the object never has an empty name.
+				pName = p.SectionID
 			}
 			pProps := map[string]any{
 				"name":          pName,
@@ -1630,8 +1890,8 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 			if p.Title != "" {
 				pProps["title"] = p.Title
 			}
-			items = append(items, graph.CreateObjectRequest{
-				Type: "LegalParagraph", Key: strPtr(pKey), Properties: pProps,
+			records = append(records, seedObjectRecord{
+				Type: "LegalParagraph", Key: pKey, Properties: pProps,
 			})
 		}
 	}
@@ -1671,20 +1931,38 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 		if dir.Content != "" {
 			props["content"] = dir.Content
 		}
-		items = append(items, graph.CreateObjectRequest{
-			Type: "EUDirective", Key: strPtr(k), Properties: props,
+		normalizeDateProps("EUDirective", props, normCounts, &rawMoved)
+		records = append(records, seedObjectRecord{
+			Type: "EUDirective", Key: k, Properties: props,
 		})
 	}
 
 	for _, ev := range concepts {
-		k := "eurovoc_" + ev.ID
-		items = append(items, graph.CreateObjectRequest{
-			Type: "EuroVocConcept", Key: strPtr(k),
+		records = append(records, seedObjectRecord{
+			Type: "EuroVocConcept", Key: "eurovoc_" + ev.ID,
 			Properties: map[string]any{
 				"name":       ev.LabelEN,
 				"eurovoc_id": ev.ID,
 				"label_en":   ev.LabelEN,
 			},
+		})
+	}
+
+	normParts := make([]string, 0, len(normCounts))
+	for _, k := range sortedMapKeys(normCounts) {
+		normParts = append(normParts, fmt.Sprintf("%s=%d", k, normCounts[k]))
+	}
+	log.Printf("  Date normalization: normalized [%s], raw-preserved: %d", strings.Join(normParts, " "), rawMoved)
+
+	return dedupeSeedObjects(records)
+}
+
+func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, batchSz, nWorkers int) map[string]string {
+	records := buildSeedObjectRecords(docs, directives, concepts)
+	items := make([]graph.CreateObjectRequest, 0, len(records))
+	for _, r := range records {
+		items = append(items, graph.CreateObjectRequest{
+			Type: r.Type, Key: strPtr(r.Key), Properties: r.Properties,
 		})
 	}
 
@@ -1694,13 +1972,13 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 
 // ─── Relationship ingestion (Phase 2) ─────────────────────────────────────────
 
-func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, idMap map[string]string, batchSz, nWorkers int, stateDir string) (int64, int64) {
-	var items []graph.CreateRelationshipRequest
-
-	knownRefs := make(map[string]bool, len(docs))
-	for _, d := range docs {
-		knownRefs[d.RefID] = true
-	}
+// buildSeedRelationshipRecords builds the full ordered list of relationships as
+// key-based records, independent of any server. `objectKeys` is the set of keys
+// emitted by buildSeedObjectRecords; it plays the role of `knownRefs` for the
+// SEE_ALSO/REFERENCES filter (semantically identical, since those refs are
+// always document RefIDs) and lets the dump path verify endpoint existence.
+func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, objectKeys map[string]bool) []seedRelationshipRecord {
+	var records []seedRelationshipRecord
 
 	dirByID := make(map[string]*EUDirective, len(directives))
 	for _, dir := range directives {
@@ -1709,65 +1987,52 @@ func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDo
 	}
 
 	for _, d := range docs {
-		src, ok := idMap[d.RefID]
-		if !ok {
-			continue
-		}
-
 		if d.Ministry != "" {
-			if dst, ok2 := idMap["ministry_"+d.Ministry]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "ADMINISTERED_BY", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "ADMINISTERED_BY", SrcKey: d.RefID, DstKey: "ministry_" + d.Ministry,
+				Properties: map[string]any{},
+			})
 		}
 		for _, area := range d.AllLegalAreas {
-			if dst, ok2 := idMap["area_"+area]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "IN_LEGAL_AREA", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "IN_LEGAL_AREA", SrcKey: d.RefID, DstKey: "area_" + area,
+				Properties: map[string]any{},
+			})
 		}
 		for _, sub := range d.AllLegalSubAreas {
-			if dst, ok2 := idMap["subarea_"+sub]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "IN_LEGAL_AREA", SrcID: src, DstID: dst, Properties: map[string]any{"level": "sub"},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "IN_LEGAL_AREA", SrcKey: d.RefID, DstKey: "subarea_" + sub,
+				Properties: map[string]any{"level": "sub"},
+			})
 		}
 		for _, ref := range d.AmendsRefs {
-			if dst, ok2 := idMap[ref]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "AMENDS", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "AMENDS", SrcKey: d.RefID, DstKey: ref,
+				Properties: map[string]any{},
+			})
 		}
 		for _, ref := range d.SeeAlsoRefs {
-			if knownRefs[ref] {
-				if dst, ok2 := idMap[ref]; ok2 && dst != src {
-					items = append(items, graph.CreateRelationshipRequest{
-						Type: "SEE_ALSO", SrcID: src, DstID: dst, Properties: map[string]any{},
-					})
-				}
+			if objectKeys[ref] {
+				records = append(records, seedRelationshipRecord{
+					Type: "SEE_ALSO", SrcKey: d.RefID, DstKey: ref,
+					Properties: map[string]any{},
+				})
 			}
 		}
 		for _, ref := range d.References {
-			if knownRefs[ref] {
-				if dst, ok2 := idMap[ref]; ok2 && dst != src {
-					items = append(items, graph.CreateRelationshipRequest{
-						Type: "REFERENCES", SrcID: src, DstID: dst, Properties: map[string]any{},
-					})
-				}
+			if objectKeys[ref] {
+				records = append(records, seedRelationshipRecord{
+					Type: "REFERENCES", SrcKey: d.RefID, DstKey: ref,
+					Properties: map[string]any{},
+				})
 			}
 		}
 		for _, did := range d.EUDirectiveIDs {
 			if dir := dirByID[did]; dir != nil {
-				if dst, ok2 := idMap["eu_"+dir.CelexID]; ok2 && dst != src {
-					items = append(items, graph.CreateRelationshipRequest{
-						Type: "IMPLEMENTS_EEA", SrcID: src, DstID: dst,
-						Properties: map[string]any{"directive_id": did},
-					})
-				}
+				records = append(records, seedRelationshipRecord{
+					Type: "IMPLEMENTS_EEA", SrcKey: d.RefID, DstKey: "eu_" + dir.CelexID,
+					Properties: map[string]any{"directive_id": did},
+				})
 			}
 		}
 		for _, p := range d.Paragraphs {
@@ -1775,12 +2040,10 @@ func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDo
 				continue
 			}
 			pKey := d.RefID + "#" + p.SectionID
-			if dst, ok2 := idMap[pKey]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "HAS_PARAGRAPH", SrcID: src, DstID: dst,
-					Properties: map[string]any{"position": p.Position},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "HAS_PARAGRAPH", SrcKey: d.RefID, DstKey: pKey,
+				Properties: map[string]any{"position": p.Position},
+			})
 		}
 		seenEU := make(map[string]bool)
 		for _, euCode := range d.EUBodyRefs {
@@ -1789,27 +2052,20 @@ func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDo
 				continue
 			}
 			seenEU[euKey] = true
-			if dst, ok2 := idMap[euKey]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "CITES_EU_LAW", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "CITES_EU_LAW", SrcKey: d.RefID, DstKey: euKey,
+				Properties: map[string]any{},
+			})
 		}
 	}
 
 	// AMENDED_BY: separate pass using LastChangedByRef
 	for _, d := range docs {
-		src, ok := idMap[d.RefID]
-		if !ok {
-			continue
-		}
 		if d.LastChangedByRef != "" {
-			if dst, ok2 := idMap[d.LastChangedByRef]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "AMENDED_BY", SrcID: src, DstID: dst,
-					Properties: map[string]any{"effective_date": d.LastChangeInForce},
-				})
-			}
+			records = append(records, seedRelationshipRecord{
+				Type: "AMENDED_BY", SrcKey: d.RefID, DstKey: d.LastChangedByRef,
+				Properties: map[string]any{"effective_date": d.LastChangeInForce},
+			})
 		}
 	}
 
@@ -1821,48 +2077,63 @@ func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDo
 	for _, group := range docsByDocID {
 		for i := 0; i < len(group); i++ {
 			for j := i + 1; j < len(group); j++ {
-				s, ok1 := idMap[group[i].RefID]
-				dt, ok2 := idMap[group[j].RefID]
-				if ok1 && ok2 && s != dt {
-					items = append(items, graph.CreateRelationshipRequest{
-						Type: "HAS_LANGUAGE_VARIANT", SrcID: s, DstID: dt,
-						Properties: map[string]any{
-							"source_language": group[i].Language,
-							"target_language": group[j].Language,
-						},
-					})
-				}
+				records = append(records, seedRelationshipRecord{
+					Type: "HAS_LANGUAGE_VARIANT", SrcKey: group[i].RefID, DstKey: group[j].RefID,
+					Properties: map[string]any{
+						"source_language": group[i].Language,
+						"target_language": group[j].Language,
+					},
+				})
 			}
 		}
 	}
 
 	// EU chain relationships
 	for _, dir := range directives {
-		src, ok := idMap["eu_"+dir.CelexID]
+		srcKey := "eu_" + dir.CelexID
+		for _, cited := range dir.CitedCELEX {
+			records = append(records, seedRelationshipRecord{
+				Type: "EU_CITES", SrcKey: srcKey, DstKey: "eu_" + cited,
+				Properties: map[string]any{},
+			})
+		}
+		for _, mod := range dir.ModifiedByCELEX {
+			records = append(records, seedRelationshipRecord{
+				Type: "EU_MODIFIED_BY", SrcKey: srcKey, DstKey: "eu_" + mod,
+				Properties: map[string]any{},
+			})
+		}
+		for _, evID := range dir.EuroVocIDs {
+			records = append(records, seedRelationshipRecord{
+				Type: "HAS_EUROVOC_DESCRIPTOR", SrcKey: srcKey, DstKey: "eurovoc_" + evID,
+				Properties: map[string]any{},
+			})
+		}
+	}
+
+	return dedupeSeedRelationships(records)
+}
+
+func ingestRelationships(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, idMap map[string]string, batchSz, nWorkers int, stateDir string) (int64, int64) {
+	objectKeys := make(map[string]bool, len(idMap))
+	for k := range idMap {
+		objectKeys[k] = true
+	}
+	records := buildSeedRelationshipRecords(docs, directives, objectKeys)
+
+	var items []graph.CreateRelationshipRequest
+	for _, r := range records {
+		src, ok := idMap[r.SrcKey]
 		if !ok {
 			continue
 		}
-		for _, cited := range dir.CitedCELEX {
-			if dst, ok2 := idMap["eu_"+cited]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "EU_CITES", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
+		dst, ok2 := idMap[r.DstKey]
+		if !ok2 || dst == src {
+			continue
 		}
-		for _, mod := range dir.ModifiedByCELEX {
-			if dst, ok2 := idMap["eu_"+mod]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "EU_MODIFIED_BY", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
-		}
-		for _, evID := range dir.EuroVocIDs {
-			if dst, ok2 := idMap["eurovoc_"+evID]; ok2 && dst != src {
-				items = append(items, graph.CreateRelationshipRequest{
-					Type: "HAS_EUROVOC_DESCRIPTOR", SrcID: src, DstID: dst, Properties: map[string]any{},
-				})
-			}
-		}
+		items = append(items, graph.CreateRelationshipRequest{
+			Type: r.Type, SrcID: src, DstID: dst, Properties: r.Properties,
+		})
 	}
 
 	log.Printf("  Uploading %d relationships in batches of %d with %d workers ...", len(items), batchSz, nWorkers)
@@ -2085,34 +2356,305 @@ func bulkUploadRelationships(ctx context.Context, client *graph.Client, items []
 	return succeeded.Load() * int64(batchSz), failed.Load() * int64(batchSz)
 }
 
+// ─── Seed export (server-free JSONL) ──────────────────────────────────────────
+
+type seedObjectLine struct {
+	Type       string         `json:"type"`
+	Key        string         `json:"key"`
+	Properties map[string]any `json:"properties"`
+}
+
+type seedRelationshipLine struct {
+	Type       string         `json:"type"`
+	SrcKey     string         `json:"srcKey"`
+	DstKey     string         `json:"dstKey"`
+	Properties map[string]any `json:"properties,omitempty"`
+}
+
+// dumpSplitSize is the per-file byte threshold for seed JSONL splitting. It
+// matches the Memory CLI blueprint dumper's 50 MB split so files stay under
+// GitHub's 100 MB hard limit while the blueprint loader (which reads all
+// *.jsonl files, including *.001.jsonl, *.002.jsonl, …) reassembles them.
+var dumpSplitSize int64 = 50 * 1024 * 1024
+
+// splitJSONLWriter writes JSONL lines to a sequence of files, splitting at
+// dumpSplitSize bytes. Files are named <typeName>.jsonl for the first file, then
+// <typeName>.001.jsonl, <typeName>.002.jsonl, … once splitting occurs — the same
+// convention as the Memory CLI blueprint dumper.
+type splitJSONLWriter struct {
+	dir      string
+	typeName string
+	file     *os.File
+	buf      *bufio.Writer
+	written  int64
+	part     int // 0 = unsplit; 1+ = split sequence
+}
+
+func (w *splitJSONLWriter) fileName() string {
+	if w.part == 0 {
+		return filepath.Join(w.dir, w.typeName+".jsonl")
+	}
+	return filepath.Join(w.dir, fmt.Sprintf("%s.%03d.jsonl", w.typeName, w.part))
+}
+
+func (w *splitJSONLWriter) openNext() error {
+	if w.file != nil {
+		if err := w.buf.Flush(); err != nil {
+			return err
+		}
+		if err := w.file.Close(); err != nil {
+			return err
+		}
+	}
+	if w.part == 0 && w.file == nil {
+		// First file: keep the plain name.
+	} else if w.part == 0 {
+		// First split: rename the plain file to .001.jsonl, then continue at .002.
+		oldName := filepath.Join(w.dir, w.typeName+".jsonl")
+		w.part = 1
+		if err := os.Rename(oldName, w.fileName()); err != nil {
+			return fmt.Errorf("rename split file: %w", err)
+		}
+		w.part++
+	} else {
+		w.part++
+	}
+	w.written = 0
+
+	f, err := os.Create(w.fileName())
+	if err != nil {
+		return fmt.Errorf("create file %s: %w", w.fileName(), err)
+	}
+	w.file = f
+	w.buf = bufio.NewWriter(f)
+	return nil
+}
+
+func (w *splitJSONLWriter) writeLine(line []byte) error {
+	needed := int64(len(line)) + 1 // +1 for newline
+	if w.written > 0 && w.written+needed > dumpSplitSize {
+		if err := w.openNext(); err != nil {
+			return err
+		}
+	}
+	if _, err := w.buf.Write(line); err != nil {
+		return err
+	}
+	if err := w.buf.WriteByte('\n'); err != nil {
+		return err
+	}
+	w.written += needed
+	return nil
+}
+
+func (w *splitJSONLWriter) close() error {
+	if w.file == nil {
+		return nil
+	}
+	if err := w.buf.Flush(); err != nil {
+		return err
+	}
+	return w.file.Close()
+}
+
+func writeObjectJSONL(dir, typ string, recs []seedObjectRecord) error {
+	w := &splitJSONLWriter{dir: dir, typeName: typ}
+	if err := w.openNext(); err != nil {
+		return err
+	}
+	for _, r := range recs {
+		data, err := json.Marshal(seedObjectLine{Type: r.Type, Key: r.Key, Properties: r.Properties})
+		if err != nil {
+			w.close() //nolint:errcheck
+			return err
+		}
+		if err := w.writeLine(data); err != nil {
+			return err
+		}
+	}
+	return w.close()
+}
+
+func writeRelationshipJSONL(dir, typ string, recs []seedRelationshipRecord) error {
+	w := &splitJSONLWriter{dir: dir, typeName: typ}
+	if err := w.openNext(); err != nil {
+		return err
+	}
+	for _, r := range recs {
+		data, err := json.Marshal(seedRelationshipLine{Type: r.Type, SrcKey: r.SrcKey, DstKey: r.DstKey, Properties: r.Properties})
+		if err != nil {
+			w.close() //nolint:errcheck
+			return err
+		}
+		if err := w.writeLine(data); err != nil {
+			return err
+		}
+	}
+	return w.close()
+}
+
+// removeJSONLFiles deletes every non-directory *.jsonl entry in dir. Used to
+// clear stale seed files before a fresh export.
+func removeJSONLFiles(dir string) error {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".jsonl") {
+			if err := os.Remove(filepath.Join(dir, e.Name())); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// dumpSeed writes a portable blueprint seed (JSONL) to <dir>/seed/objects/<Type>.jsonl
+// and <dir>/seed/relationships/<Type>.jsonl. It builds object records first so the
+// relationship pass can enforce the "both endpoints exist" (known-refs) rule and
+// the SrcKey != DstKey self-loop rule without any server round-trip.
+func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) error {
+	objRecords := buildSeedObjectRecords(docs, directives, concepts)
+	objectKeys := make(map[string]bool, len(objRecords))
+	for _, r := range objRecords {
+		objectKeys[r.Key] = true
+	}
+	relRecords := buildSeedRelationshipRecords(docs, directives, objectKeys)
+
+	objByType := make(map[string][]seedObjectRecord)
+	for _, r := range objRecords {
+		objByType[r.Type] = append(objByType[r.Type], r)
+	}
+	relByType := make(map[string][]seedRelationshipRecord)
+	for _, r := range relRecords {
+		if !objectKeys[r.SrcKey] || !objectKeys[r.DstKey] {
+			continue
+		}
+		if r.SrcKey == r.DstKey {
+			continue
+		}
+		relByType[r.Type] = append(relByType[r.Type], r)
+	}
+
+	objDir := filepath.Join(dir, "seed", "objects")
+	relDir := filepath.Join(dir, "seed", "relationships")
+	if err := os.MkdirAll(objDir, 0755); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(relDir, 0755); err != nil {
+		return err
+	}
+
+	// Remove any stale JSONL files from previous exports. A later run may emit
+	// fewer records or split differently, so leftover files would otherwise be
+	// read by the blueprint loader as duplicate/outdated records.
+	if err := removeJSONLFiles(objDir); err != nil {
+		return err
+	}
+	if err := removeJSONLFiles(relDir); err != nil {
+		return err
+	}
+
+	objectCount := 0
+	for _, typ := range sortedMapKeys(objByType) {
+		recs := objByType[typ]
+		if err := writeObjectJSONL(objDir, typ, recs); err != nil {
+			return err
+		}
+		objectCount += len(recs)
+	}
+
+	relCount := 0
+	for _, typ := range sortedMapKeys(relByType) {
+		recs := relByType[typ]
+		if err := writeRelationshipJSONL(relDir, typ, recs); err != nil {
+			return err
+		}
+		relCount += len(recs)
+	}
+
+	log.Printf("Seed export complete: %d objects, %d relationships -> %s", objectCount, relCount, filepath.Join(dir, "seed"))
+	return nil
+}
+
+// ─── Project helpers ──────────────────────────────────────────────────────────
+
+// ensureProject finds a project by name within the organisation (or the user's
+// accessible projects when orgID is empty) and returns its ID; if none exists it
+// creates one. Mirrors the CLI's `lovdataEnsureProject`.
+func ensureProject(ctx context.Context, client *sdk.Client, orgID, name string) (string, error) {
+	list, err := client.Projects.List(ctx, &projects.ListOptions{OrgID: orgID})
+	if err != nil {
+		return "", fmt.Errorf("list projects: %w", err)
+	}
+	for _, p := range list {
+		if p.Name == name {
+			log.Printf("  Found existing project %q (ID: %s)", name, p.ID)
+			return p.ID, nil
+		}
+	}
+	proj, err := client.Projects.Create(ctx, &projects.CreateProjectRequest{
+		Name:  name,
+		OrgID: orgID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("create project %q: %w", name, err)
+	}
+	log.Printf("  Created project %q (ID: %s)", proj.Name, proj.ID)
+	return proj.ID, nil
+}
+
+// deleteProject deletes a project by ID (used by --cleanup).
+func deleteProject(ctx context.Context, client *sdk.Client, projectID string) error {
+	return client.Projects.Delete(ctx, projectID)
+}
+
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 func main() {
 	cfg := parseConfig()
-	if err := cfg.validate(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
-		flag.Usage()
-		os.Exit(1)
+
+	dumpMode := cfg.dumpSeedDir != ""
+
+	if !dumpMode {
+		if err := cfg.validate(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
+			flag.Usage()
+			os.Exit(1)
+		}
 	}
 
-	os.MkdirAll(cfg.stateDir, 0755) //nolint:errcheck
 	os.MkdirAll(cfg.cacheDir, 0755) //nolint:errcheck
 
-	client, err := sdk.New(sdk.Config{
-		ServerURL:  cfg.serverURL,
-		ProjectID:  cfg.projectID,
-		HTTPClient: &http.Client{Timeout: 5 * time.Minute},
-		Auth:       sdk.AuthConfig{Mode: "apikey", APIKey: cfg.token},
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	var client *sdk.Client
+	if !dumpMode {
+		os.MkdirAll(cfg.stateDir, 0755) //nolint:errcheck
 
-	log.Printf("Norwegian Law Seeder → %s (project: %s)", cfg.serverURL, cfg.projectID)
-	log.Printf("State directory: %s", cfg.stateDir)
-	log.Printf("Cache directory: %s", cfg.cacheDir)
-	if cfg.limit > 0 {
-		log.Printf("Document limit: %d per dataset", cfg.limit)
+		var err error
+		client, err = sdk.New(sdk.Config{
+			ServerURL:  cfg.serverURL,
+			ProjectID:  cfg.projectID,
+			OrgID:      cfg.orgID,
+			HTTPClient: &http.Client{Timeout: 5 * time.Minute},
+			Auth:       sdk.AuthConfig{Mode: "apikey", APIKey: cfg.token},
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("State directory: %s", cfg.stateDir)
+		log.Printf("Cache directory: %s", cfg.cacheDir)
+		if cfg.limit > 0 {
+			log.Printf("Document limit: %d per dataset", cfg.limit)
+		}
+	} else {
+		log.Printf("Norwegian Law Seeder → server-free seed export")
+		log.Printf("Output directory: %s", cfg.dumpSeedDir)
+		log.Printf("Cache directory: %s", cfg.cacheDir)
+		if cfg.limit > 0 {
+			log.Printf("Document limit: %d per dataset", cfg.limit)
+		}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2125,6 +2667,21 @@ func main() {
 		log.Printf("Received signal %s — shutting down gracefully (state preserved)", sig)
 		cancel()
 	}()
+
+	// Resolve the target project: --project overrides; otherwise find-or-create
+	// by name within the org. --download-only skips this entirely: it only
+	// downloads and caches, so no project exists (or is needed) for ingestion.
+	if !dumpMode && !cfg.downloadOnly {
+		if cfg.projectID == "" {
+			resolved, err := ensureProject(ctx, client, cfg.orgID, cfg.projectName)
+			if err != nil {
+				log.Fatalf("resolve project: %v", err)
+			}
+			cfg.projectID = resolved
+		}
+		client.SetContext(cfg.orgID, cfg.projectID)
+		log.Printf("Norwegian Law Seeder → %s (project: %s)", cfg.serverURL, cfg.projectID)
+	}
 
 	var allDocs []LovDoc
 	var directives []*EUDirective
@@ -2205,10 +2762,22 @@ func main() {
 		if bConc, err := json.MarshalIndent(concepts, "", "  "); err == nil {
 			os.WriteFile(cachePathConcepts, bConc, 0644) //nolint:errcheck
 		}
+
+		if cfg.downloadOnly {
+			log.Println("Data downloaded and cached successfully. Exiting (--download-only).")
+			return
+		}
 	}
 
 	if cfg.limit > 0 && len(allDocs) > cfg.limit*2 {
 		allDocs = allDocs[:cfg.limit*2]
+	}
+
+	if dumpMode {
+		if err := dumpSeed(cfg.dumpSeedDir, allDocs, directives, concepts); err != nil {
+			log.Fatalf("seed export: %v", err)
+		}
+		return
 	}
 
 	state := loadState(cfg.stateDir)
@@ -2260,4 +2829,11 @@ func main() {
 	state.Phase = phaseDone
 	saveState(cfg.stateDir, state)
 	log.Println("Done.")
+
+	if cfg.cleanup {
+		log.Printf("Cleaning up project %s ...", cfg.projectID)
+		if err := deleteProject(ctx, client, cfg.projectID); err != nil {
+			log.Printf("WARN: cleanup failed: %v", err)
+		}
+	}
 }
