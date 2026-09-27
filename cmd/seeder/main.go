@@ -261,33 +261,34 @@ func appendRelFailed(dir string, items []graph.CreateRelationshipRequest) {
 // ─── Data types ───────────────────────────────────────────────────────────────
 
 type LovDoc struct {
-	RefID             string
-	DocID             string
-	LegacyID          string
-	Title             string
-	ShortTitle        string
-	Language          string
-	Ministry          string
-	LegalArea         string
-	LegalSubArea      string
-	AllLegalAreas     []string
-	AllLegalSubAreas  []string
-	DateInForce       string
-	LastChangeInForce string
-	DateOfPublication string
-	AppliesTo         string
-	LastChangedByRef  string
-	AmendsRefs        []string
-	SeeAlsoRefs       []string
-	EEAReferences     string
-	EUDirectiveIDs    []string
-	DocType           string // "Law" | "Regulation"
-	References        []string
-	Content           string // Full Markdown of law body
-	Paragraphs        []LovParagraph
-	EUBodyRefs        []string // eu/XXXXXXXX hrefs from body → CITES_EU_LAW edges
-	SourceSHA256      string   // SHA-256 of the raw source XML bytes (change-detection key)
-	Coverage          float64  // token-bag coverage of rendered Content vs source body (not emitted to JSONL)
+	RefID              string
+	DocID              string
+	LegacyID           string
+	Title              string
+	ShortTitle         string
+	Language           string
+	Ministry           string
+	LegalArea          string
+	LegalSubArea       string
+	AllLegalAreas      []string
+	AllLegalSubAreas   []string
+	DateInForce        string
+	LastChangeInForce  string
+	DateOfPublication  string
+	AppliesTo          string
+	LastChangedByRef   string
+	AmendsRefs         []string
+	SeeAlsoRefs        []string
+	EEAReferences      string
+	EUDirectiveIDs     []string
+	DocType            string // "Law" | "Regulation"
+	References         []string
+	Content            string // Full Markdown of law body
+	Paragraphs         []LovParagraph
+	EUBodyRefs         []string // eu/XXXXXXXX hrefs from body → CITES_EU_LAW edges
+	SourceSHA256       string   // SHA-256 of the raw source XML bytes (change-detection key)
+	Coverage           float64  // token-bag coverage of rendered Content vs source body (not emitted to JSONL)
+	ContentUnavailable bool     // true when Lovdata served an error placeholder instead of the body
 }
 
 type LovParagraph struct {
@@ -744,6 +745,38 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 
 // ─── Document parser ──────────────────────────────────────────────────────────
 
+// contentUnavailableMarker is the literal text Lovdata serves when it cannot
+// display a document body.
+const contentUnavailableMarker = "klarer dessverre ikke vise hele dokumentet"
+
+// isContentUnavailable reports whether the parsed document is a Lovdata error
+// placeholder rather than a real body. Primary signal: an element with class
+// "errorMessage". Defensive fallback: the literal placeholder message text
+// (case-insensitive). It deliberately does NOT treat "empty body" as a signal —
+// several legitimate short acts/regulations have no legalArticle/legalP and must
+// not be flagged.
+func isContentUnavailable(root *html.Node) bool {
+	found := false
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if found {
+			return
+		}
+		if n.Type == html.ElementNode && attr(n, "class") == "errorMessage" {
+			found = true
+			return
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(root)
+	if found {
+		return true
+	}
+	return strings.Contains(strings.ToLower(nodeText(root)), contentUnavailableMarker)
+}
+
 func parseDocument(content []byte, docType string) *LovDoc {
 	// Hash the raw source bytes as read (the tar member XML), not any derived or
 	// rendered form, so re-exports are change-detected against the actual source.
@@ -761,6 +794,7 @@ func parseDocument(content []byte, docType string) *LovDoc {
 	if err != nil {
 		return nil
 	}
+	doc.ContentUnavailable = isContentUnavailable(root)
 
 	var currentDtClass string
 	var walkMeta func(*html.Node)
@@ -1970,6 +2004,10 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		}
 		if d.Content != "" {
 			props["content"] = d.Content
+		}
+		if d.ContentUnavailable {
+			props["content_unavailable"] = true
+			log.Printf("  [seeder] WARN: content unavailable for %s (Lovdata error placeholder)", d.RefID)
 		}
 		normalizeDateProps(d.DocType, props, normCounts, &rawMoved)
 		records = append(records, seedObjectRecord{

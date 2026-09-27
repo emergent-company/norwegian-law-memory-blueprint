@@ -91,8 +91,8 @@ func TestManifestProvenanceAndCoverage(t *testing.T) {
 	cov := computeCoverage(docs)
 	m := buildManifest(docs, nil, "laws", 1, 0, nil, cov)
 
-	if m.ManifestVersion != 3 {
-		t.Fatalf("ManifestVersion = %d; want 3", m.ManifestVersion)
+	if m.ManifestVersion != 4 {
+		t.Fatalf("ManifestVersion = %d; want 4", m.ManifestVersion)
 	}
 	if m.Source != "Lovdata" || m.License != "NLOD-2.0" || m.LicenseURL != "https://data.norge.no/nlod/en/2.0" {
 		t.Fatalf("provenance fields wrong: %+v", m)
@@ -105,5 +105,8 @@ func TestManifestProvenanceAndCoverage(t *testing.T) {
 	}
 	if m.Coverage.Docs != 1 || m.Coverage.Mean != 0.99 || m.Coverage.Min != 0.99 || m.Coverage.DocsBelow099 != 0 || m.Coverage.DocsBelow095 != 0 {
 		t.Fatalf("coverage block wrong: %+v", m.Coverage)
+	}
+	if m.Quality.ContentUnavailable != 0 || len(m.Quality.ContentUnavailableRefs) != 0 {
+		t.Fatalf("quality block wrong for clean corpus: %+v", m.Quality)
 	}
 }
