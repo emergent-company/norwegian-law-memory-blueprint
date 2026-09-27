@@ -234,17 +234,18 @@ func dateTypeList() []string {
 	return keys
 }
 
-// isDateValue reports whether v is a valid YYYY-MM-DD date string.
+// isDateValue reports whether v is a valid YYYY-MM-DD date or RFC3339 timestamp.
 func isDateValue(v any) bool {
 	s, ok := v.(string)
 	if !ok {
 		return false
 	}
 	s = strings.TrimSpace(s)
-	if len(s) != 10 || s[4] != '-' || s[7] != '-' {
-		return false
+	if len(s) == 10 && s[4] == '-' && s[7] == '-' {
+		_, err := time.Parse("2006-01-02", s)
+		return err == nil
 	}
-	_, err := time.Parse("2006-01-02", s)
+	_, err := time.Parse(time.RFC3339, s)
 	return err == nil
 }
 

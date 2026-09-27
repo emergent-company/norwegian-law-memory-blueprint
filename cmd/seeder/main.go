@@ -2493,6 +2493,23 @@ func writeRelationshipJSONL(dir, typ string, recs []seedRelationshipRecord) erro
 	return w.close()
 }
 
+// removeJSONLFiles deletes every non-directory *.jsonl entry in dir. Used to
+// clear stale seed files before a fresh export.
+func removeJSONLFiles(dir string) error {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".jsonl") {
+			if err := os.Remove(filepath.Join(dir, e.Name())); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // dumpSeed writes a portable blueprint seed (JSONL) to <dir>/seed/objects/<Type>.jsonl
 // and <dir>/seed/relationships/<Type>.jsonl. It builds object records first so the
 // relationship pass can enforce the "both endpoints exist" (known-refs) rule and
@@ -2526,6 +2543,16 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 		return err
 	}
 	if err := os.MkdirAll(relDir, 0755); err != nil {
+		return err
+	}
+
+	// Remove any stale JSONL files from previous exports. A later run may emit
+	// fewer records or split differently, so leftover files would otherwise be
+	// read by the blueprint loader as duplicate/outdated records.
+	if err := removeJSONLFiles(objDir); err != nil {
+		return err
+	}
+	if err := removeJSONLFiles(relDir); err != nil {
 		return err
 	}
 
@@ -2642,8 +2669,9 @@ func main() {
 	}()
 
 	// Resolve the target project: --project overrides; otherwise find-or-create
-	// by name within the org.
-	if !dumpMode {
+	// by name within the org. --download-only skips this entirely: it only
+	// downloads and caches, so no project exists (or is needed) for ingestion.
+	if !dumpMode && !cfg.downloadOnly {
 		if cfg.projectID == "" {
 			resolved, err := ensureProject(ctx, client, cfg.orgID, cfg.projectName)
 			if err != nil {

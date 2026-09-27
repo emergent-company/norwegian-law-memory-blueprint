@@ -1,20 +1,20 @@
 # Deploy runbook — Norwegian Law Assistant
 
-Target: **dev instance** — account `m+test@kucharz.net`, org "Maciej Kucharz's Org".
+Target: **dev instance** — account `<dev-account-email>`, org `<dev-org>`.
 Coordinates in §5. **Not yet deployed.**
 
 ## 0. Preconditions
 
 - A reachable Memory server and a project under the target account.
 - `memory` CLI logged in / configured for that server, or `--server` passed explicitly.
-- Enough time + budget: applying the seed creates ~101k objects and ~122k
+- Enough time + budget: applying the seed creates ~144k objects and ~165k
   relationships and may trigger embedding cost on the target instance.
 
 ## 1. Source
 
-Local, prepared: `/root/norwegian-law-memory-blueprint`, branch `feat/agent-and-seed`
-(commit `0d31d9c`). Not pushed yet — can be installed from disk as-is, or pushed
-and installed from the GitHub URL.
+Local, prepared: `/root/norwegian-law-memory-blueprint`, branch
+`fix/parser-and-migrate-lovdata` (the PR branch). Not pushed yet — can be
+installed from disk as-is, or pushed and installed from the GitHub URL.
 
 ## 2. Validate (offline, no API calls)
 
@@ -24,7 +24,7 @@ memory blueprints inspect  ./norwegian-law-memory-blueprint   # preview contents
 ```
 
 Expected: 1 pack, 7 object types, 13 relationship types, 1 agent,
-101,207 seed objects, 122,260 seed relationships.
+144,237 seed objects, 165,287 seed relationships.
 
 ## 3. Apply
 
@@ -35,8 +35,8 @@ memory blueprints install ./norwegian-law-memory-blueprint \
   --server  <server-url>
 
 # Concrete dev target:
-#   --server http://emergent-dev:3002
-#   --project f131d865-5d9c-43ae-834f-bcb749c3359d   # "test" project
+#   --server <dev-server-url>
+#   --project <dev-project-id>   # e.g. "test" project
 ```
 
 Re-runs are idempotent by object `key`; existing keys are skipped unless
@@ -67,22 +67,22 @@ If the instance should not take the whole corpus in one shot:
   `norwegian-law` with 7 object types / 13 relationship types.
 - Agent: `memory agents list --project <id> --server <url>` shows
   `norwegian-law-assistant`.
-- Graph: query an object, e.g. `Law` key `lov/2005-06-17-90` (arbeidsmiljøloven),
+- Graph: query an object, e.g. `Law` key `lov/2005-06-17-62` (arbeidsmiljøloven),
   confirm its `HAS_PARAGRAPH` edges resolve.
 - Functional: ask the agent a cited question, e.g. "Hva sier arbeidsmiljøloven om
   oppsigelsesfrist?" — expect `short_title` + `ref_id` + paragraf citation.
 
 ## 5. Target (resolved)
 
-- Instance: **dev** — internal `http://emergent-dev:3002`, public `https://api.dev.emergent-company.ai`.
-- Account: `m+test@kucharz.net` → user `198d334e-90e8-458f-a826-15779102e975`.
-- Org: "Maciej Kucharz's Org" (`f6b5b71c-8c37-4a2f-9ec6-2761cd477744`), role org_admin.
-- Existing projects: `test` (`f131d865-5d9c-43ae-834f-bcb749c3359d`),
-  `Maciej's Project` (`ed473064-fc14-4289-9cbe-c6269c390324`).
-  No "Norwegian Law" project exists yet — create one, or apply into `test`.
-- `mcj-emergent` is **offline** (last seen 175d) — do not use it.
+- Instance: **dev** — internal `<dev-server-url>`, public `<dev-public-url>`.
+- Account: `<dev-account-email>` → user `<dev-user-id>`.
+- Org: `<dev-org-name>` (`<dev-org-id>`), role org_admin.
+- Existing projects: `<dev-project-name-1>` (`<dev-project-id>`),
+  `<dev-project-name-2>` (`<dev-project-id-2>`).
+  No "Norwegian Law" project exists yet — create one, or apply into an existing project.
+- Some dev hosts may be **offline** (last seen 175d) — do not use them.
 - Seeder route only: mint a project API token (`core.api_tokens`), e.g.
-  `memory apitokens create --project <project-id> --server http://emergent-dev:3002`
+  `memory apitokens create --project <project-id> --server <dev-server-url>`
   (verify the exact subcommand with `memory apitokens --help`).
 
 ## Rollback

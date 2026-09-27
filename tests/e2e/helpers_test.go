@@ -237,6 +237,13 @@ func parseSSEResponse(body []byte) (string, string, error) {
 				}
 			}
 		}
+		if ev.ArtifactUpdate != nil {
+			au := ev.ArtifactUpdate
+			if latestTask == nil || latestTask.ID != au.TaskID {
+				latestTask = &a2a.Task{ID: au.TaskID, ContextID: au.ContextID}
+			}
+			latestTask.Artifacts = mergeArtifact(latestTask.Artifacts, au.Artifact, au.Append)
+		}
 	}
 	if err := sc.Err(); err != nil {
 		return "", "", fmt.Errorf("read SSE stream: %w", err)
@@ -249,6 +256,25 @@ func parseSSEResponse(body []byte) (string, string, error) {
 		return extractMessageText(latestMessage), "", nil
 	}
 	return "", "", fmt.Errorf("SSE stream contained no task or message")
+}
+
+// mergeArtifact merges an artifact-update delta into a task's artifact list.
+// When append is true and an artifact with the same non-empty ID exists, the
+// delta's parts are appended to it (streamed chunks); otherwise the delta
+// replaces any existing artifact with the same non-empty ID, or is added as a
+// new artifact.
+func mergeArtifact(artifacts []a2a.Artifact, delta a2a.Artifact, appendMode bool) []a2a.Artifact {
+	for i := range artifacts {
+		if delta.ArtifactID != "" && artifacts[i].ArtifactID == delta.ArtifactID {
+			if appendMode {
+				artifacts[i].Parts = append(artifacts[i].Parts, delta.Parts...)
+			} else {
+				artifacts[i] = delta
+			}
+			return artifacts
+		}
+	}
+	return append(artifacts, delta)
 }
 
 // taskAnswer validates a task's terminal state and returns the final assistant
@@ -280,8 +306,12 @@ func taskAnswer(task *a2a.Task) (string, string, error) {
 	if sb.Len() > 0 {
 		return sb.String(), status, nil
 	}
-	// Fall back to history (agent-authored text parts).
+	// Fall back to history, but only agent-authored messages — the user's prompt
+	// must not leak into the answer.
 	for _, m := range task.History {
+		if m.Role != a2a.RoleAgent {
+			continue
+		}
 		for _, p := range m.Parts {
 			if p.Text != nil {
 				sb.WriteString(*p.Text)
