@@ -95,6 +95,7 @@ type config struct {
 	dataset      string // "laws", "regulations", "both"
 	dumpSeedDir  string // "" = upload mode; non-empty = server-free seed export
 	minCoverage  float64
+	refreshEU    bool
 }
 
 func envOr(envKey, defaultVal string) string {
@@ -134,6 +135,7 @@ func parseConfig() config {
 	dataset := flag.String("dataset", "both", `Dataset to import: "laws", "regulations", or "both"`)
 	dumpSeedDir := flag.String("dump-seed", envOr("SEED_DUMP_DIR", ""), "Write a server-free blueprint seed (JSONL) to this directory instead of uploading")
 	minCoverage := flag.Float64("min-coverage", 0, "Fail the dump when the mean source-token coverage is below this threshold (0 = report-only; a threshold near 0.99–1.0 is meaningful)")
+	refreshEU := flag.Bool("refresh-eu", false, "Ignore the cached EU directive metadata and re-fetch from CELLAR SPARQL")
 
 	flag.Parse()
 
@@ -162,6 +164,7 @@ func parseConfig() config {
 		dataset:      *dataset,
 		dumpSeedDir:  *dumpSeedDir,
 		minCoverage:  *minCoverage,
+		refreshEU:    *refreshEU,
 	}
 }
 
@@ -308,12 +311,12 @@ type EUDirective struct {
 	Form            string
 	DateOfDocument  string
 	DateOfEffect    string
-	Author          string
+	Author          []string
 	ResponsibleDG   string
 	Content         string
-	SubjectMatter   string
+	SubjectMatter   []string
 	DirectoryCode   string
-	LegalBasis      string
+	LegalBasis      []string
 	ProcedureNum    string
 	OJReference     string
 	EuroVocIDs      []string
@@ -1062,7 +1065,53 @@ func directiveToCELEX(id string) string {
 func fetchEURLex(ctx context.Context, directiveID string) (*EUDirective, error) {
 	celexL := directiveToCELEX(directiveID)
 	celexR := strings.Replace(celexL, "L", "R", 1)
-	var dir *EUDirective
+
+	dir := &EUDirective{DirectiveID: directiveID, CelexID: celexL}
+
+	// SPARQL metadata is authoritative. Fall back to the legacy HTML scrape only
+	// when CELLAR yields nothing usable.
+	meta, _ := fetchDirectiveMeta(ctx, celexL)
+	if meta == nil && celexR != "" {
+		meta, _ = fetchDirectiveMeta(ctx, celexR)
+	}
+	if meta != nil && (meta.FullTitle != "" || meta.Form != "") {
+		mergeDirectiveMeta(dir, meta)
+	} else if legacy := fetchLegacyEURLex(ctx, directiveID, celexL, celexR); legacy != nil {
+		mergeDirectiveMeta(dir, legacy)
+	}
+	dir.ShortTitle = deriveShortTitle(dir.FullTitle)
+
+	// CELLAR full-text (unchanged working path)
+	if celexL != "" {
+		uuid := cellarUUID(ctx, celexL)
+		if uuid == "" && celexR != "" {
+			uuid = cellarUUID(ctx, celexR)
+		}
+		if uuid != "" {
+			if content, fmtName := fetchCellarContent(ctx, uuid); len(content) > 0 {
+				switch fmtName {
+				case "legacy":
+					dir.Content = extractEUBodyLegacy(content)
+				case "formex":
+					dir.Content = extractEUBodyFormex(content)
+				default:
+					dir.Content = extractEUBody(content)
+				}
+			}
+		}
+	}
+
+	// OJ reference: decode the oj: id and enrich with the issue publication date.
+	if strings.HasPrefix(dir.OJReference, "oj:") {
+		dir.OJReference = fetchOJReference(ctx, celexL, dir.OJReference)
+	}
+
+	return dir, nil
+}
+
+// fetchLegacyEURLex scrapes the (now stale) EUR-Lex HTML page. Kept only as a
+// last-resort fallback behind the SPARQL path.
+func fetchLegacyEURLex(ctx context.Context, directiveID, celexL, celexR string) *EUDirective {
 	for _, celex := range []string{celexL, celexR} {
 		if celex == "" {
 			continue
@@ -1082,34 +1131,40 @@ func fetchEURLex(ctx context.Context, directiveID string) (*EUDirective, error) 
 		}
 		body, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-		dir = parseEURLex(directiveID, celex, body)
-		break
+		return parseEURLex(directiveID, celex, body)
 	}
-	if dir == nil {
-		dir = &EUDirective{DirectiveID: directiveID, CelexID: celexL}
-	}
+	return nil
+}
 
-	// CELLAR full-text
-	if celexL != "" {
-		uuid := cellarUUID(ctx, celexL)
-		if uuid == "" && celexR != "" {
-			uuid = cellarUUID(ctx, celexR)
-		}
-		if uuid != "" {
-			if content, fmt := fetchCellarContent(ctx, uuid); len(content) > 0 {
-				switch fmt {
-				case "legacy":
-					dir.Content = extractEUBodyLegacy(content)
-				case "formex":
-					dir.Content = extractEUBodyFormex(content)
-				default:
-					dir.Content = extractEUBody(content)
-				}
-			}
-		}
-	}
+// mergeDirectiveMeta copies the metadata fields (everything except the identity
+// fields DirectiveID/CelexID, which the caller owns) from src into dst.
+func mergeDirectiveMeta(dst, src *EUDirective) {
+	dst.FullTitle = src.FullTitle
+	dst.Form = src.Form
+	dst.DateOfDocument = src.DateOfDocument
+	dst.DateOfEffect = src.DateOfEffect
+	dst.Author = src.Author
+	dst.ResponsibleDG = src.ResponsibleDG
+	dst.SubjectMatter = src.SubjectMatter
+	dst.DirectoryCode = src.DirectoryCode
+	dst.LegalBasis = src.LegalBasis
+	dst.ProcedureNum = src.ProcedureNum
+	dst.OJReference = src.OJReference
+	dst.EuroVocIDs = src.EuroVocIDs
+	dst.CitedCELEX = src.CitedCELEX
+	dst.ModifiedByCELEX = src.ModifiedByCELEX
+}
 
-	return dir, nil
+// deriveShortTitle shortens a full directive title into a display name.
+func deriveShortTitle(full string) string {
+	short := full
+	if idx := strings.Index(short, "("); idx > 20 {
+		short = strings.TrimSpace(short[:idx])
+	}
+	if len(short) > 120 {
+		short = short[:120]
+	}
+	return short
 }
 
 func parseEURLex(directiveID, celex string, content []byte) *EUDirective {
@@ -1145,16 +1200,16 @@ func parseEURLex(directiveID, celex string, content []byte) *EUDirective {
 						}
 					case strings.Contains(label, "Form") && dir.Form == "":
 						dir.Form = val
-					case strings.Contains(label, "Author") && dir.Author == "":
-						dir.Author = val
+					case strings.Contains(label, "Author") && len(dir.Author) == 0:
+						dir.Author = []string{val}
 					case strings.Contains(label, "Responsible body") && dir.ResponsibleDG == "":
 						dir.ResponsibleDG = val
-					case strings.Contains(label, "Subject matter") && dir.SubjectMatter == "":
-						dir.SubjectMatter = val
+					case strings.Contains(label, "Subject matter") && len(dir.SubjectMatter) == 0:
+						dir.SubjectMatter = []string{val}
 					case strings.Contains(label, "Directory code") && dir.DirectoryCode == "":
 						dir.DirectoryCode = val
-					case strings.Contains(label, "Legal basis") && dir.LegalBasis == "":
-						dir.LegalBasis = val
+					case strings.Contains(label, "Legal basis") && len(dir.LegalBasis) == 0:
+						dir.LegalBasis = []string{val}
 					case strings.Contains(label, "Procedure number") && dir.ProcedureNum == "":
 						dir.ProcedureNum = val
 					case strings.Contains(label, "Instruments cited"):
@@ -1630,7 +1685,7 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 	if euLimit > 0 && len(ids) > euLimit {
 		ids = ids[:euLimit]
 	}
-	log.Printf("  Fetching %d EU directives from EUR-Lex (max 5 concurrent) ...", len(ids))
+	log.Printf("  Fetching %d EU directives from CELLAR (max 5 concurrent) ...", len(ids))
 
 	sem := make(chan struct{}, 5)
 	var mu sync.Mutex
@@ -1719,6 +1774,43 @@ func sortConcepts(concepts []*EuroVocConcept) {
 	sort.SliceStable(concepts, func(i, j int) bool {
 		return concepts[i].ID < concepts[j].ID
 	})
+}
+
+// collectEUStubs returns stub EUDirective objects for the cited/amended CELEX ids
+// that are not among the fetched directives, so EU_CITES/EU_MODIFIED_BY edges
+// always have a target object. CELEX ids are uppercase-normalised on both sides.
+func collectEUStubs(directives []*EUDirective) []*EUDirective {
+	known := make(map[string]bool, len(directives))
+	for _, d := range directives {
+		if d.CelexID != "" {
+			known[strings.ToUpper(d.CelexID)] = true
+		}
+	}
+	need := make(map[string]bool)
+	for _, d := range directives {
+		for _, c := range d.CitedCELEX {
+			u := strings.ToUpper(c)
+			if u != "" && !known[u] {
+				need[u] = true
+			}
+		}
+		for _, c := range d.ModifiedByCELEX {
+			u := strings.ToUpper(c)
+			if u != "" && !known[u] {
+				need[u] = true
+			}
+		}
+	}
+	keys := make([]string, 0, len(need))
+	for c := range need {
+		keys = append(keys, c)
+	}
+	sort.Strings(keys)
+	stubs := make([]*EUDirective, 0, len(keys))
+	for _, c := range keys {
+		stubs = append(stubs, &EUDirective{CelexID: c})
+	}
+	return stubs
 }
 
 // ─── Seed records (shared between upload + dump) ──────────────────────────────
@@ -2071,11 +2163,23 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		if dir.DateOfEffect != "" {
 			props["date_of_effect"] = dir.DateOfEffect
 		}
-		if dir.Author != "" {
-			props["author"] = dir.Author
+		if len(dir.Author) > 0 {
+			props["author"] = strings.Join(dir.Author, "; ")
 		}
-		if dir.SubjectMatter != "" {
-			props["subject_matter"] = dir.SubjectMatter
+		if dir.ResponsibleDG != "" {
+			props["responsible_dg"] = dir.ResponsibleDG
+		}
+		if len(dir.SubjectMatter) > 0 {
+			props["subject_matter"] = strings.Join(dir.SubjectMatter, "; ")
+		}
+		if dir.DirectoryCode != "" {
+			props["directory_code"] = dir.DirectoryCode
+		}
+		if len(dir.LegalBasis) > 0 {
+			props["legal_basis"] = strings.Join(dir.LegalBasis, "; ")
+		}
+		if dir.ProcedureNum != "" {
+			props["procedure_num"] = dir.ProcedureNum
 		}
 		if dir.OJReference != "" {
 			props["oj_reference"] = dir.OJReference
@@ -2087,6 +2191,23 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		records = append(records, seedObjectRecord{
 			Type: "EUDirective", Key: k, Properties: props,
 		})
+	}
+
+	// Referential-integrity stubs: cited/amended CELEX ids that are not among the
+	// fetched directives get a bare object so EU_CITES/EU_MODIFIED_BY edges never
+	// dangle.
+	stubs := collectEUStubs(directives)
+	for _, s := range stubs {
+		records = append(records, seedObjectRecord{
+			Type: "EUDirective", Key: "eu_" + s.CelexID,
+			Properties: map[string]any{
+				"name":     s.CelexID,
+				"celex_id": s.CelexID,
+			},
+		})
+	}
+	if len(stubs) > 0 {
+		log.Printf("  [EU] created %d stub EUDirective objects for cited/amended CELEX", len(stubs))
 	}
 
 	for _, ev := range concepts {
@@ -2937,19 +3058,21 @@ func main() {
 		log.Printf("  Total docs: %d", len(allDocs))
 
 		if !cfg.skipEU {
-			// Use cached directives if available
-			if bDir, err := os.ReadFile(cachePathDirectives); err == nil && len(bDir) > 10 {
-				var cached []*EUDirective
-				if jsonErr := json.Unmarshal(bDir, &cached); jsonErr == nil && len(cached) > 0 {
-					directives = cached
-					log.Printf("Phase 2: Using cached EU directives (count=%d, skipping re-fetch)", len(directives))
-					if bConc, err2 := os.ReadFile(cachePathConcepts); err2 == nil && len(bConc) > 10 {
-						json.Unmarshal(bConc, &concepts) //nolint:errcheck
+			// Use cached directives if available (unless --refresh-eu).
+			if !cfg.refreshEU {
+				if bDir, err := os.ReadFile(cachePathDirectives); err == nil && len(bDir) > 10 {
+					var cached []*EUDirective
+					if jsonErr := json.Unmarshal(bDir, &cached); jsonErr == nil && len(cached) > 0 {
+						directives = cached
+						log.Printf("Phase 2: Using cached EU directives (count=%d, skipping re-fetch)", len(directives))
+						if bConc, err2 := os.ReadFile(cachePathConcepts); err2 == nil && len(bConc) > 10 {
+							json.Unmarshal(bConc, &concepts) //nolint:errcheck
+						}
 					}
 				}
 			}
 			if len(directives) == 0 {
-				log.Println("Phase 2: Fetching EU directive metadata from EUR-Lex ...")
+				log.Println("Phase 2: Fetching EU directive metadata from CELLAR SPARQL ...")
 				directives, concepts = fetchAllEUData(ctx, allDocs, cfg.euLimit)
 			}
 		} else {

@@ -200,9 +200,21 @@ objectTypes:
       author:
         type: string
         description: Authoring institution (e.g. European Parliament and of the Council)
+      responsible_dg:
+        type: string
+        description: Directorate-General responsible for the act (from CELLAR)
       subject_matter:
         type: string
         description: EUR-Lex subject-matter classification
+      directory_code:
+        type: string
+        description: EUR-Lex directory-code classification label
+      legal_basis:
+        type: string
+        description: Treaty/legal-basis CELEX identifiers (semicolon-joined)
+      procedure_num:
+        type: string
+        description: Interinstitutional procedure reference (e.g. 2000/0169/COD)
       oj_reference:
         type: string
         description: Official Journal reference (e.g. OJ L 84, 20.3.2014)
