@@ -283,6 +283,7 @@ type LovDoc struct {
 	Content           string // Full Markdown of law body
 	Paragraphs        []LovParagraph
 	EUBodyRefs        []string // eu/XXXXXXXX hrefs from body → CITES_EU_LAW edges
+	SourceSHA256      string   // SHA-256 of the raw source XML bytes (change-detection key)
 }
 
 type LovParagraph struct {
@@ -725,7 +726,9 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 // ─── Document parser ──────────────────────────────────────────────────────────
 
 func parseDocument(content []byte, docType string) *LovDoc {
-	doc := &LovDoc{DocType: docType}
+	// Hash the raw source bytes as read (the tar member XML), not any derived or
+	// rendered form, so re-exports are change-detected against the actual source.
+	doc := &LovDoc{DocType: docType, SourceSHA256: sha256Hex(content)}
 
 	// Detect language from <html lang="...">
 	if idx := strings.Index(string(content), `lang="`); idx >= 0 {
@@ -908,15 +911,28 @@ func downloadAndCache(rawURL, cacheDir string) (string, error) {
 	return localPath, nil
 }
 
-func loadDataset(dataURL, docType string, limit int, cacheDir string) ([]LovDoc, error) {
+func loadDataset(dataURL, docType string, limit int, cacheDir string) ([]LovDoc, sourceArchive, error) {
 	path, err := downloadAndCache(dataURL, cacheDir)
 	if err != nil {
-		return nil, err
+		return nil, sourceArchive{}, err
+	}
+
+	// Record the source archive fingerprint (name/sha256/size) for the manifest.
+	// mtime is logged only, never written to the manifest, so re-dumps stay
+	// byte-identical.
+	archName := filepath.Base(path)
+	archSHA, archSize, err := hashFile(path)
+	if err != nil {
+		return nil, sourceArchive{}, fmt.Errorf("hash archive %s: %w", archName, err)
+	}
+	arch := sourceArchive{Name: archName, SHA256: archSHA, Size: archSize}
+	if fi, statErr := os.Stat(path); statErr == nil {
+		log.Printf("  Archive %s: sha256=%s size=%d mtime=%s", archName, archSHA, archSize, fi.ModTime().UTC().Format(time.RFC3339))
 	}
 
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, sourceArchive{}, err
 	}
 	defer f.Close()
 
@@ -933,7 +949,7 @@ func loadDataset(dataURL, docType string, limit int, cacheDir string) ([]LovDoc,
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("tar read: %w", err)
+			return nil, sourceArchive{}, fmt.Errorf("tar read: %w", err)
 		}
 		if hdr.Typeflag != tar.TypeReg || !strings.HasSuffix(hdr.Name, ".xml") {
 			continue
@@ -964,7 +980,7 @@ func loadDataset(dataURL, docType string, limit int, cacheDir string) ([]LovDoc,
 		docs = append(docs, *d)
 		mu.Unlock()
 	}
-	return docs, nil
+	return docs, arch, nil
 }
 
 // ─── EUR-Lex fetching ─────────────────────────────────────────────────────────
@@ -2592,7 +2608,7 @@ func removeJSONLFiles(dir string) error {
 // and <dir>/seed/relationships/<Type>.jsonl. It builds object records first so the
 // relationship pass can enforce the "both endpoints exist" (known-refs) rule and
 // the SrcKey != DstKey self-loop rule without any server round-trip.
-func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) error {
+func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, archives []sourceArchive, dataset string) error {
 	// Deterministic emission: sort the EU inputs so the seed bytes are stable
 	// across regenerations regardless of fetch/cache ordering (the cached
 	// directives bypass fetchAllEUData's sort, so sort again at the single
@@ -2642,12 +2658,14 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 	}
 
 	objectCount := 0
+	objByTypeCounts := make(map[string]int, len(objByType))
 	for _, typ := range sortedMapKeys(objByType) {
 		recs := objByType[typ]
 		if err := writeObjectJSONL(objDir, typ, recs); err != nil {
 			return err
 		}
 		objectCount += len(recs)
+		objByTypeCounts[typ] = len(recs)
 	}
 
 	relCount := 0
@@ -2660,6 +2678,32 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 	}
 
 	log.Printf("Seed export complete: %d objects, %d relationships -> %s", objectCount, relCount, filepath.Join(dir, "seed"))
+
+	// Build the change-detection manifest and diff against any prior one.
+	mf := buildManifest(docs, archives, dataset, objectCount, relCount, objByTypeCounts)
+	manifestPath := filepath.Join(dir, "seed", "manifest.json")
+	if old, ok, err := loadManifest(manifestPath); err != nil {
+		log.Printf("  [manifest] cannot read existing manifest: %v", err)
+	} else if ok {
+		ch := diffManifests(old, mf)
+		log.Printf("  [manifest] change detection: added=%d changed=%d removed=%d unchanged=%d", ch.Added, ch.Changed, ch.Removed, ch.Unchanged)
+		const maxChanged = 10
+		for i, ref := range ch.ChangedRefs {
+			if i >= maxChanged {
+				log.Printf("  [manifest]   ... and %d more changed", len(ch.ChangedRefs)-maxChanged)
+				break
+			}
+			log.Printf("  [manifest]   changed: %s", ref)
+		}
+		if ch.Added == 0 && ch.Changed == 0 && ch.Removed == 0 {
+			log.Printf("  [manifest] no source changes detected")
+		}
+	} else {
+		log.Printf("  [manifest] no existing manifest; writing initial manifest")
+	}
+	if err := writeManifest(manifestPath, mf); err != nil {
+		return fmt.Errorf("write manifest: %w", err)
+	}
 	return nil
 }
 
@@ -2771,6 +2815,7 @@ func main() {
 	var allDocs []LovDoc
 	var directives []*EUDirective
 	var concepts []*EuroVocConcept
+	var sourceArchives []sourceArchive
 
 	cachePathDocs := filepath.Join(cfg.cacheDir, "parsed_docs.json")
 	cachePathDirectives := filepath.Join(cfg.cacheDir, "parsed_directives.json")
@@ -2798,21 +2843,23 @@ func main() {
 
 		if cfg.dataset == "laws" || cfg.dataset == "both" {
 			log.Println("  Downloading laws ...")
-			docs, err := loadDataset(lawsURL, "Law", cfg.limit, cfg.cacheDir)
+			docs, arch, err := loadDataset(lawsURL, "Law", cfg.limit, cfg.cacheDir)
 			if err != nil {
 				log.Fatalf("load laws: %v", err)
 			}
 			log.Printf("  Parsed %d laws", len(docs))
 			allDocs = append(allDocs, docs...)
+			sourceArchives = append(sourceArchives, arch)
 		}
 		if cfg.dataset == "regulations" || cfg.dataset == "both" {
 			log.Println("  Downloading regulations ...")
-			docs, err := loadDataset(regsURL, "Regulation", cfg.limit, cfg.cacheDir)
+			docs, arch, err := loadDataset(regsURL, "Regulation", cfg.limit, cfg.cacheDir)
 			if err != nil {
 				log.Fatalf("load regulations: %v", err)
 			}
 			log.Printf("  Parsed %d regulations", len(docs))
 			allDocs = append(allDocs, docs...)
+			sourceArchives = append(sourceArchives, arch)
 		}
 		log.Printf("  Total docs: %d", len(allDocs))
 
@@ -2859,7 +2906,7 @@ func main() {
 	}
 
 	if dumpMode {
-		if err := dumpSeed(cfg.dumpSeedDir, allDocs, directives, concepts); err != nil {
+		if err := dumpSeed(cfg.dumpSeedDir, allDocs, directives, concepts, sourceArchives, cfg.dataset); err != nil {
 			log.Fatalf("seed export: %v", err)
 		}
 		return
