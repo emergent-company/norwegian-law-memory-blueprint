@@ -315,3 +315,220 @@ func TestSplitJSONLWriter(t *testing.T) {
 		t.Fatalf("no .001.jsonl split file among %v", names)
 	}
 }
+
+// nestedSectionFixture has an inner <section> nested inside an outer <section>,
+// with a legalP after the inner section closes. The outer paragraph must carry
+// the outer chapter id (the inner id must not leak out).
+const nestedSectionFixture = `<!DOCTYPE html><html lang="nb"><head><title>Nested</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2024-01-01-3</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<section class="section" id="kapittel-1"><h2>Kapittel 1</h2><section class="section" id="kapittel-1-del-1"><h2>Del 1</h2><article class="legalP" id="kapittel-1-del-1-ledd-1">Inner paragraph text.</article></section><article class="legalP" id="kapittel-1-ledd-1">Outer paragraph after inner section.</article></section>
+</main></body></html>`
+
+func TestNestedSectionChapterIDRestored(t *testing.T) {
+	doc := parseDocument([]byte(nestedSectionFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if len(doc.Paragraphs) != 2 {
+		t.Fatalf("Paragraphs len = %d, want 2: %+v", len(doc.Paragraphs), doc.Paragraphs)
+	}
+	inner, outer := doc.Paragraphs[0], doc.Paragraphs[1]
+	if inner.SectionID != "kapittel-1-del-1-ledd-1" || inner.ChapterID != "kapittel-1-del-1" {
+		t.Fatalf("inner paragraph = %+v; want ChapterID kapittel-1-del-1", inner)
+	}
+	if outer.SectionID != "kapittel-1-ledd-1" || outer.ChapterID != "kapittel-1" {
+		t.Fatalf("outer paragraph = %+v; want ChapterID kapittel-1 (inner id leaked?)", outer)
+	}
+}
+
+func TestYearFromLooseDate(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want int
+		ok   bool
+	}{
+		{"iso date", "2004-01-01", 2004, true},
+		{"free text year", "Inntektsåret 1998", 1998, true},
+		{"first of several", "Kongen bestemmer, 2004-01-01, 2005-01-01", 2004, true},
+		{"no year", "Ikkje i kraft", 0, false},
+		{"empty", "", 0, false},
+		{"pre-1900", "1814-05-17", 1814, true},
+		{"beyond 2050", "abc 3000-01-01", 0, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, ok := yearFromLooseDate(tc.in)
+			if ok != tc.ok || got != tc.want {
+				t.Fatalf("yearFromLooseDate(%q) = (%d, %v); want (%d, %v)", tc.in, got, ok, tc.want, tc.ok)
+			}
+		})
+	}
+}
+
+func TestSortDirectives(t *testing.T) {
+	dirs := []*EUDirective{
+		{DirectiveID: "2010/75/EU", CelexID: "32010L0075"},
+		{DirectiveID: "", CelexID: "31985L0337"}, // fallback to CelexID
+		{DirectiveID: "2004/35/CE", CelexID: "32004L0035"},
+		{DirectiveID: "1999/31/EC", CelexID: "31999L0031"},
+	}
+	sortDirectives(dirs)
+	want := []string{"1999/31/EC", "2004/35/CE", "2010/75/EU", "31985L0337"}
+	for i, d := range dirs {
+		got := d.DirectiveID
+		if got == "" {
+			got = d.CelexID
+		}
+		if got != want[i] {
+			t.Fatalf("sortDirectives order[%d] = %q; want %q (full: %+v)", i, got, want[i], dirs)
+		}
+	}
+}
+
+func TestSortConcepts(t *testing.T) {
+	concepts := []*EuroVocConcept{
+		{ID: "200", LabelEN: "b"},
+		{ID: "10", LabelEN: "a"},
+		{ID: "100", LabelEN: "c"},
+		{ID: "20", LabelEN: "d"},
+	}
+	sortConcepts(concepts)
+	want := []string{"10", "100", "20", "200"}
+	for i, c := range concepts {
+		if c.ID != want[i] {
+			t.Fatalf("sortConcepts order[%d] = %q; want %q", i, c.ID, want[i])
+		}
+	}
+}
+
+// chapterTitleFixture uses an <h2> that already carries the "Kapittel" prefix.
+const chapterTitleFixture = `<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2024-01-01-4</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<section class="section" id="kapittel-1"><h2>Kapittel 1. Innledende bestemmelser</h2><article class="legalP" id="kapittel-1-ledd-1">Body text.</article></section>
+</main></body></html>`
+
+func TestChapterTitlePrefixNotDuplicated(t *testing.T) {
+	doc := parseDocument([]byte(chapterTitleFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if n := strings.Count(doc.Content, "Kapittel"); n != 1 {
+		t.Fatalf("content contains %d occurrences of 'Kapittel', want exactly 1: %q", n, doc.Content)
+	}
+	if !strings.Contains(doc.Content, "## Kapittel 1. Innledende bestemmelser") {
+		t.Fatalf("heading not emitted as-is: %q", doc.Content)
+	}
+}
+
+// partHeadingFixture uses an <h2> that labels a part ("Del I."), which must be
+// kept as authored, not prefixed with "Kapittel".
+const partHeadingFixture = `<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2024-01-01-5</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<section class="section" id="kapittel-1"><h2>Del I. Innledende bestemmelser</h2><article class="legalP" id="kapittel-1-ledd-1">Body text.</article></section>
+</main></body></html>`
+
+func TestPartHeadingKeptAsAuthored(t *testing.T) {
+	doc := parseDocument([]byte(partHeadingFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if strings.Contains(doc.Content, "## Kapittel") {
+		t.Fatalf("part heading must not be prefixed with 'Kapittel': %q", doc.Content)
+	}
+	if !strings.Contains(doc.Content, "## Del I. Innledende bestemmelser") {
+		t.Fatalf("part heading not emitted as-authored: %q", doc.Content)
+	}
+}
+
+// normalTitleFixture uses a plain chapter title that must still be prefixed.
+const normalTitleFixture = `<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2024-01-01-6</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<section class="section" id="kapittel-1"><h2>Virkeområde</h2><article class="legalP" id="kapittel-1-ledd-1">Body text.</article></section>
+</main></body></html>`
+
+func TestNormalChapterHeadingPrefixed(t *testing.T) {
+	doc := parseDocument([]byte(normalTitleFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if !strings.Contains(doc.Content, "## Kapittel 1. Virkeområde") {
+		t.Fatalf("normal title not prefixed correctly: %q", doc.Content)
+	}
+}
+
+// headingDoc builds a minimal regulation document whose single <section
+// id="kapittel-1"> carries the given <h2> title, so the emitted markdown
+// heading can be asserted independently.
+func headingDoc(title string) string {
+	return fmt.Sprintf(`<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2024-01-01-9</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<section class="section" id="kapittel-1"><h2>%s</h2><article class="legalP" id="kapittel-1-ledd-1">Body text.</article></section>
+</main></body></html>`, title)
+}
+
+// assertHeading parses headingDoc(title) and checks the emitted markdown
+// contains wantSub and does not contain wantNotSub.
+func assertHeading(t *testing.T, title, wantSub, wantNotSub string) {
+	t.Helper()
+	doc := parseDocument([]byte(headingDoc(title)), "Regulation")
+	if doc == nil {
+		t.Fatalf("parseDocument returned nil for %q", title)
+	}
+	if wantSub != "" && !strings.Contains(doc.Content, wantSub) {
+		t.Fatalf("heading for %q: missing %q in %q", title, wantSub, doc.Content)
+	}
+	if wantNotSub != "" && strings.Contains(doc.Content, wantNotSub) {
+		t.Fatalf("heading for %q: unexpectedly contains %q in %q", title, wantNotSub, doc.Content)
+	}
+}
+
+func TestPartHeadingDefiniteForms(t *testing.T) {
+	cases := []struct {
+		title   string
+		want    string
+		wantNot string
+	}{
+		{"Første delen. Sluttføresegner", "## Første delen. Sluttføresegner", "## Kapittel"},
+		{"Andre delen – vidaregåande opplæring", "## Andre delen – vidaregåande opplæring", "## Kapittel"},
+		{"Tredje delen – fellesreglar", "## Tredje delen – fellesreglar", "## Kapittel"},
+		{"Del I. Innledende bestemmelser", "## Del I. Innledende bestemmelser", "## Kapittel"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.title, func(t *testing.T) {
+			assertHeading(t, tc.title, tc.want, tc.wantNot)
+		})
+	}
+}
+
+func TestPartHeadingDoesNotOverMatchRealTitles(t *testing.T) {
+	cases := []struct {
+		title string
+		want  string
+	}{
+		{"Delegering", "## Kapittel 1. Delegering"},
+		{"Delårsregnskap", "## Kapittel 1. Delårsregnskap"},
+		{"Deling av foretak m.v.", "## Kapittel 1. Deling av foretak m.v."},
+		{"Deltakelse i beslutningsprosesser", "## Kapittel 1. Deltakelse i beslutningsprosesser"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.title, func(t *testing.T) {
+			assertHeading(t, tc.title, tc.want, "")
+		})
+	}
+}
