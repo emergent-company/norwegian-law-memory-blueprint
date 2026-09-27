@@ -15,10 +15,17 @@ bounds below.
 - **No municipal or regional regulations.** Only *central* government
   regulations (`forskrift/…` from Lovdata's `gjeldende-sentrale-forskrifter`)
   are present. County/municipal bylaws and local regulations are out of scope.
-- **No EU act full text.** We ingest EU/EEA *directive metadata* and link it via
-  `IMPLEMENTS_EEA` / `CITES_EU_LAW`, but we do **not** store the directive's
-  legislative text as a navigable object. Do not treat an EU directive node as
-  a source of quoted EU text.
+- **EU directive text is partial.** EU/EEA directive nodes carry metadata
+  (title, form, author, dates, subject matter, OJ reference, EuroVoc
+  descriptors) and, for **63 of 85** directives, a `content` body sourced from
+  CELLAR. The other 22 have no retrievable full text, and even the stored body is
+  not guaranteed complete — do not treat an EU directive node as authoritative
+  quoted EU law.
+- **Many EU directive nodes are stubs.** Cited or amending acts that are not
+  themselves among the referenced directives are stored as stub nodes
+  (`celex_id` + `name` only — **534 of 619** `EUDirective` objects) so that
+  `EU_CITES` / `EU_MODIFIED_BY` edges resolve instead of dangling. A stub carries
+  no metadata.
 
 ## Temporal scope: current consolidated text only
 
@@ -43,6 +50,24 @@ bounds below.
   Lovdata HTML class hierarchy (`legalArticle`, `legalP`, `ledd`, …) is flattened
   into `##`/`###` headings. Original HTML attributes and nested structure beyond
   what the renderer emits are not recoverable.
+
+## EU/EEA metadata limits
+
+- Metadata is sourced from **CELLAR / EUR-Lex SPARQL** (EU Publications Office).
+  **Norwegian titles are not available**: CELLAR exposes EU official-language
+  expressions only, so `full_title` is English. Norwegian/EØS wording must come
+  from Lovdata/EFTA.
+- **EuroVoc labels are English only** (`label_en`); EuroVoc has no Norwegian
+  labels. Concept keys use the numeric notation (`eurovoc_<id>`).
+- `directory_code` holds CELLAR's human-readable label, not the numeric
+  directory notation, and CELLAR's classification is occasionally
+  counter-intuitive — treat it as authoritative-but-verified.
+- `oj_reference` carries the OJ issue/number and start page; the **page range**
+  (e.g. `26–31`) is not recoverable from the OJ document id.
+- `responsible_dg` (80/85) and `procedure_num` (81/85) are absent for a few acts
+  because CELLAR does not carry them.
+- `HAS_LANGUAGE_VARIANT` edges are **0**: language variants are deduplicated
+  ("first occurrence wins"), so no variant pairs exist to link.
 
 ## Source & licensing
 

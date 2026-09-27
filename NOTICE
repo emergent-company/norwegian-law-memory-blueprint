@@ -54,6 +54,21 @@ permission statement:
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
 
+## EU Publications Office — EUR-Lex / CELLAR
+
+EU directive metadata and full-text content are sourced from **EUR-Lex / CELLAR**,
+made available by the **Publications Office of the European Union**. Reuse is
+permitted under **Commission Decision 2011/833/EU**, which requires that the
+source be acknowledged and that the data not be distorted:
+
+- Source: EUR-Lex / CELLAR (Publications Office of the European Union)
+- Reuse decision: <https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32011D0833>
+
+Metadata is retrieved through the Publications Office SPARQL endpoint
+(`https://publications.europa.eu/webapi/rdf/sparql`); full text through the
+CELLAR content-delivery service. The data has been parsed and restructured into
+the `seed/` object/relationship format by this project.
+
 ## Note on this repository's own licence
 
 The repository metadata (`schemas/norwegian-law.yaml`) declares `license: MIT`

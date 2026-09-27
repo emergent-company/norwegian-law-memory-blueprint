@@ -1,0 +1,311 @@
+{"type":"EuroVocConcept","key":"eurovoc_103","properties":{"eurovoc_id":"103","label_en":"maternity leave","name":"maternity leave"}}
+{"type":"EuroVocConcept","key":"eurovoc_106","properties":{"eurovoc_id":"106","label_en":"paid leave","name":"paid leave"}}
+{"type":"EuroVocConcept","key":"eurovoc_1074","properties":{"eurovoc_id":"1074","label_en":"vocational training","name":"vocational training"}}
+{"type":"EuroVocConcept","key":"eurovoc_1122","properties":{"eurovoc_id":"1122","label_en":"merger","name":"merger"}}
+{"type":"EuroVocConcept","key":"eurovoc_1130","properties":{"eurovoc_id":"1130","label_en":"credit guarantee","name":"credit guarantee"}}
+{"type":"EuroVocConcept","key":"eurovoc_114","properties":{"eurovoc_id":"114","label_en":"Council of the European Union","name":"Council of the European Union"}}
+{"type":"EuroVocConcept","key":"eurovoc_1141","properties":{"eurovoc_id":"1141","label_en":"natural gas","name":"natural gas"}}
+{"type":"EuroVocConcept","key":"eurovoc_1156","properties":{"eurovoc_id":"1156","label_en":"business management","name":"business management"}}
+{"type":"EuroVocConcept","key":"eurovoc_1164","properties":{"eurovoc_id":"1164","label_en":"financial management","name":"financial management"}}
+{"type":"EuroVocConcept","key":"eurovoc_1193","properties":{"eurovoc_id":"1193","label_en":"group of companies","name":"group of companies"}}
+{"type":"EuroVocConcept","key":"eurovoc_1247","properties":{"eurovoc_id":"1247","label_en":"holding company","name":"holding company"}}
+{"type":"EuroVocConcept","key":"eurovoc_1275","properties":{"eurovoc_id":"1275","label_en":"hydrogen","name":"hydrogen"}}
+{"type":"EuroVocConcept","key":"eurovoc_1280","properties":{"eurovoc_id":"1280","label_en":"occupational health","name":"occupational health"}}
+{"type":"EuroVocConcept","key":"eurovoc_1281","properties":{"eurovoc_id":"1281","label_en":"mortgage","name":"mortgage"}}
+{"type":"EuroVocConcept","key":"eurovoc_13","properties":{"eurovoc_id":"13","label_en":"marketing","name":"marketing"}}
+{"type":"EuroVocConcept","key":"eurovoc_1301","properties":{"eurovoc_id":"1301","label_en":"registration of a company","name":"registration of a company"}}
+{"type":"EuroVocConcept","key":"eurovoc_1341","properties":{"eurovoc_id":"1341","label_en":"insurance indemnity","name":"insurance indemnity"}}
+{"type":"EuroVocConcept","key":"eurovoc_1366","properties":{"eurovoc_id":"1366","label_en":"audiovisual industry","name":"audiovisual industry"}}
+{"type":"EuroVocConcept","key":"eurovoc_1367","properties":{"eurovoc_id":"1367","label_en":"information industry","name":"information industry"}}
+{"type":"EuroVocConcept","key":"eurovoc_1379","properties":{"eurovoc_id":"1379","label_en":"framework agreement","name":"framework agreement"}}
+{"type":"EuroVocConcept","key":"eurovoc_1384","properties":{"eurovoc_id":"1384","label_en":"service industry","name":"service industry"}}
+{"type":"EuroVocConcept","key":"eurovoc_1395","properties":{"eurovoc_id":"1395","label_en":"tobacco industry","name":"tobacco industry"}}
+{"type":"EuroVocConcept","key":"eurovoc_142","properties":{"eurovoc_id":"142","label_en":"energy consumption","name":"energy consumption"}}
+{"type":"EuroVocConcept","key":"eurovoc_1423","properties":{"eurovoc_id":"1423","label_en":"trade information","name":"trade information"}}
+{"type":"EuroVocConcept","key":"eurovoc_1424","properties":{"eurovoc_id":"1424","label_en":"worker information","name":"worker information"}}
+{"type":"EuroVocConcept","key":"eurovoc_1425","properties":{"eurovoc_id":"1425","label_en":"consumer information","name":"consumer information"}}
+{"type":"EuroVocConcept","key":"eurovoc_1433","properties":{"eurovoc_id":"1433","label_en":"transport infrastructure","name":"transport infrastructure"}}
+{"type":"EuroVocConcept","key":"eurovoc_1442","properties":{"eurovoc_id":"1442","label_en":"food inspection","name":"food inspection"}}
+{"type":"EuroVocConcept","key":"eurovoc_1447","properties":{"eurovoc_id":"1447","label_en":"harbour installation","name":"harbour installation"}}
+{"type":"EuroVocConcept","key":"eurovoc_1452","properties":{"eurovoc_id":"1452","label_en":"financial institution","name":"financial institution"}}
+{"type":"EuroVocConcept","key":"eurovoc_1459","properties":{"eurovoc_id":"1459","label_en":"financial instrument","name":"financial instrument"}}
+{"type":"EuroVocConcept","key":"eurovoc_1485","properties":{"eurovoc_id":"1485","label_en":"financial intervention","name":"financial intervention"}}
+{"type":"EuroVocConcept","key":"eurovoc_1495","properties":{"eurovoc_id":"1495","label_en":"private investment","name":"private investment"}}
+{"type":"EuroVocConcept","key":"eurovoc_1503","properties":{"eurovoc_id":"1503","label_en":"arrangement of working time","name":"arrangement of working time"}}
+{"type":"EuroVocConcept","key":"eurovoc_1516","properties":{"eurovoc_id":"1516","label_en":"thermal insulation","name":"thermal insulation"}}
+{"type":"EuroVocConcept","key":"eurovoc_157","properties":{"eurovoc_id":"157","label_en":"worker consultation","name":"worker consultation"}}
+{"type":"EuroVocConcept","key":"eurovoc_1631","properties":{"eurovoc_id":"1631","label_en":"free movement of goods","name":"free movement of goods"}}
+{"type":"EuroVocConcept","key":"eurovoc_1638","properties":{"eurovoc_id":"1638","label_en":"freedom to provide services","name":"freedom to provide services"}}
+{"type":"EuroVocConcept","key":"eurovoc_164","properties":{"eurovoc_id":"164","label_en":"contract","name":"contract"}}
+{"type":"EuroVocConcept","key":"eurovoc_1641","properties":{"eurovoc_id":"1641","label_en":"trade licence","name":"trade licence"}}
+{"type":"EuroVocConcept","key":"eurovoc_1643","properties":{"eurovoc_id":"1643","label_en":"asbestos","name":"asbestos"}}
+{"type":"EuroVocConcept","key":"eurovoc_1645","properties":{"eurovoc_id":"1645","label_en":"transport licence","name":"transport licence"}}
+{"type":"EuroVocConcept","key":"eurovoc_1647","properties":{"eurovoc_id":"1647","label_en":"collective dismissal","name":"collective dismissal"}}
+{"type":"EuroVocConcept","key":"eurovoc_165","properties":{"eurovoc_id":"165","label_en":"insurance contract","name":"insurance contract"}}
+{"type":"EuroVocConcept","key":"eurovoc_1696","properties":{"eurovoc_id":"1696","label_en":"software","name":"software"}}
+{"type":"EuroVocConcept","key":"eurovoc_174","properties":{"eurovoc_id":"174","label_en":"management audit","name":"management audit"}}
+{"type":"EuroVocConcept","key":"eurovoc_1796","properties":{"eurovoc_id":"1796","label_en":"supplies contract","name":"supplies contract"}}
+{"type":"EuroVocConcept","key":"eurovoc_1798","properties":{"eurovoc_id":"1798","label_en":"works contract","name":"works contract"}}
+{"type":"EuroVocConcept","key":"eurovoc_1806","properties":{"eurovoc_id":"1806","label_en":"domestic market","name":"domestic market"}}
+{"type":"EuroVocConcept","key":"eurovoc_189","properties":{"eurovoc_id":"189","label_en":"financial control","name":"financial control"}}
+{"type":"EuroVocConcept","key":"eurovoc_192","properties":{"eurovoc_id":"192","label_en":"health control","name":"health control"}}
+{"type":"EuroVocConcept","key":"eurovoc_1971","properties":{"eurovoc_id":"1971","label_en":"electronic money","name":"electronic money"}}
+{"type":"EuroVocConcept","key":"eurovoc_20","properties":{"eurovoc_id":"20","label_en":"award of contract","name":"award of contract"}}
+{"type":"EuroVocConcept","key":"eurovoc_2022","properties":{"eurovoc_id":"2022","label_en":"museum","name":"museum"}}
+{"type":"EuroVocConcept","key":"eurovoc_2023","properties":{"eurovoc_id":"2023","label_en":"music","name":"music"}}
+{"type":"EuroVocConcept","key":"eurovoc_206","properties":{"eurovoc_id":"206","label_en":"administrative cooperation","name":"administrative cooperation"}}
+{"type":"EuroVocConcept","key":"eurovoc_2081","properties":{"eurovoc_id":"2081","label_en":"marketing standard","name":"marketing standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_2082","properties":{"eurovoc_id":"2082","label_en":"labour standard","name":"labour standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_2184","properties":{"eurovoc_id":"2184","label_en":"organisation of work","name":"organisation of work"}}
+{"type":"EuroVocConcept","key":"eurovoc_2216","properties":{"eurovoc_id":"2216","label_en":"payment","name":"payment"}}
+{"type":"EuroVocConcept","key":"eurovoc_2218","properties":{"eurovoc_id":"2218","label_en":"invitation to tender","name":"invitation to tender"}}
+{"type":"EuroVocConcept","key":"eurovoc_2243","properties":{"eurovoc_id":"2243","label_en":"European Parliament","name":"European Parliament"}}
+{"type":"EuroVocConcept","key":"eurovoc_2247","properties":{"eurovoc_id":"2247","label_en":"application of EU law","name":"application of EU law"}}
+{"type":"EuroVocConcept","key":"eurovoc_2266","properties":{"eurovoc_id":"2266","label_en":"worker participation","name":"worker participation"}}
+{"type":"EuroVocConcept","key":"eurovoc_2335","properties":{"eurovoc_id":"2335","label_en":"married person","name":"married person"}}
+{"type":"EuroVocConcept","key":"eurovoc_2352","properties":{"eurovoc_id":"2352","label_en":"crew","name":"crew"}}
+{"type":"EuroVocConcept","key":"eurovoc_2359","properties":{"eurovoc_id":"2359","label_en":"small and medium-sized enterprises","name":"small and medium-sized enterprises"}}
+{"type":"EuroVocConcept","key":"eurovoc_2468","properties":{"eurovoc_id":"2468","label_en":"employment policy","name":"employment policy"}}
+{"type":"EuroVocConcept","key":"eurovoc_2470","properties":{"eurovoc_id":"2470","label_en":"environmental policy","name":"environmental policy"}}
+{"type":"EuroVocConcept","key":"eurovoc_2479","properties":{"eurovoc_id":"2479","label_en":"health policy","name":"health policy"}}
+{"type":"EuroVocConcept","key":"eurovoc_2527","properties":{"eurovoc_id":"2527","label_en":"air quality","name":"air quality"}}
+{"type":"EuroVocConcept","key":"eurovoc_2535","properties":{"eurovoc_id":"2535","label_en":"marine pollution","name":"marine pollution"}}
+{"type":"EuroVocConcept","key":"eurovoc_2599","properties":{"eurovoc_id":"2599","label_en":"press","name":"press"}}
+{"type":"EuroVocConcept","key":"eurovoc_2602","properties":{"eurovoc_id":"2602","label_en":"provision of services","name":"provision of services"}}
+{"type":"EuroVocConcept","key":"eurovoc_2611","properties":{"eurovoc_id":"2611","label_en":"prevention of pollution","name":"prevention of pollution"}}
+{"type":"EuroVocConcept","key":"eurovoc_2626","properties":{"eurovoc_id":"2626","label_en":"polluter pays principle","name":"polluter pays principle"}}
+{"type":"EuroVocConcept","key":"eurovoc_272","properties":{"eurovoc_id":"272","label_en":"cost of pollution","name":"cost of pollution"}}
+{"type":"EuroVocConcept","key":"eurovoc_2739","properties":{"eurovoc_id":"2739","label_en":"chemical product","name":"chemical product"}}
+{"type":"EuroVocConcept","key":"eurovoc_2815","properties":{"eurovoc_id":"2815","label_en":"real property","name":"real property"}}
+{"type":"EuroVocConcept","key":"eurovoc_2824","properties":{"eurovoc_id":"2824","label_en":"noise protection","name":"noise protection"}}
+{"type":"EuroVocConcept","key":"eurovoc_2825","properties":{"eurovoc_id":"2825","label_en":"environmental protection","name":"environmental protection"}}
+{"type":"EuroVocConcept","key":"eurovoc_2828","properties":{"eurovoc_id":"2828","label_en":"protection of privacy","name":"protection of privacy"}}
+{"type":"EuroVocConcept","key":"eurovoc_2836","properties":{"eurovoc_id":"2836","label_en":"consumer protection","name":"consumer protection"}}
+{"type":"EuroVocConcept","key":"eurovoc_2843","properties":{"eurovoc_id":"2843","label_en":"care of mothers and infants","name":"care of mothers and infants"}}
+{"type":"EuroVocConcept","key":"eurovoc_2862","properties":{"eurovoc_id":"2862","label_en":"advertising","name":"advertising"}}
+{"type":"EuroVocConcept","key":"eurovoc_2863","properties":{"eurovoc_id":"2863","label_en":"advertising malpractice","name":"advertising malpractice"}}
+{"type":"EuroVocConcept","key":"eurovoc_2864","properties":{"eurovoc_id":"2864","label_en":"publication of accounts","name":"publication of accounts"}}
+{"type":"EuroVocConcept","key":"eurovoc_2868","properties":{"eurovoc_id":"2868","label_en":"professional qualifications","name":"professional qualifications"}}
+{"type":"EuroVocConcept","key":"eurovoc_2883","properties":{"eurovoc_id":"2883","label_en":"broadcasting","name":"broadcasting"}}
+{"type":"EuroVocConcept","key":"eurovoc_289","properties":{"eurovoc_id":"289","label_en":"consumer credit","name":"consumer credit"}}
+{"type":"EuroVocConcept","key":"eurovoc_2897","properties":{"eurovoc_id":"2897","label_en":"approximation of laws","name":"approximation of laws"}}
+{"type":"EuroVocConcept","key":"eurovoc_2932","properties":{"eurovoc_id":"2932","label_en":"recognition of diplomas","name":"recognition of diplomas"}}
+{"type":"EuroVocConcept","key":"eurovoc_2947","properties":{"eurovoc_id":"2947","label_en":"waste recycling","name":"waste recycling"}}
+{"type":"EuroVocConcept","key":"eurovoc_298","properties":{"eurovoc_id":"298","label_en":"real estate credit","name":"real estate credit"}}
+{"type":"EuroVocConcept","key":"eurovoc_30","properties":{"eurovoc_id":"30","label_en":"satellite communications","name":"satellite communications"}}
+{"type":"EuroVocConcept","key":"eurovoc_3010","properties":{"eurovoc_id":"3010","label_en":"electronic mail","name":"electronic mail"}}
+{"type":"EuroVocConcept","key":"eurovoc_3017","properties":{"eurovoc_id":"3017","label_en":"transmission network","name":"transmission network"}}
+{"type":"EuroVocConcept","key":"eurovoc_3028","properties":{"eurovoc_id":"3028","label_en":"data-processing law","name":"data-processing law"}}
+{"type":"EuroVocConcept","key":"eurovoc_3033","properties":{"eurovoc_id":"3033","label_en":"computer piracy","name":"computer piracy"}}
+{"type":"EuroVocConcept","key":"eurovoc_3069","properties":{"eurovoc_id":"3069","label_en":"aid for restructuring","name":"aid for restructuring"}}
+{"type":"EuroVocConcept","key":"eurovoc_3117","properties":{"eurovoc_id":"3117","label_en":"roadworthiness tests","name":"roadworthiness tests"}}
+{"type":"EuroVocConcept","key":"eurovoc_3135","properties":{"eurovoc_id":"3135","label_en":"toxic substance","name":"toxic substance"}}
+{"type":"EuroVocConcept","key":"eurovoc_3139","properties":{"eurovoc_id":"3139","label_en":"environmental impact","name":"environmental impact"}}
+{"type":"EuroVocConcept","key":"eurovoc_3140","properties":{"eurovoc_id":"3140","label_en":"environmental monitoring","name":"environmental monitoring"}}
+{"type":"EuroVocConcept","key":"eurovoc_3148","properties":{"eurovoc_id":"3148","label_en":"regulation of investments","name":"regulation of investments"}}
+{"type":"EuroVocConcept","key":"eurovoc_3159","properties":{"eurovoc_id":"3159","label_en":"motor vehicle pollution","name":"motor vehicle pollution"}}
+{"type":"EuroVocConcept","key":"eurovoc_3163","properties":{"eurovoc_id":"3163","label_en":"pollution from ships","name":"pollution from ships"}}
+{"type":"EuroVocConcept","key":"eurovoc_3164","properties":{"eurovoc_id":"3164","label_en":"industrial pollution","name":"industrial pollution"}}
+{"type":"EuroVocConcept","key":"eurovoc_3246","properties":{"eurovoc_id":"3246","label_en":"credit institution","name":"credit institution"}}
+{"type":"EuroVocConcept","key":"eurovoc_3299","properties":{"eurovoc_id":"3299","label_en":"single market","name":"single market"}}
+{"type":"EuroVocConcept","key":"eurovoc_3303","properties":{"eurovoc_id":"3303","label_en":"motor vehicle insurance","name":"motor vehicle insurance"}}
+{"type":"EuroVocConcept","key":"eurovoc_3349","properties":{"eurovoc_id":"3349","label_en":"physically disabled person","name":"physically disabled person"}}
+{"type":"EuroVocConcept","key":"eurovoc_34","properties":{"eurovoc_id":"34","label_en":"insurance company","name":"insurance company"}}
+{"type":"EuroVocConcept","key":"eurovoc_3422","properties":{"eurovoc_id":"3422","label_en":"information network","name":"information network"}}
+{"type":"EuroVocConcept","key":"eurovoc_3428","properties":{"eurovoc_id":"3428","label_en":"transport network","name":"transport network"}}
+{"type":"EuroVocConcept","key":"eurovoc_3460","properties":{"eurovoc_id":"3460","label_en":"residence","name":"residence"}}
+{"type":"EuroVocConcept","key":"eurovoc_3468","properties":{"eurovoc_id":"3468","label_en":"international convention","name":"international convention"}}
+{"type":"EuroVocConcept","key":"eurovoc_3545","properties":{"eurovoc_id":"3545","label_en":"self-employed person","name":"self-employed person"}}
+{"type":"EuroVocConcept","key":"eurovoc_3572","properties":{"eurovoc_id":"3572","label_en":"social partners","name":"social partners"}}
+{"type":"EuroVocConcept","key":"eurovoc_3575","properties":{"eurovoc_id":"3575","label_en":"trade union","name":"trade union"}}
+{"type":"EuroVocConcept","key":"eurovoc_3581","properties":{"eurovoc_id":"3581","label_en":"restriction on competition","name":"restriction on competition"}}
+{"type":"EuroVocConcept","key":"eurovoc_3593","properties":{"eurovoc_id":"3593","label_en":"dentist","name":"dentist"}}
+{"type":"EuroVocConcept","key":"eurovoc_3594","properties":{"eurovoc_id":"3594","label_en":"physician","name":"physician"}}
+{"type":"EuroVocConcept","key":"eurovoc_3595","properties":{"eurovoc_id":"3595","label_en":"veterinarian","name":"veterinarian"}}
+{"type":"EuroVocConcept","key":"eurovoc_3596","properties":{"eurovoc_id":"3596","label_en":"pharmacist","name":"pharmacist"}}
+{"type":"EuroVocConcept","key":"eurovoc_3597","properties":{"eurovoc_id":"3597","label_en":"midwife","name":"midwife"}}
+{"type":"EuroVocConcept","key":"eurovoc_3641","properties":{"eurovoc_id":"3641","label_en":"technical regulations","name":"technical regulations"}}
+{"type":"EuroVocConcept","key":"eurovoc_3646","properties":{"eurovoc_id":"3646","label_en":"European standard","name":"European standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_3647","properties":{"eurovoc_id":"3647","label_en":"international standard","name":"international standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_3648","properties":{"eurovoc_id":"3648","label_en":"harmonisation of standards","name":"harmonisation of standards"}}
+{"type":"EuroVocConcept","key":"eurovoc_3673","properties":{"eurovoc_id":"3673","label_en":"third-party insurance","name":"third-party insurance"}}
+{"type":"EuroVocConcept","key":"eurovoc_3681","properties":{"eurovoc_id":"3681","label_en":"transport of dangerous goods","name":"transport of dangerous goods"}}
+{"type":"EuroVocConcept","key":"eurovoc_3723","properties":{"eurovoc_id":"3723","label_en":"life assurance","name":"life assurance"}}
+{"type":"EuroVocConcept","key":"eurovoc_3730","properties":{"eurovoc_id":"3730","label_en":"health risk","name":"health risk"}}
+{"type":"EuroVocConcept","key":"eurovoc_3737","properties":{"eurovoc_id":"3737","label_en":"energy industry","name":"energy industry"}}
+{"type":"EuroVocConcept","key":"eurovoc_3751","properties":{"eurovoc_id":"3751","label_en":"pension scheme","name":"pension scheme"}}
+{"type":"EuroVocConcept","key":"eurovoc_378","properties":{"eurovoc_id":"378","label_en":"energy demand","name":"energy demand"}}
+{"type":"EuroVocConcept","key":"eurovoc_3783","properties":{"eurovoc_id":"3783","label_en":"electrical industry","name":"electrical industry"}}
+{"type":"EuroVocConcept","key":"eurovoc_3797","properties":{"eurovoc_id":"3797","label_en":"biotechnology","name":"biotechnology"}}
+{"type":"EuroVocConcept","key":"eurovoc_3843","properties":{"eurovoc_id":"3843","label_en":"pay","name":"pay"}}
+{"type":"EuroVocConcept","key":"eurovoc_3885","properties":{"eurovoc_id":"3885","label_en":"public health","name":"public health"}}
+{"type":"EuroVocConcept","key":"eurovoc_3906","properties":{"eurovoc_id":"3906","label_en":"freedom of movement","name":"freedom of movement"}}
+{"type":"EuroVocConcept","key":"eurovoc_3908","properties":{"eurovoc_id":"3908","label_en":"anti-discriminatory measure","name":"anti-discriminatory measure"}}
+{"type":"EuroVocConcept","key":"eurovoc_3913","properties":{"eurovoc_id":"3913","label_en":"gender equality","name":"gender equality"}}
+{"type":"EuroVocConcept","key":"eurovoc_3919","properties":{"eurovoc_id":"3919","label_en":"child protection","name":"child protection"}}
+{"type":"EuroVocConcept","key":"eurovoc_3937","properties":{"eurovoc_id":"3937","label_en":"time-sharing","name":"time-sharing"}}
+{"type":"EuroVocConcept","key":"eurovoc_3942","properties":{"eurovoc_id":"3942","label_en":"financial solvency","name":"financial solvency"}}
+{"type":"EuroVocConcept","key":"eurovoc_4003","properties":{"eurovoc_id":"4003","label_en":"foreign national","name":"foreign national"}}
+{"type":"EuroVocConcept","key":"eurovoc_4004","properties":{"eurovoc_id":"4004","label_en":"residence permit","name":"residence permit"}}
+{"type":"EuroVocConcept","key":"eurovoc_4015","properties":{"eurovoc_id":"4015","label_en":"EC Directive","name":"EC Directive"}}
+{"type":"EuroVocConcept","key":"eurovoc_4033","properties":{"eurovoc_id":"4033","label_en":"transport safety","name":"transport safety"}}
+{"type":"EuroVocConcept","key":"eurovoc_4036","properties":{"eurovoc_id":"4036","label_en":"product safety","name":"product safety"}}
+{"type":"EuroVocConcept","key":"eurovoc_4039","properties":{"eurovoc_id":"4039","label_en":"occupational safety","name":"occupational safety"}}
+{"type":"EuroVocConcept","key":"eurovoc_4047","properties":{"eurovoc_id":"4047","label_en":"road safety","name":"road safety"}}
+{"type":"EuroVocConcept","key":"eurovoc_4050","properties":{"eurovoc_id":"4050","label_en":"social security","name":"social security"}}
+{"type":"EuroVocConcept","key":"eurovoc_4074","properties":{"eurovoc_id":"4074","label_en":"environmental risk prevention","name":"environmental risk prevention"}}
+{"type":"EuroVocConcept","key":"eurovoc_4076","properties":{"eurovoc_id":"4076","label_en":"industrial hazard","name":"industrial hazard"}}
+{"type":"EuroVocConcept","key":"eurovoc_4099","properties":{"eurovoc_id":"4099","label_en":"service","name":"service"}}
+{"type":"EuroVocConcept","key":"eurovoc_4105","properties":{"eurovoc_id":"4105","label_en":"literary and artistic property","name":"literary and artistic property"}}
+{"type":"EuroVocConcept","key":"eurovoc_4122","properties":{"eurovoc_id":"4122","label_en":"free service","name":"free service"}}
+{"type":"EuroVocConcept","key":"eurovoc_4133","properties":{"eurovoc_id":"4133","label_en":"postal service","name":"postal service"}}
+{"type":"EuroVocConcept","key":"eurovoc_4167","properties":{"eurovoc_id":"4167","label_en":"town-planning profession","name":"town-planning profession"}}
+{"type":"EuroVocConcept","key":"eurovoc_4195","properties":{"eurovoc_id":"4195","label_en":"investment company","name":"investment company"}}
+{"type":"EuroVocConcept","key":"eurovoc_4199","properties":{"eurovoc_id":"4199","label_en":"partnership","name":"partnership"}}
+{"type":"EuroVocConcept","key":"eurovoc_4202","properties":{"eurovoc_id":"4202","label_en":"European company","name":"European company"}}
+{"type":"EuroVocConcept","key":"eurovoc_4250","properties":{"eurovoc_id":"4250","label_en":"economic stabilisation","name":"economic stabilisation"}}
+{"type":"EuroVocConcept","key":"eurovoc_4252","properties":{"eurovoc_id":"4252","label_en":"interprofessional agreement","name":"interprofessional agreement"}}
+{"type":"EuroVocConcept","key":"eurovoc_4293","properties":{"eurovoc_id":"4293","label_en":"energy storage","name":"energy storage"}}
+{"type":"EuroVocConcept","key":"eurovoc_4307","properties":{"eurovoc_id":"4307","label_en":"carcinogenic substance","name":"carcinogenic substance"}}
+{"type":"EuroVocConcept","key":"eurovoc_4308","properties":{"eurovoc_id":"4308","label_en":"dangerous substance","name":"dangerous substance"}}
+{"type":"EuroVocConcept","key":"eurovoc_433","properties":{"eurovoc_id":"433","label_en":"foreign currency","name":"foreign currency"}}
+{"type":"EuroVocConcept","key":"eurovoc_434743","properties":{"eurovoc_id":"434743","label_en":"climate change policy","name":"climate change policy"}}
+{"type":"EuroVocConcept","key":"eurovoc_435469","properties":{"eurovoc_id":"435469","label_en":"alternative dispute resolution","name":"alternative dispute resolution"}}
+{"type":"EuroVocConcept","key":"eurovoc_4359","properties":{"eurovoc_id":"4359","label_en":"information system","name":"information system"}}
+{"type":"EuroVocConcept","key":"eurovoc_4361","properties":{"eurovoc_id":"4361","label_en":"communications systems","name":"communications systems"}}
+{"type":"EuroVocConcept","key":"eurovoc_4373","properties":{"eurovoc_id":"4373","label_en":"tobacco","name":"tobacco"}}
+{"type":"EuroVocConcept","key":"eurovoc_441","properties":{"eurovoc_id":"441","label_en":"dissemination of information","name":"dissemination of information"}}
+{"type":"EuroVocConcept","key":"eurovoc_4424","properties":{"eurovoc_id":"4424","label_en":"telecommunications","name":"telecommunications"}}
+{"type":"EuroVocConcept","key":"eurovoc_4428","properties":{"eurovoc_id":"4428","label_en":"cable distribution","name":"cable distribution"}}
+{"type":"EuroVocConcept","key":"eurovoc_4435","properties":{"eurovoc_id":"4435","label_en":"rest period","name":"rest period"}}
+{"type":"EuroVocConcept","key":"eurovoc_4491","properties":{"eurovoc_id":"4491","label_en":"financial transaction","name":"financial transaction"}}
+{"type":"EuroVocConcept","key":"eurovoc_4492","properties":{"eurovoc_id":"4492","label_en":"transfer of businesses","name":"transfer of businesses"}}
+{"type":"EuroVocConcept","key":"eurovoc_45","properties":{"eurovoc_id":"45","label_en":"competitiveness","name":"competitiveness"}}
+{"type":"EuroVocConcept","key":"eurovoc_4511","properties":{"eurovoc_id":"4511","label_en":"carriage of passengers","name":"carriage of passengers"}}
+{"type":"EuroVocConcept","key":"eurovoc_4519","properties":{"eurovoc_id":"4519","label_en":"international transport","name":"international transport"}}
+{"type":"EuroVocConcept","key":"eurovoc_4522","properties":{"eurovoc_id":"4522","label_en":"maritime transport","name":"maritime transport"}}
+{"type":"EuroVocConcept","key":"eurovoc_4526","properties":{"eurovoc_id":"4526","label_en":"national transport","name":"national transport"}}
+{"type":"EuroVocConcept","key":"eurovoc_453","properties":{"eurovoc_id":"453","label_en":"access to information","name":"access to information"}}
+{"type":"EuroVocConcept","key":"eurovoc_4533","properties":{"eurovoc_id":"4533","label_en":"road transport","name":"road transport"}}
+{"type":"EuroVocConcept","key":"eurovoc_454","properties":{"eurovoc_id":"454","label_en":"sexual discrimination","name":"sexual discrimination"}}
+{"type":"EuroVocConcept","key":"eurovoc_4542","properties":{"eurovoc_id":"4542","label_en":"carrier","name":"carrier"}}
+{"type":"EuroVocConcept","key":"eurovoc_4551","properties":{"eurovoc_id":"4551","label_en":"night work","name":"night work"}}
+{"type":"EuroVocConcept","key":"eurovoc_4553","properties":{"eurovoc_id":"4553","label_en":"shift work","name":"shift work"}}
+{"type":"EuroVocConcept","key":"eurovoc_4557","properties":{"eurovoc_id":"4557","label_en":"worker (EU)","name":"worker (EU)"}}
+{"type":"EuroVocConcept","key":"eurovoc_4634","properties":{"eurovoc_id":"4634","label_en":"holiday","name":"holiday"}}
+{"type":"EuroVocConcept","key":"eurovoc_4646","properties":{"eurovoc_id":"4646","label_en":"securities","name":"securities"}}
+{"type":"EuroVocConcept","key":"eurovoc_4656","properties":{"eurovoc_id":"4656","label_en":"electric vehicle","name":"electric vehicle"}}
+{"type":"EuroVocConcept","key":"eurovoc_4663","properties":{"eurovoc_id":"4663","label_en":"sale","name":"sale"}}
+{"type":"EuroVocConcept","key":"eurovoc_4673","properties":{"eurovoc_id":"4673","label_en":"distance selling","name":"distance selling"}}
+{"type":"EuroVocConcept","key":"eurovoc_4675","properties":{"eurovoc_id":"4675","label_en":"auditing","name":"auditing"}}
+{"type":"EuroVocConcept","key":"eurovoc_475","properties":{"eurovoc_id":"475","label_en":"energy distribution","name":"energy distribution"}}
+{"type":"EuroVocConcept","key":"eurovoc_476","properties":{"eurovoc_id":"476","label_en":"water supply","name":"water supply"}}
+{"type":"EuroVocConcept","key":"eurovoc_4827","properties":{"eurovoc_id":"4827","label_en":"vessel","name":"vessel"}}
+{"type":"EuroVocConcept","key":"eurovoc_4831","properties":{"eurovoc_id":"4831","label_en":"building","name":"building"}}
+{"type":"EuroVocConcept","key":"eurovoc_4868","properties":{"eurovoc_id":"4868","label_en":"public library","name":"public library"}}
+{"type":"EuroVocConcept","key":"eurovoc_4877","properties":{"eurovoc_id":"4877","label_en":"cultural object","name":"cultural object"}}
+{"type":"EuroVocConcept","key":"eurovoc_4900","properties":{"eurovoc_id":"4900","label_en":"biogas","name":"biogas"}}
+{"type":"EuroVocConcept","key":"eurovoc_4983","properties":{"eurovoc_id":"4983","label_en":"purchase","name":"purchase"}}
+{"type":"EuroVocConcept","key":"eurovoc_5048","properties":{"eurovoc_id":"5048","label_en":"noise","name":"noise"}}
+{"type":"EuroVocConcept","key":"eurovoc_5070","properties":{"eurovoc_id":"5070","label_en":"administrative formalities","name":"administrative formalities"}}
+{"type":"EuroVocConcept","key":"eurovoc_5093","properties":{"eurovoc_id":"5093","label_en":"acquisition of property","name":"acquisition of property"}}
+{"type":"EuroVocConcept","key":"eurovoc_513","properties":{"eurovoc_id":"513","label_en":"right to information","name":"right to information"}}
+{"type":"EuroVocConcept","key":"eurovoc_5136","properties":{"eurovoc_id":"5136","label_en":"judgment of the Court (EU)","name":"judgment of the Court (EU)"}}
+{"type":"EuroVocConcept","key":"eurovoc_5181","properties":{"eurovoc_id":"5181","label_en":"data protection","name":"data protection"}}
+{"type":"EuroVocConcept","key":"eurovoc_5187","properties":{"eurovoc_id":"5187","label_en":"audiovisual production","name":"audiovisual production"}}
+{"type":"EuroVocConcept","key":"eurovoc_5188","properties":{"eurovoc_id":"5188","label_en":"information technology","name":"information technology"}}
+{"type":"EuroVocConcept","key":"eurovoc_5192","properties":{"eurovoc_id":"5192","label_en":"audiovisual piracy","name":"audiovisual piracy"}}
+{"type":"EuroVocConcept","key":"eurovoc_521","properties":{"eurovoc_id":"521","label_en":"law of banking","name":"law of banking"}}
+{"type":"EuroVocConcept","key":"eurovoc_5233","properties":{"eurovoc_id":"5233","label_en":"quality standard","name":"quality standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_5234","properties":{"eurovoc_id":"5234","label_en":"safety standard","name":"safety standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_5235","properties":{"eurovoc_id":"5235","label_en":"technical standard","name":"technical standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_5283","properties":{"eurovoc_id":"5283","label_en":"EU Member State","name":"EU Member State"}}
+{"type":"EuroVocConcept","key":"eurovoc_529","properties":{"eurovoc_id":"529","label_en":"copyright","name":"copyright"}}
+{"type":"EuroVocConcept","key":"eurovoc_532","properties":{"eurovoc_id":"532","label_en":"right of establishment","name":"right of establishment"}}
+{"type":"EuroVocConcept","key":"eurovoc_5334","properties":{"eurovoc_id":"5334","label_en":"disclosure of information","name":"disclosure of information"}}
+{"type":"EuroVocConcept","key":"eurovoc_539","properties":{"eurovoc_id":"539","label_en":"competition law","name":"competition law"}}
+{"type":"EuroVocConcept","key":"eurovoc_5392","properties":{"eurovoc_id":"5392","label_en":"load","name":"load"}}
+{"type":"EuroVocConcept","key":"eurovoc_5399","properties":{"eurovoc_id":"5399","label_en":"access to EU information","name":"access to EU information"}}
+{"type":"EuroVocConcept","key":"eurovoc_549","properties":{"eurovoc_id":"549","label_en":"insurance law","name":"insurance law"}}
+{"type":"EuroVocConcept","key":"eurovoc_5491","properties":{"eurovoc_id":"5491","label_en":"European citizenship","name":"European citizenship"}}
+{"type":"EuroVocConcept","key":"eurovoc_5498","properties":{"eurovoc_id":"5498","label_en":"codification of EU law","name":"codification of EU law"}}
+{"type":"EuroVocConcept","key":"eurovoc_5503","properties":{"eurovoc_id":"5503","label_en":"heating","name":"heating"}}
+{"type":"EuroVocConcept","key":"eurovoc_557","properties":{"eurovoc_id":"557","label_en":"labour law","name":"labour law"}}
+{"type":"EuroVocConcept","key":"eurovoc_5581","properties":{"eurovoc_id":"5581","label_en":"derogation from EU law","name":"derogation from EU law"}}
+{"type":"EuroVocConcept","key":"eurovoc_5585","properties":{"eurovoc_id":"5585","label_en":"sustainable development","name":"sustainable development"}}
+{"type":"EuroVocConcept","key":"eurovoc_5587","properties":{"eurovoc_id":"5587","label_en":"social dialogue","name":"social dialogue"}}
+{"type":"EuroVocConcept","key":"eurovoc_5595","properties":{"eurovoc_id":"5595","label_en":"personal data","name":"personal data"}}
+{"type":"EuroVocConcept","key":"eurovoc_560","properties":{"eurovoc_id":"560","label_en":"financial legislation","name":"financial legislation"}}
+{"type":"EuroVocConcept","key":"eurovoc_5606","properties":{"eurovoc_id":"5606","label_en":"drafting of EU law","name":"drafting of EU law"}}
+{"type":"EuroVocConcept","key":"eurovoc_5650","properties":{"eurovoc_id":"5650","label_en":"greenhouse gas","name":"greenhouse gas"}}
+{"type":"EuroVocConcept","key":"eurovoc_5672","properties":{"eurovoc_id":"5672","label_en":"waste incineration","name":"waste incineration"}}
+{"type":"EuroVocConcept","key":"eurovoc_5707","properties":{"eurovoc_id":"5707","label_en":"liberalisation of the market","name":"liberalisation of the market"}}
+{"type":"EuroVocConcept","key":"eurovoc_5710","properties":{"eurovoc_id":"5710","label_en":"hiring","name":"hiring"}}
+{"type":"EuroVocConcept","key":"eurovoc_5725","properties":{"eurovoc_id":"5725","label_en":"services contract","name":"services contract"}}
+{"type":"EuroVocConcept","key":"eurovoc_5726","properties":{"eurovoc_id":"5726","label_en":"EC conformity marking","name":"EC conformity marking"}}
+{"type":"EuroVocConcept","key":"eurovoc_5740","properties":{"eurovoc_id":"5740","label_en":"microorganism","name":"microorganism"}}
+{"type":"EuroVocConcept","key":"eurovoc_5754","properties":{"eurovoc_id":"5754","label_en":"environmental standard","name":"environmental standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_5768","properties":{"eurovoc_id":"5768","label_en":"genetically modified organism","name":"genetically modified organism"}}
+{"type":"EuroVocConcept","key":"eurovoc_5771","properties":{"eurovoc_id":"5771","label_en":"sponsorship","name":"sponsorship"}}
+{"type":"EuroVocConcept","key":"eurovoc_5782","properties":{"eurovoc_id":"5782","label_en":"tradeable emission permit","name":"tradeable emission permit"}}
+{"type":"EuroVocConcept","key":"eurovoc_5785","properties":{"eurovoc_id":"5785","label_en":"nursing staff","name":"nursing staff"}}
+{"type":"EuroVocConcept","key":"eurovoc_5794","properties":{"eurovoc_id":"5794","label_en":"EU environmental policy","name":"EU environmental policy"}}
+{"type":"EuroVocConcept","key":"eurovoc_5796","properties":{"eurovoc_id":"5796","label_en":"EU visa policy","name":"EU visa policy"}}
+{"type":"EuroVocConcept","key":"eurovoc_5810","properties":{"eurovoc_id":"5810","label_en":"accident prevention","name":"accident prevention"}}
+{"type":"EuroVocConcept","key":"eurovoc_5814","properties":{"eurovoc_id":"5814","label_en":"infringement procedure (EU)","name":"infringement procedure (EU)"}}
+{"type":"EuroVocConcept","key":"eurovoc_5861","properties":{"eurovoc_id":"5861","label_en":"energy grid","name":"energy grid"}}
+{"type":"EuroVocConcept","key":"eurovoc_5864","properties":{"eurovoc_id":"5864","label_en":"trans-European network","name":"trans-European network"}}
+{"type":"EuroVocConcept","key":"eurovoc_5889","properties":{"eurovoc_id":"5889","label_en":"maritime safety","name":"maritime safety"}}
+{"type":"EuroVocConcept","key":"eurovoc_592","properties":{"eurovoc_id":"592","label_en":"working time","name":"working time"}}
+{"type":"EuroVocConcept","key":"eurovoc_5936","properties":{"eurovoc_id":"5936","label_en":"administrative transparency","name":"administrative transparency"}}
+{"type":"EuroVocConcept","key":"eurovoc_6012","properties":{"eurovoc_id":"6012","label_en":"air conditioning","name":"air conditioning"}}
+{"type":"EuroVocConcept","key":"eurovoc_6013","properties":{"eurovoc_id":"6013","label_en":"closing of accounts","name":"closing of accounts"}}
+{"type":"EuroVocConcept","key":"eurovoc_6051","properties":{"eurovoc_id":"6051","label_en":"works council","name":"works council"}}
+{"type":"EuroVocConcept","key":"eurovoc_6064","properties":{"eurovoc_id":"6064","label_en":"audit","name":"audit"}}
+{"type":"EuroVocConcept","key":"eurovoc_6067","properties":{"eurovoc_id":"6067","label_en":"virtual library","name":"virtual library"}}
+{"type":"EuroVocConcept","key":"eurovoc_6088","properties":{"eurovoc_id":"6088","label_en":"Internet","name":"Internet"}}
+{"type":"EuroVocConcept","key":"eurovoc_6089","properties":{"eurovoc_id":"6089","label_en":"electronic commerce","name":"electronic commerce"}}
+{"type":"EuroVocConcept","key":"eurovoc_6099","properties":{"eurovoc_id":"6099","label_en":"recognition of vocational training qualifications","name":"recognition of vocational training qualifications"}}
+{"type":"EuroVocConcept","key":"eurovoc_6134","properties":{"eurovoc_id":"6134","label_en":"comparative advertising","name":"comparative advertising"}}
+{"type":"EuroVocConcept","key":"eurovoc_6139","properties":{"eurovoc_id":"6139","label_en":"regulation of telecommunications","name":"regulation of telecommunications"}}
+{"type":"EuroVocConcept","key":"eurovoc_614","properties":{"eurovoc_id":"614","label_en":"trading operation","name":"trading operation"}}
+{"type":"EuroVocConcept","key":"eurovoc_6140","properties":{"eurovoc_id":"6140","label_en":"information society","name":"information society"}}
+{"type":"EuroVocConcept","key":"eurovoc_616","properties":{"eurovoc_id":"616","label_en":"exchange of information","name":"exchange of information"}}
+{"type":"EuroVocConcept","key":"eurovoc_6173","properties":{"eurovoc_id":"6173","label_en":"trade dispute","name":"trade dispute"}}
+{"type":"EuroVocConcept","key":"eurovoc_6174","properties":{"eurovoc_id":"6174","label_en":"company in difficulties","name":"company in difficulties"}}
+{"type":"EuroVocConcept","key":"eurovoc_619","properties":{"eurovoc_id":"619","label_en":"intra-EU trade","name":"intra-EU trade"}}
+{"type":"EuroVocConcept","key":"eurovoc_6191","properties":{"eurovoc_id":"6191","label_en":"digitisation","name":"digitisation"}}
+{"type":"EuroVocConcept","key":"eurovoc_62","properties":{"eurovoc_id":"62","label_en":"consolidated account","name":"consolidated account"}}
+{"type":"EuroVocConcept","key":"eurovoc_6298","properties":{"eurovoc_id":"6298","label_en":"production standard","name":"production standard"}}
+{"type":"EuroVocConcept","key":"eurovoc_635","properties":{"eurovoc_id":"635","label_en":"market access","name":"market access"}}
+{"type":"EuroVocConcept","key":"eurovoc_6369","properties":{"eurovoc_id":"6369","label_en":"services of general interest","name":"services of general interest"}}
+{"type":"EuroVocConcept","key":"eurovoc_6400","properties":{"eurovoc_id":"6400","label_en":"reduction of gas emissions","name":"reduction of gas emissions"}}
+{"type":"EuroVocConcept","key":"eurovoc_6401","properties":{"eurovoc_id":"6401","label_en":"environmental liability","name":"environmental liability"}}
+{"type":"EuroVocConcept","key":"eurovoc_642","properties":{"eurovoc_id":"642","label_en":"energy saving","name":"energy saving"}}
+{"type":"EuroVocConcept","key":"eurovoc_6747","properties":{"eurovoc_id":"6747","label_en":"non-ionising radiation","name":"non-ionising radiation"}}
+{"type":"EuroVocConcept","key":"eurovoc_6749","properties":{"eurovoc_id":"6749","label_en":"entrepreneurship","name":"entrepreneurship"}}
+{"type":"EuroVocConcept","key":"eurovoc_6756","properties":{"eurovoc_id":"6756","label_en":"micro-enterprise","name":"micro-enterprise"}}
+{"type":"EuroVocConcept","key":"eurovoc_6851","properties":{"eurovoc_id":"6851","label_en":"intelligent transport system","name":"intelligent transport system"}}
+{"type":"EuroVocConcept","key":"eurovoc_688","properties":{"eurovoc_id":"688","label_en":"equal treatment","name":"equal treatment"}}
+{"type":"EuroVocConcept","key":"eurovoc_6924","properties":{"eurovoc_id":"6924","label_en":"paternity leave","name":"paternity leave"}}
+{"type":"EuroVocConcept","key":"eurovoc_7136","properties":{"eurovoc_id":"7136","label_en":"universal service","name":"universal service"}}
+{"type":"EuroVocConcept","key":"eurovoc_720","properties":{"eurovoc_id":"720","label_en":"packaging","name":"packaging"}}
+{"type":"EuroVocConcept","key":"eurovoc_7218","properties":{"eurovoc_id":"7218","label_en":"geographical information system","name":"geographical information system"}}
+{"type":"EuroVocConcept","key":"eurovoc_729","properties":{"eurovoc_id":"729","label_en":"issuing of currency","name":"issuing of currency"}}
+{"type":"EuroVocConcept","key":"eurovoc_730","properties":{"eurovoc_id":"730","label_en":"transport accident","name":"transport accident"}}
+{"type":"EuroVocConcept","key":"eurovoc_735","properties":{"eurovoc_id":"735","label_en":"employer","name":"employer"}}
+{"type":"EuroVocConcept","key":"eurovoc_7395","properties":{"eurovoc_id":"7395","label_en":"gas supply","name":"gas supply"}}
+{"type":"EuroVocConcept","key":"eurovoc_75","properties":{"eurovoc_id":"75","label_en":"competition","name":"competition"}}
+{"type":"EuroVocConcept","key":"eurovoc_82","properties":{"eurovoc_id":"82","label_en":"working conditions","name":"working conditions"}}
+{"type":"EuroVocConcept","key":"eurovoc_820","properties":{"eurovoc_id":"820","label_en":"European undertaking","name":"European undertaking"}}
+{"type":"EuroVocConcept","key":"eurovoc_825","properties":{"eurovoc_id":"825","label_en":"occupational accident","name":"occupational accident"}}
+{"type":"EuroVocConcept","key":"eurovoc_8412","properties":{"eurovoc_id":"8412","label_en":"biofuel","name":"biofuel"}}
+{"type":"EuroVocConcept","key":"eurovoc_8468","properties":{"eurovoc_id":"8468","label_en":"principle of legal certainty","name":"principle of legal certainty"}}
+{"type":"EuroVocConcept","key":"eurovoc_8469","properties":{"eurovoc_id":"8469","label_en":"financial services","name":"financial services"}}
+{"type":"EuroVocConcept","key":"eurovoc_8470","properties":{"eurovoc_id":"8470","label_en":"digital archiving","name":"digital archiving"}}
+{"type":"EuroVocConcept","key":"eurovoc_848","properties":{"eurovoc_id":"848","label_en":"vehicle parts","name":"vehicle parts"}}
+{"type":"EuroVocConcept","key":"eurovoc_849","properties":{"eurovoc_id":"849","label_en":"electronic equipment","name":"electronic equipment"}}
+{"type":"EuroVocConcept","key":"eurovoc_873","properties":{"eurovoc_id":"873","label_en":"educational institution","name":"educational institution"}}
+{"type":"EuroVocConcept","key":"eurovoc_893","properties":{"eurovoc_id":"893","label_en":"labelling","name":"labelling"}}
+{"type":"EuroVocConcept","key":"eurovoc_922","properties":{"eurovoc_id":"922","label_en":"financial aid","name":"financial aid"}}
+{"type":"EuroVocConcept","key":"eurovoc_965","properties":{"eurovoc_id":"965","label_en":"family","name":"family"}}
