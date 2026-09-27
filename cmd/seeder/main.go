@@ -327,10 +327,11 @@ var (
 	directivePattern = regexp.MustCompile(`\b(\d{4}/[\d]+/(?:EF|EØF|EU|EEC|EC|EØF))\b`)
 	celexPattern     = regexp.MustCompile(`\b(3\d{7}[A-Z]\d+)\b`)
 	eurovocPattern   = regexp.MustCompile(`eurovoc\.europa\.eu/(\d+)`)
-	// romanOnlyPattern matches a bare Roman numeral (I, II, III, …). Lovdata
-	// uses such <h2> headings as section dividers, not chapter titles, so they
-	// must not be rendered as "## Kapittel <n>. <roman>".
-	romanOnlyPattern = regexp.MustCompile(`(?i)^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$`)
+	// romanOnlyPattern matches a bare Roman numeral (I, II, III, …) with an
+	// optional trailing period ("I."), after trimming surrounding whitespace.
+	// Lovdata uses such <h2> headings as section dividers, not chapter titles,
+	// so they must not be rendered as "## Kapittel <n>. <roman>".
+	romanOnlyPattern = regexp.MustCompile(`(?i)^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\.?$`)
 )
 
 // ─── HTML helpers ─────────────────────────────────────────────────────────────
@@ -1651,20 +1652,13 @@ func sortedMapKeys[V any](m map[string]V) []string {
 // seedDateProps lists the object types whose properties are date-typed in the
 // blueprint schema pack, and the property names that must be emitted as valid
 // YYYY-MM-DD dates (never an empty/invalid string, which the server rejects
-// with a 400 for the whole object).
+// with a 400 for the whole object). date_of_publication is date-only even
+// though Lovdata carries a clock time (e.g. "2024-07-09 14:55") — the schema
+// types it as a bare date, so the clock time is dropped.
 var seedDateProps = map[string][]string{
-	"Law":         {"date_in_force", "last_change_in_force"},
-	"Regulation":  {"date_in_force", "last_change_in_force"},
+	"Law":         {"date_in_force", "last_change_in_force", "date_of_publication"},
+	"Regulation":  {"date_in_force", "last_change_in_force", "date_of_publication"},
 	"EUDirective": {"date_of_document", "date_of_effect"},
-}
-
-// seedDateTimeProps lists the date-typed properties whose Lovdata source carries
-// a clock time (e.g. "2024-07-09 14:55"). They are normalized to RFC3339 rather
-// than truncated to a bare date; the server's `coerceToDate` accepts RFC3339
-// datetime values, so the time is preserved under a `type: date` field.
-var seedDateTimeProps = map[string][]string{
-	"Law":        {"date_of_publication"},
-	"Regulation": {"date_of_publication"},
 }
 
 // seedDateRawProps maps a date/datetime property to the companion raw-text field
@@ -1721,23 +1715,8 @@ func normalizeDateValue(v any) (string, bool) {
 	return t.Format("2006-01-02"), true
 }
 
-// normalizeDateTimeValue parses a property value and returns the normalized
-// RFC3339 datetime form (preserving any clock time), or ok=false if the value
-// is empty, non-string, or not parseable.
-func normalizeDateTimeValue(v any) (string, bool) {
-	s, ok := v.(string)
-	if !ok {
-		return "", false
-	}
-	t, ok := parseDateValue(s)
-	if !ok {
-		return "", false
-	}
-	return t.Format(time.RFC3339), true
-}
-
-// normalizeDateProps normalizes the date- and datetime-typed properties of an
-// object record in place: parseable values are rewritten to their canonical form,
+// normalizeDateProps normalizes the date-typed properties of an object record
+// in place: parseable values are rewritten to their canonical YYYY-MM-DD form,
 // unparseable/empty ones are dropped, and an unparseable non-empty value is
 // preserved in its raw companion field (date_in_force_raw /
 // date_of_publication_raw) so the information is never silently lost.
@@ -1765,7 +1744,6 @@ func normalizeDateProps(objType string, props map[string]any, normCounts map[str
 		}
 	}
 	normalizeFields(seedDateProps[objType], normalizeDateValue)
-	normalizeFields(seedDateTimeProps[objType], normalizeDateTimeValue)
 }
 
 // ─── Object ingestion (Phase 1) ───────────────────────────────────────────────

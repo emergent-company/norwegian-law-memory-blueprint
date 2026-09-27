@@ -68,6 +68,95 @@ func TestParseLegalPOnlyDocument(t *testing.T) {
 	}
 }
 
+// legalArticleFixture reproduces the standard § (article) structure of the bulk
+// Lovdata corpus: an <article class="legalArticle"> whose body text lives in
+// nested <article class="legalP"> children under a legalArticleHeader.
+const legalArticleFixture = `<!DOCTYPE html><html lang="nb"><head><title>Lov om arbeidsmiljø</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">lov/2005-06-17-90</dd>
+<dt class="title">Tittel</dt><dd class="title">Lov om arbeidsmiljø</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<h1>Lov om arbeidsmiljø</h1>
+<article class="legalArticle" id="paragraf-1"><h3 class="legalArticleHeader"><span class="legalArticleValue">§ 1</span>. <span class="legalArticleTitle">Formål</span></h3><article class="legalP" id="paragraf-1-ledd-1">Lovens formål er å sikre trygge arbeidsforhold.</article><article class="legalP" id="paragraf-1-ledd-2">Arbeidsgiver skal sørge for et fullt forsvarlig arbeidsmiljø.</article></article>
+</main></body></html>`
+
+func TestParseLegalArticleDocument(t *testing.T) {
+	doc := parseDocument([]byte(legalArticleFixture), "Law")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+
+	const wantContent = "### § 1 — Formål\n\nLovens formål er å sikre trygge arbeidsforhold.\n\nArbeidsgiver skal sørge for et fullt forsvarlig arbeidsmiljø."
+	if doc.Content != wantContent {
+		t.Fatalf("Content mismatch:\n got: %q\nwant: %q", doc.Content, wantContent)
+	}
+
+	if len(doc.Paragraphs) != 1 {
+		t.Fatalf("Paragraphs len = %d, want 1: %+v", len(doc.Paragraphs), doc.Paragraphs)
+	}
+	p := doc.Paragraphs[0]
+	if p.SectionID != "paragraf-1" || p.ParagraphNum != "§ 1" || p.Title != "Formål" {
+		t.Fatalf("paragraph = %+v", p)
+	}
+	if !strings.Contains(p.Content, "Lovens formål er å sikre trygge arbeidsforhold.") ||
+		!strings.Contains(p.Content, "Arbeidsgiver skal sørge for et fullt forsvarlig arbeidsmiljø.") {
+		t.Fatalf("paragraph content missing body text: %q", p.Content)
+	}
+}
+
+// mixedDocFixture places a top-level legalP AND a legalArticle in the same
+// <main>, guarding against double-capture of the nested legalP paragraphs.
+const mixedDocFixture = `<!DOCTYPE html><html lang="nb"><head><title>Mixed</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2024-01-01-1</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<section class="section" id="kapittel-1"><h2>I</h2><article class="legalP" id="kapittel-1-ledd-1">Top-level paragraph text.</article></section>
+<article class="legalArticle" id="paragraf-1"><h3 class="legalArticleHeader"><span class="legalArticleValue">§ 1</span>. <span class="legalArticleTitle">Bestemmelse</span></h3><article class="legalP" id="paragraf-1-ledd-1">Nested article paragraph.</article></article>
+</main></body></html>`
+
+func TestParseMixedLegalPAndArticle(t *testing.T) {
+	doc := parseDocument([]byte(mixedDocFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+
+	if n := strings.Count(doc.Content, "Top-level paragraph text."); n != 1 {
+		t.Fatalf("top-level legalP text count = %d, want 1: %q", n, doc.Content)
+	}
+	if n := strings.Count(doc.Content, "Nested article paragraph."); n != 1 {
+		t.Fatalf("nested legalP text count = %d, want 1 (double-captured?): %q", n, doc.Content)
+	}
+
+	if len(doc.Paragraphs) != 2 {
+		t.Fatalf("Paragraphs len = %d, want 2: %+v", len(doc.Paragraphs), doc.Paragraphs)
+	}
+}
+
+// romanPeriodFixture uses an <h2> with a trailing period ("I."), which must also
+// be suppressed as a roman-only section divider.
+const romanPeriodFixture = `<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2024-01-01-1</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<section class="section" id="kapittel-1"><h2>I.</h2><article class="legalP" id="kapittel-1-ledd-1">Some body text.</article></section>
+</main></body></html>`
+
+func TestRomanOnlyHeadingWithPeriodSuppressed(t *testing.T) {
+	doc := parseDocument([]byte(romanPeriodFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if strings.Contains(doc.Content, "Kapittel") {
+		t.Fatalf("content must not contain a roman-only chapter heading with trailing period: %q", doc.Content)
+	}
+	if !strings.Contains(doc.Content, "Some body text.") {
+		t.Fatalf("body text lost: %q", doc.Content)
+	}
+}
+
 func TestNormalizeDateValue(t *testing.T) {
 	cases := []struct {
 		name string
@@ -98,24 +187,22 @@ func TestNormalizeDateValue(t *testing.T) {
 	}
 }
 
-func TestNormalizeDateTimeValue(t *testing.T) {
-	cases := []struct {
-		name string
-		in   any
-		want string
-		ok   bool
-	}{
-		{"clock time no seconds", "2024-07-09 14:55", "2024-07-09T14:55:00Z", true},
-		{"date only", "2024-07-09", "2024-07-09T00:00:00Z", true},
-		{"free text", "not a date", "", false},
+func TestNormalizeDateOfPublicationDateOnly(t *testing.T) {
+	props := map[string]any{
+		"date_of_publication": "2024-07-09 14:55",
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got, ok := normalizeDateTimeValue(tc.in)
-			if ok != tc.ok || got != tc.want {
-				t.Fatalf("normalizeDateTimeValue(%v) = (%q, %v); want (%q, %v)", tc.in, got, ok, tc.want, tc.ok)
-			}
-		})
+	normCounts := map[string]int{}
+	rawMoved := 0
+	normalizeDateProps("Regulation", props, normCounts, &rawMoved)
+
+	if got := props["date_of_publication"]; got != "2024-07-09" {
+		t.Fatalf("date_of_publication = %v, want 2024-07-09", got)
+	}
+	if _, ok := props["date_of_publication_raw"]; ok {
+		t.Fatalf("date_of_publication_raw should not be set for a parseable value: %v", props)
+	}
+	if rawMoved != 0 {
+		t.Fatalf("rawMoved = %d, want 0", rawMoved)
 	}
 }
 

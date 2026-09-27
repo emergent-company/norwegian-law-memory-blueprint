@@ -48,7 +48,7 @@ objectTypes:
         description: Date of last amendment in force (YYYY-MM-DD)
       date_of_publication:
         type: date
-        description: Date of official publication (RFC3339; source carries a clock time)
+        description: Date of official publication; clock time from the source is dropped
       date_of_publication_raw:
         type: string
         description: Raw Lovdata publication text when it is not a parseable date
@@ -104,7 +104,7 @@ objectTypes:
         description: Date of last amendment in force (YYYY-MM-DD)
       date_of_publication:
         type: date
-        description: Date of official publication (RFC3339; source carries a clock time)
+        description: Date of official publication; clock time from the source is dropped
       date_of_publication_raw:
         type: string
         description: Raw Lovdata publication text when it is not a parseable date
