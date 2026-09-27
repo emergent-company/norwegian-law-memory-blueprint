@@ -1,0 +1,63 @@
+# NOTICE — data & third-party attributions
+
+This repository redistributes legal data and adapts a third-party parser design.
+The attributions below cover the obligations attached to those inputs.
+
+## Lovdata — Norwegian Licence for Open Government Data (NLOD 2.0)
+
+The seed corpus is a derivative of Lovdata's public datasets
+(`gjeldende-lover`, `gjeldende-sentrale-forskrifter`), made available by
+**Lovdata** under the **Norwegian Licence for Open Government Data (NLOD 2.0)**:
+
+- Licence: <https://data.norge.no/nlod/en/2.0>
+- Licensor: Lovdata
+
+Norsk: *«Inneholder data under Norsk lisens for offentlige data (NLOD)
+tilgjengeliggjort av Lovdata.»*
+
+English: *"Contains data under the Norwegian Licence for Open Government Data
+(NLOD) distributed by Lovdata."*
+
+The data has been **changed** by this project: the raw Lovdata XML/HTML has been
+parsed, rendered to Markdown, and restructured into the object/relationship
+format in `seed/`. This repository publishes that derivative, not the original
+source files.
+
+## MIT — parser design lineage
+
+The Lovdata HTML class taxonomy used by our seeder (`cmd/seeder`) follows the
+reference parser:
+
+- <https://github.com/sondreskarsten/norwegian-laws>
+- `lovdata-loader/src/lovdata_loader/parser.py` — **MIT**
+
+Under the terms of that MIT licence, this notice reproduces the copyright and
+permission statement:
+
+> Copyright (c) the `norwegian-laws` contributors.
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
+
+## Note on this repository's own licence
+
+The repository metadata (`schemas/norwegian-law.yaml`) declares `license: MIT`
+for the source code, and the README states "Source code: MIT." This `NOTICE`
+does not independently re-assert a licence for the whole repository beyond what
+is already declared; the data portions are governed by the third-party licences
+above (NLOD 2.0, and the EU Publications Office public data).
