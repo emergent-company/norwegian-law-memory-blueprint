@@ -539,7 +539,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 				continue
 			}
 			switch cls {
-			case "legalArticleHeader":
+			case "legalArticleHeader", "futureLegalArticleHeader":
 				continue
 			case "numberedLegalP", "legalP", "defaultP", "centeredP", "legalPfortsettelse", "leddfortsettelse":
 				text := strings.TrimSpace(extractPlainText(c))
@@ -636,34 +636,55 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 			paraNum := ""
 			paraTitle := ""
 			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				if c.Type == html.ElementNode && c.Data == "h3" && attr(c, "class") == "legalArticleHeader" {
-					for sc := c.FirstChild; sc != nil; sc = sc.NextSibling {
-						if sc.Type != html.ElementNode {
-							continue
+				if c.Type != html.ElementNode {
+					continue
+				}
+				hcls := attr(c, "class")
+				// Lovdata marks the § header with class "legalArticleHeader" on
+				// any heading level (h2–h6, and occasionally a div), plus the newer
+				// "futureLegalArticleHeader" span form. Match the CLASS, not the
+				// tag, so h4 (e.g. skatteloven) and the future form are captured.
+				if hcls != "legalArticleHeader" && hcls != "futureLegalArticleHeader" {
+					continue
+				}
+				// Search the header's subtree (bounded to this element) for the
+				// value/title spans so nesting differences don't drop them.
+				for _, span := range findAll(c, "span") {
+					switch attr(span, "class") {
+					case "legalArticleValue":
+						if paraNum == "" {
+							paraNum = strings.TrimSpace(extractPlainText(span))
 						}
-						switch attr(sc, "class") {
-						case "legalArticleValue":
-							paraNum = strings.TrimSpace(extractPlainText(sc))
-						case "legalArticleTitle":
-							paraTitle = strings.TrimSpace(extractPlainText(sc))
+					case "legalArticleTitle":
+						if paraTitle == "" {
+							paraTitle = strings.TrimSpace(extractPlainText(span))
 						}
 					}
-					break
 				}
+				break
 			}
 
-			h3 := "### " + paraNum
-			if paraTitle != "" {
-				h3 += " — " + paraTitle
+			// Build the heading from non-empty parts only; emit no stray "### "
+			// when both the number and title are empty (the body row is kept).
+			var heading string
+			switch {
+			case paraNum != "" && paraTitle != "":
+				heading = "### " + paraNum + " — " + paraTitle
+			case paraNum != "":
+				heading = "### " + paraNum
+			case paraTitle != "":
+				heading = "### " + paraTitle
 			}
-			sb.WriteString(h3 + "\n\n")
+			if heading != "" {
+				sb.WriteString(heading + "\n\n")
+			}
 
 			bodyText := renderArticleContent(n)
 			sb.WriteString(bodyText)
 
 			collectEURefs(n)
 
-			paraContent := strings.TrimSpace(h3 + "\n\n" + bodyText)
+			paraContent := strings.TrimSpace(heading + "\n\n" + bodyText)
 			if paraContent != "" && sectionID != "" {
 				paragraphs = append(paragraphs, LovParagraph{
 					SectionID:    sectionID,
