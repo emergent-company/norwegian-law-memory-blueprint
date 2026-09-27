@@ -13,7 +13,7 @@ import (
 const (
 	// manifestVersion is the schema version of seed/manifest.json. Bump when the
 	// manifest shape changes.
-	manifestVersion = 3
+	manifestVersion = 4
 	// parserVersion identifies the parser/source-hash pipeline that produced the
 	// manifest. Bump when parseDocument or the source-hash computation changes
 	// materially, so a manifest built by an older parser is distinguishable.
@@ -62,6 +62,14 @@ type manifestCoverage struct {
 	DocsBelow095 int     `json:"docs_below_0_95"`
 }
 
+// manifestQuality records corpus-level data-quality anomalies so they are
+// visible and trendable (e.g. Lovdata error placeholders ingested in place of a
+// real body).
+type manifestQuality struct {
+	ContentUnavailable     int      `json:"content_unavailable"`
+	ContentUnavailableRefs []string `json:"content_unavailable_refs"`
+}
+
 // seedManifest is the on-disk seed/manifest.json schema. It contains no
 // timestamps, so two dumps over identical inputs are byte-identical.
 type seedManifest struct {
@@ -78,6 +86,7 @@ type seedManifest struct {
 	Documents       map[string]manifestDoc `json:"documents"`
 	Counts          manifestCounts         `json:"counts"`
 	Coverage        manifestCoverage       `json:"coverage"`
+	Quality         manifestQuality        `json:"quality"`
 }
 
 func sha256Hex(b []byte) string {
@@ -140,6 +149,19 @@ func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objC
 	}
 	if unknown > 0 {
 		fmt.Fprintf(os.Stderr, "  [manifest] WARN: %d source document(s) have no source hash (old cache?) — recorded as \"unknown\"\n", unknown)
+	}
+
+	// Quality: collect content-unavailable refids (sorted for byte stability).
+	var unavailable []string
+	for _, d := range docs {
+		if d.ContentUnavailable {
+			unavailable = append(unavailable, d.RefID)
+		}
+	}
+	sort.Strings(unavailable)
+	m.Quality = manifestQuality{
+		ContentUnavailable:     len(unavailable),
+		ContentUnavailableRefs: unavailable,
 	}
 
 	// Deterministic order for source_archives regardless of load order.

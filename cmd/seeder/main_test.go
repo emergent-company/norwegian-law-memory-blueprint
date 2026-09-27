@@ -748,3 +748,83 @@ func TestGrunnlovenDocument(t *testing.T) {
 		t.Fatalf("historic law body not captured: %q", doc.Content)
 	}
 }
+
+// contentUnavailableFixture reproduces the Lovdata error placeholder: the body
+// carries class="errorMessage" and the literal message text.
+const contentUnavailableFixture = `<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/2020-03-09-720</dd>
+<dt class="title">Tittel</dt><dd class="title">Forskrift om offentlig kontroll</dd>
+</dl></header>
+<main class="documentBody" id="dokument"><span class="errorMessage"><strong>Vi klarer dessverre ikke vise hele dokumentet.</strong></span></main>
+</body></html>`
+
+func TestContentUnavailablePlaceholder(t *testing.T) {
+	doc := parseDocument([]byte(contentUnavailableFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if !doc.ContentUnavailable {
+		t.Fatalf("ContentUnavailable = false; want true for error placeholder")
+	}
+	if doc.Content != "" {
+		t.Fatalf("Content = %q; want empty", doc.Content)
+	}
+	if len(doc.Paragraphs) != 0 {
+		t.Fatalf("Paragraphs = %d; want 0", len(doc.Paragraphs))
+	}
+
+	recs := buildSeedObjectRecords([]LovDoc{*doc}, nil, nil)
+	var reg *seedObjectRecord
+	for i := range recs {
+		if recs[i].Type == "Regulation" {
+			reg = &recs[i]
+			break
+		}
+	}
+	if reg == nil {
+		t.Fatal("no Regulation object emitted (must not be dropped)")
+	}
+	if reg.Properties["content_unavailable"] != true {
+		t.Fatalf("content_unavailable not set: %+v", reg.Properties)
+	}
+	if _, has := reg.Properties["content"]; has {
+		t.Fatalf("content must be omitted when empty: %+v", reg.Properties)
+	}
+}
+
+// shortNoMarkerFixture is a legitimate short document whose body has no
+// legalArticle/legalP and no error marker (like del/sf-19900428-0348.xml). It
+// must NOT be flagged.
+const shortNoMarkerFixture = `<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">forskrift/1990-04-28-348</dd>
+<dt class="title">Tittel</dt><dd class="title">Forskrift om kort</dd>
+</dl></header>
+<main class="documentBody" id="dokument"><h1>Forskrift om kort</h1></main>
+</body></html>`
+
+func TestShortDocumentWithoutMarkerNotFlagged(t *testing.T) {
+	doc := parseDocument([]byte(shortNoMarkerFixture), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if doc.ContentUnavailable {
+		t.Fatalf("ContentUnavailable = true; want false (no error marker)")
+	}
+
+	recs := buildSeedObjectRecords([]LovDoc{*doc}, nil, nil)
+	var reg *seedObjectRecord
+	for i := range recs {
+		if recs[i].Type == "Regulation" {
+			reg = &recs[i]
+			break
+		}
+	}
+	if reg == nil {
+		t.Fatal("no Regulation object emitted")
+	}
+	if _, has := reg.Properties["content_unavailable"]; has {
+		t.Fatalf("content_unavailable must NOT be set: %+v", reg.Properties)
+	}
+}

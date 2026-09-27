@@ -1,5 +1,5 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 4,
   "parser_version": "1",
   "dataset": "both",
   "source": "Lovdata",
@@ -23508,5 +23508,11 @@
     "min": 0,
     "docs_below_0_99": 1898,
     "docs_below_0_95": 322
+  },
+  "quality": {
+    "content_unavailable": 1,
+    "content_unavailable_refs": [
+      "forskrift/2020-03-09-720"
+    ]
   }
 }
