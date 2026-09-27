@@ -532,3 +532,119 @@ func TestPartHeadingDoesNotOverMatchRealTitles(t *testing.T) {
 		})
 	}
 }
+
+// articleDoc builds a minimal Law document with a single <article
+// class="legalArticle" id="paragraf-1"> carrying the given header HTML and body
+// text, so header extraction can be asserted in isolation.
+func articleDoc(headerHTML, bodyText string) string {
+	return fmt.Sprintf(`<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">lov/2020-01-01-1</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<article class="legalArticle" id="paragraf-1">%s<article class="legalP" id="paragraf-1-ledd-1">%s</article></article>
+</main></body></html>`, headerHTML, bodyText)
+}
+
+func TestArticleHeaderLevels(t *testing.T) {
+	levels := []string{"h2", "h3", "h4", "h5", "h6"}
+	for _, lvl := range levels {
+		t.Run(lvl, func(t *testing.T) {
+			header := fmt.Sprintf(`<%s class="legalArticleHeader"><span class="legalArticleValue">§ 1</span>. <span class="legalArticleTitle">Tittel</span></%s>`, lvl, lvl)
+			doc := parseDocument([]byte(articleDoc(header, "Body text.")), "Law")
+			if doc == nil {
+				t.Fatal("parseDocument returned nil")
+			}
+			if len(doc.Paragraphs) != 1 {
+				t.Fatalf("Paragraphs = %d, want 1: %+v", len(doc.Paragraphs), doc.Paragraphs)
+			}
+			p := doc.Paragraphs[0]
+			if p.ParagraphNum != "§ 1" || p.Title != "Tittel" {
+				t.Fatalf("paragraph num/title not extracted: %+v", p)
+			}
+			if !strings.HasPrefix(p.Content, "### § 1 — Tittel") {
+				t.Fatalf("heading not rendered: %q", p.Content)
+			}
+		})
+	}
+}
+
+func TestFutureLegalArticleHeader(t *testing.T) {
+	header := `<span class="futureLegalArticleHeader"><span class="legalArticleValue">§ 3-2</span>. <span class="legalArticleTitle">Strategisk obligasjonsindeks</span></span>`
+	doc := parseDocument([]byte(articleDoc(header, "Body text.")), "Regulation")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if len(doc.Paragraphs) != 1 {
+		t.Fatalf("Paragraphs = %d, want 1: %+v", len(doc.Paragraphs), doc.Paragraphs)
+	}
+	p := doc.Paragraphs[0]
+	if p.ParagraphNum != "§ 3-2" || p.Title != "Strategisk obligasjonsindeks" {
+		t.Fatalf("future header not extracted: %+v", p)
+	}
+	if !strings.HasPrefix(p.Content, "### § 3-2 — Strategisk obligasjonsindeks") {
+		t.Fatalf("heading not rendered: %q", p.Content)
+	}
+	// The header text must not leak into the body (it is skipped by
+	// renderArticleContent), so the title appears exactly once.
+	if n := strings.Count(p.Content, "Strategisk obligasjonsindeks"); n != 1 {
+		t.Fatalf("future header title appears %d times, want 1 (leaked into body?): %q", n, p.Content)
+	}
+}
+
+func TestArticleHeaderNestedSpans(t *testing.T) {
+	header := `<h3 class="legalArticleHeader"><span class="wrap"><span class="legalArticleValue">§ 1</span></span>. <span class="wrap"><span class="legalArticleTitle">Tittel</span></span></h3>`
+	doc := parseDocument([]byte(articleDoc(header, "Body text.")), "Law")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if len(doc.Paragraphs) != 1 {
+		t.Fatalf("Paragraphs = %d, want 1: %+v", len(doc.Paragraphs), doc.Paragraphs)
+	}
+	p := doc.Paragraphs[0]
+	if p.ParagraphNum != "§ 1" || p.Title != "Tittel" {
+		t.Fatalf("nested value/title spans not extracted: %+v", p)
+	}
+}
+
+func TestArticleHeaderTitleOnly(t *testing.T) {
+	header := `<h3 class="legalArticleHeader"><span class="legalArticleTitle">Tittel</span></h3>`
+	doc := parseDocument([]byte(articleDoc(header, "Body text.")), "Law")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if len(doc.Paragraphs) != 1 {
+		t.Fatalf("Paragraphs = %d, want 1: %+v", len(doc.Paragraphs), doc.Paragraphs)
+	}
+	p := doc.Paragraphs[0]
+	if p.ParagraphNum != "" || p.Title != "Tittel" {
+		t.Fatalf("title-only extraction wrong: %+v", p)
+	}
+	if !strings.HasPrefix(p.Content, "### Tittel") {
+		t.Fatalf("title-only heading not rendered: %q", p.Content)
+	}
+	if strings.Contains(p.Content, "###  —") || strings.Contains(p.Content, "### \n") {
+		t.Fatalf("stray '### ' emitted for title-only: %q", p.Content)
+	}
+}
+
+func TestArticleHeaderEmptyNoStrayHeading(t *testing.T) {
+	header := `<h3 class="legalArticleHeader"></h3>`
+	doc := parseDocument([]byte(articleDoc(header, "Body text.")), "Law")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if len(doc.Paragraphs) != 1 {
+		t.Fatalf("Paragraphs = %d, want 1: %+v", len(doc.Paragraphs), doc.Paragraphs)
+	}
+	p := doc.Paragraphs[0]
+	if p.ParagraphNum != "" || p.Title != "" {
+		t.Fatalf("empty header must leave num/title empty: %+v", p)
+	}
+	if strings.Contains(p.Content, "###") {
+		t.Fatalf("stray '###' heading emitted: %q", p.Content)
+	}
+	if !strings.Contains(p.Content, "Body text.") {
+		t.Fatalf("body text lost: %q", p.Content)
+	}
+}
