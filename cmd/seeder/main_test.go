@@ -648,3 +648,103 @@ func TestArticleHeaderEmptyNoStrayHeading(t *testing.T) {
 		t.Fatalf("body text lost: %q", p.Content)
 	}
 }
+
+// nynorskFixture is a Nynorsk (<html lang="nn">) law used to assert language
+// detection and body capture for the second written standard.
+const nynorskFixture = `<!DOCTYPE html><html lang="nn"><head><title>Lov om</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">lov/2020-01-01-10</dd>
+<dt class="title">Tittel</dt><dd class="title">Lov om nynorsk</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<article class="legalArticle" id="paragraf-1"><h3 class="legalArticleHeader"><span class="legalArticleValue">§ 1</span>. <span class="legalArticleTitle">Føremål</span></h3><article class="legalP" id="paragraf-1-ledd-1">Lova sitt føremål er å tryggje trygge arbeidsforhold.</article></article>
+</main></body></html>`
+
+func TestNynorskDocument(t *testing.T) {
+	doc := parseDocument([]byte(nynorskFixture), "Law")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if doc.Language != "nn" {
+		t.Fatalf("Language = %q, want nn", doc.Language)
+	}
+	if !strings.Contains(doc.Content, "Lova sitt føremål er å tryggje") {
+		t.Fatalf("Nynorsk body not captured: %q", doc.Content)
+	}
+}
+
+// eeaFixture reproduces a header eeaReferences block whose <dd> carries an
+// eu/<celex> link, matching the bulk corpus shape.
+const eeaFixture = `<!DOCTYPE html><html lang="nb"><head><title>X</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">lov/2026-06-19-63</dd>
+<dt class="eeaReferences">EU/EØS-henvisning</dt><dd class="eeaReferences"><a href="avtale/avt-1992-05-02-1-v13">EØS-avtalen vedlegg XIII</a> <br />nr. 5a (forordning <a href="eu/32023r1804">(EU) 2023/1804</a>)</dd>
+<dt class="title">Tittel</dt><dd class="title">Lov om infrastruktur</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<article class="legalArticle" id="paragraf-1"><h3 class="legalArticleHeader"><span class="legalArticleValue">§ 1</span>. <span class="legalArticleTitle">Formål</span></h3><article class="legalP">Body.</article></article>
+</main></body></html>`
+
+func TestEEAReferencesCaptured(t *testing.T) {
+	doc := parseDocument([]byte(eeaFixture), "Law")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+	if !strings.Contains(doc.EEAReferences, "EØS-avtalen vedlegg XIII") {
+		t.Fatalf("EEAReferences missing link text: %q", doc.EEAReferences)
+	}
+	if !strings.Contains(doc.EEAReferences, "2023/1804") {
+		t.Fatalf("EEAReferences missing celex link text: %q", doc.EEAReferences)
+	}
+}
+
+func TestDuplicateRefIDDedupeFirstWins(t *testing.T) {
+	// Two documents sharing one RefID model the language-variant duplication that
+	// dedupeSeedObjects must collapse (first occurrence wins).
+	docs := []LovDoc{
+		{RefID: "lov/2020-01-01-1", DocType: "Law", Title: "First", Content: "body one", Paragraphs: []LovParagraph{{SectionID: "p1", Content: "text", Position: 1}}},
+		{RefID: "lov/2020-01-01-1", DocType: "Law", Title: "Second", Content: "body two", Paragraphs: []LovParagraph{{SectionID: "p1", Content: "text", Position: 1}}},
+	}
+	recs := buildSeedObjectRecords(docs, nil, nil)
+	lawCount := 0
+	lawTitle := ""
+	for _, r := range recs {
+		if r.Type == "Law" {
+			lawCount++
+			lawTitle, _ = r.Properties["title"].(string)
+		}
+	}
+	if lawCount != 1 {
+		t.Fatalf("Law objects = %d, want 1", lawCount)
+	}
+	if lawTitle != "First" {
+		t.Fatalf("first occurrence not kept: title = %q", lawTitle)
+	}
+}
+
+// grunnlovenFixture models a historic law (Grunnloven, lov/1814-05-17) with a
+// pre-1900 refid; it must parse and produce content without error.
+const grunnlovenFixture = `<!DOCTYPE html><html lang="nb"><head><title>Kongeriket Noregs Grunnlov</title></head><body>
+<header class="documentHeader" id="hode"><dl class="data-document-key-info">
+<dt class="refid">RefID</dt><dd class="refid">lov/1814-05-17</dd>
+<dt class="title">Tittel</dt><dd class="title">Kongeriket Noregs Grunnlov</dd>
+</dl></header>
+<main class="documentBody" id="dokument">
+<article class="legalArticle" id="paragraf-1"><h3 class="legalArticleHeader"><span class="legalArticleValue">§ 1</span>. <span class="legalArticleTitle">Riket er eit fritt, sjølvstendigt, udelelegt og uavhendelegt rike</span></h3><article class="legalP">Kongeriket Noreg er eit fritt, sjølvstendigt, udelelegt og uavhendelegt rike.</article></article>
+</main></body></html>`
+
+func TestGrunnlovenDocument(t *testing.T) {
+	doc := parseDocument([]byte(grunnlovenFixture), "Law")
+	if doc == nil {
+		t.Fatal("parseDocument returned nil for historic law")
+	}
+	if doc.RefID != "lov/1814-05-17" {
+		t.Fatalf("RefID = %q", doc.RefID)
+	}
+	if doc.Content == "" {
+		t.Fatal("historic law produced no content")
+	}
+	if !strings.Contains(doc.Content, "Kongeriket Noreg er eit fritt") {
+		t.Fatalf("historic law body not captured: %q", doc.Content)
+	}
+}

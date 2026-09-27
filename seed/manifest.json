@@ -1,7 +1,13 @@
 {
-  "manifest_version": 1,
+  "manifest_version": 3,
   "parser_version": "1",
   "dataset": "both",
+  "source": "Lovdata",
+  "license": "NLOD-2.0",
+  "license_url": "https://data.norge.no/nlod/en/2.0",
+  "attribution": "Data from Lovdata (https://lovdata.no/), licensed under the Norwegian Licence for Open Government Data (NLOD) 2.0. The data has been parsed, restructured and rendered into a knowledge-graph seed; changes were made.",
+  "changes_made": true,
+  "notice_file": "NOTICE",
   "source_archives": [
     {
       "name": "gjeldende-lover.tar.bz2",
@@ -23495,5 +23501,12 @@
       "Ministry": 18,
       "Regulation": 5111
     }
+  },
+  "coverage": {
+    "docs": 5868,
+    "mean": 0.9873894961508877,
+    "min": 0,
+    "docs_below_0_99": 1898,
+    "docs_below_0_95": 322
   }
 }

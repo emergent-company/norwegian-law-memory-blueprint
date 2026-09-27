@@ -13,11 +13,20 @@ import (
 const (
 	// manifestVersion is the schema version of seed/manifest.json. Bump when the
 	// manifest shape changes.
-	manifestVersion = 1
+	manifestVersion = 3
 	// parserVersion identifies the parser/source-hash pipeline that produced the
 	// manifest. Bump when parseDocument or the source-hash computation changes
 	// materially, so a manifest built by an older parser is distinguishable.
 	parserVersion = "1"
+
+	// Dataset-level provenance. NLOD-2.0 requires attribution, not per-record
+	// provenance, so provenance lives here (per-record would mean ~144k-record
+	// churn plus a schema change across every object type).
+	manifestSource      = "Lovdata"
+	manifestLicense     = "NLOD-2.0"
+	manifestLicenseURL  = "https://data.norge.no/nlod/en/2.0"
+	manifestAttribution = "Data from Lovdata (https://lovdata.no/), licensed under the Norwegian Licence for Open Government Data (NLOD) 2.0. The data has been parsed, restructured and rendered into a knowledge-graph seed; changes were made."
+	manifestNoticeFile  = "NOTICE"
 )
 
 // sourceArchive records one source archive file used for the export. mtime is
@@ -44,15 +53,31 @@ type manifestCounts struct {
 	ByType        map[string]int `json:"by_type"`
 }
 
+// manifestCoverage aggregates per-document token coverage for the coverage gate.
+type manifestCoverage struct {
+	Docs         int     `json:"docs"`
+	Mean         float64 `json:"mean"`
+	Min          float64 `json:"min"`
+	DocsBelow099 int     `json:"docs_below_0_99"`
+	DocsBelow095 int     `json:"docs_below_0_95"`
+}
+
 // seedManifest is the on-disk seed/manifest.json schema. It contains no
 // timestamps, so two dumps over identical inputs are byte-identical.
 type seedManifest struct {
 	ManifestVersion int                    `json:"manifest_version"`
 	ParserVersion   string                 `json:"parser_version"`
 	Dataset         string                 `json:"dataset"`
+	Source          string                 `json:"source"`
+	License         string                 `json:"license"`
+	LicenseURL      string                 `json:"license_url"`
+	Attribution     string                 `json:"attribution"`
+	ChangesMade     bool                   `json:"changes_made"`
+	NoticeFile      string                 `json:"notice_file"`
 	SourceArchives  []sourceArchive        `json:"source_archives"`
 	Documents       map[string]manifestDoc `json:"documents"`
 	Counts          manifestCounts         `json:"counts"`
+	Coverage        manifestCoverage       `json:"coverage"`
 }
 
 func sha256Hex(b []byte) string {
@@ -79,16 +104,29 @@ func hashFile(path string) (string, int64, error) {
 // documents map is keyed by ref_id; each hash is the source-bytes hash. A doc
 // with no hash (old cache written by a pre-hash binary) is recorded as
 // "unknown" and a single warning is emitted.
-func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objCount, relCount int, objByType map[string]int) seedManifest {
+func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objCount, relCount int, objByType map[string]int, cov coverageSummary) seedManifest {
 	m := seedManifest{
 		ManifestVersion: manifestVersion,
 		ParserVersion:   parserVersion,
 		Dataset:         dataset,
+		Source:          manifestSource,
+		License:         manifestLicense,
+		LicenseURL:      manifestLicenseURL,
+		Attribution:     manifestAttribution,
+		ChangesMade:     true,
+		NoticeFile:      manifestNoticeFile,
 		Documents:       make(map[string]manifestDoc, len(docs)),
 		Counts: manifestCounts{
 			Objects:       objCount,
 			Relationships: relCount,
 			ByType:        objByType,
+		},
+		Coverage: manifestCoverage{
+			Docs:         cov.Docs,
+			Mean:         cov.Mean,
+			Min:          cov.Min,
+			DocsBelow099: cov.DocsBelow099,
+			DocsBelow095: cov.DocsBelow095,
 		},
 	}
 	unknown := 0
