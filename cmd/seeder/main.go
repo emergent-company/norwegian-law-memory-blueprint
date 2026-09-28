@@ -2011,7 +2011,7 @@ func normalizeDateProps(objType string, props map[string]any, normCounts map[str
 // buildSeedObjectRecords builds the full ordered list of objects as key/property
 // records, independent of any server. Both the upload path (ingestObjects) and
 // the dump path consume these records, so the two can never diverge.
-func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) ([]seedObjectRecord, []prepWork) {
+func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, preps []prepWork) []seedObjectRecord {
 	var records []seedObjectRecord
 
 	normCounts := make(map[string]int)
@@ -2219,16 +2219,15 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		})
 	}
 
-	// Preparatory works (forarbeider): metadata-only, anchor-derived.
-	preps := aggregatePreparatoryWorks(docs)
+	// Preparatory works (forarbeider): anchor-derived; full text when matched.
 	for _, pw := range preps {
 		props := map[string]any{
 			"name":              pw.Name,
 			"ref_id":            pw.Slug,
 			"prep_type":         pw.PrepType,
-			"source":            "lovdata-ref",
-			"source_url":        "https://lovdata.no/forarbeid/" + pw.Slug,
-			"content_available": false,
+			"source":            pw.Source,
+			"source_url":        pw.SourceURL,
+			"content_available": pw.ContentAvailable,
 		}
 		if pw.Session != "" {
 			props["session"] = pw.Session
@@ -2238,6 +2237,15 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		}
 		if pw.Year != "" {
 			props["year"] = pw.Year
+		}
+		if pw.Title != "" {
+			props["title"] = pw.Title
+		}
+		if pw.Content != "" {
+			props["content"] = pw.Content
+		}
+		if pw.SourceHash != "" {
+			props["source_hash"] = pw.SourceHash
 		}
 		records = append(records, seedObjectRecord{
 			Type: "PreparatoryWork", Key: "forarbeid/" + pw.Slug, Properties: props,
@@ -2250,11 +2258,12 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 	}
 	log.Printf("  Date normalization: normalized [%s], raw-preserved: %d", strings.Join(normParts, " "), rawMoved)
 
-	return dedupeSeedObjects(records), preps
+	return dedupeSeedObjects(records)
 }
 
 func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, batchSz, nWorkers int) map[string]string {
-	records, _ := buildSeedObjectRecords(docs, directives, concepts)
+	preps := aggregatePreparatoryWorks(docs)
+	records := buildSeedObjectRecords(docs, directives, concepts, preps)
 	items := make([]graph.CreateObjectRequest, 0, len(records))
 	for _, r := range records {
 		items = append(items, graph.CreateObjectRequest{
@@ -2816,7 +2825,7 @@ func removeJSONLFiles(dir string) error {
 // and <dir>/seed/relationships/<Type>.jsonl. It builds object records first so the
 // relationship pass can enforce the "both endpoints exist" (known-refs) rule and
 // the SrcKey != DstKey self-loop rule without any server round-trip.
-func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, archives []sourceArchive, dataset string, minCoverage float64) error {
+func dumpSeed(ctx context.Context, dir string, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, archives []sourceArchive, dataset string, minCoverage float64, cacheDir string) error {
 	// Deterministic emission: sort the EU inputs so the seed bytes are stable
 	// across regenerations regardless of fetch/cache ordering (the cached
 	// directives bypass fetchAllEUData's sort, so sort again at the single
@@ -2839,12 +2848,24 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 		return fmt.Errorf("coverage gate: mean coverage %.4f is below --min-coverage %.4f (docs=%d); refusing to write seed", cov.Mean, minCoverage, cov.Docs)
 	}
 
-	objRecords, preps := buildSeedObjectRecords(docs, directives, concepts)
+	// Preparatory works: aggregate, then enrich with Stortinget full text.
+	preps := aggregatePreparatoryWorks(docs)
+	preps, prepStats := enrichPreparatoryWorks(ctx, cacheDir, preps)
+	if prepStats.WithFullText > 0 {
+		log.Printf("  [stortinget] full text: %d matched, %d fetch/extract failures", prepStats.WithFullText, len(prepStats.FetchFailures))
+	}
+
+	objRecords := buildSeedObjectRecords(docs, directives, concepts, preps)
 	objectKeys := make(map[string]bool, len(objRecords))
 	for _, r := range objRecords {
 		objectKeys[r.Key] = true
 	}
 	relRecords := buildSeedRelationshipRecords(docs, directives, objectKeys)
+
+	// DERIVES_FROM edges (innstilling -> kildedok), emitted only when both
+	// endpoints exist (the dump's endpoint filter drops the rest).
+	relRecords = append(relRecords, buildDerivesFromEdges(preps)...)
+	relRecords = dedupeSeedRelationships(relRecords)
 
 	objByType := make(map[string][]seedObjectRecord)
 	for _, r := range objRecords {
@@ -2903,7 +2924,7 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 	log.Printf("Seed export complete: %d objects, %d relationships -> %s", objectCount, relCount, filepath.Join(dir, "seed"))
 
 	// Build the change-detection manifest and diff against any prior one.
-	mf := buildManifest(docs, archives, dataset, objectCount, relCount, objByTypeCounts, cov, preps)
+	mf := buildManifest(docs, archives, dataset, objectCount, relCount, objByTypeCounts, cov, preps, prepStats)
 	manifestPath := filepath.Join(dir, "seed", "manifest.json")
 	if old, ok, err := loadManifest(manifestPath); err != nil {
 		log.Printf("  [manifest] cannot read existing manifest: %v", err)
@@ -3131,7 +3152,7 @@ func main() {
 	}
 
 	if dumpMode {
-		if err := dumpSeed(cfg.dumpSeedDir, allDocs, directives, concepts, sourceArchives, cfg.dataset, cfg.minCoverage); err != nil {
+		if err := dumpSeed(ctx, cfg.dumpSeedDir, allDocs, directives, concepts, sourceArchives, cfg.dataset, cfg.minCoverage, cfg.cacheDir); err != nil {
 			log.Fatalf("seed export: %v", err)
 		}
 		return

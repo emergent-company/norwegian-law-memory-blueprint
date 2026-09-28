@@ -23492,7 +23492,7 @@
   },
   "counts": {
     "objects": 146976,
-    "relationships": 172925,
+    "relationships": 173362,
     "by_type": {
       "EUDirective": 1516,
       "EuroVocConcept": 738,
@@ -23519,7 +23519,7 @@
   },
   "preparatory_works": {
     "total": 570,
-    "with_full_text": 0,
+    "with_full_text": 338,
     "by_type": {
       "dok": 4,
       "innstilling": 194,
@@ -23534,6 +23534,20 @@
       "1999_plus": 550,
       "pre_1999": 20,
       "unknown": 0
-    }
+    },
+    "matched_by_type": {
+      "innstilling": 190,
+      "lovvedtak": 148
+    },
+    "unmatched_by_type": {
+      "dok": 4,
+      "innstilling": 4,
+      "lovanm": 4,
+      "melding": 1,
+      "nou": 13,
+      "proposisjon": 202,
+      "representantforslag": 4
+    },
+    "fetch_failures": null
   }
 }

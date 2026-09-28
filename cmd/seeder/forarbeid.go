@@ -16,6 +16,16 @@ type prepWork struct {
 	Session   string
 	DocNumber string
 	Year      string
+
+	// phase B (full text):
+	StortingetID     string
+	Title            string
+	Content          string
+	ContentAvailable bool
+	Source           string // "stortinget" or "lovdata-ref"
+	SourceURL        string
+	SourceHash       string
+	KildedokSlugs    []string // canonical slugs referenced by <kildedok> (DERIVES_FROM targets)
 }
 
 // normalizeForarbeidSlug reduces a href to its canonical forarbeid slug:
@@ -236,6 +246,12 @@ func aggregatePreparatoryWorks(docs []LovDoc) []prepWork {
 			Session:   session,
 			DocNumber: num,
 			Year:      year,
+			// Default provenance: every forarbeid reference is at minimum a
+			// Lovdata anchor. enrichPreparatoryWorks flips matched records to
+			// "stortinget"; source must never be empty (a regression in phase B
+			// emitted `source: ""`).
+			Source:    "lovdata-ref",
+			SourceURL: "https://lovdata.no/forarbeid/" + slug,
 		})
 	}
 	return works
@@ -243,19 +259,26 @@ func aggregatePreparatoryWorks(docs []LovDoc) []prepWork {
 
 // prepSummary is the aggregate used for the manifest preparatory_works block.
 type prepSummary struct {
-	Total        int            `json:"total"`
-	WithFullText int            `json:"with_full_text"`
-	ByType       map[string]int `json:"by_type"`
-	ByEra        map[string]int `json:"by_era"`
+	Total           int            `json:"total"`
+	WithFullText    int            `json:"with_full_text"`
+	ByType          map[string]int `json:"by_type"`
+	ByEra           map[string]int `json:"by_era"`
+	MatchedByType   map[string]int `json:"matched_by_type"`
+	UnmatchedByType map[string]int `json:"unmatched_by_type"`
+	FetchFailures   []string       `json:"fetch_failures"`
 }
 
-// summarizePreparatoryWorks builds the manifest summary from the aggregated works.
-func summarizePreparatoryWorks(works []prepWork) prepSummary {
+// summarizePreparatoryWorks builds the manifest summary from the aggregated works
+// and the phase-B enrichment stats.
+func summarizePreparatoryWorks(works []prepWork, stats prepFullTextStats) prepSummary {
 	s := prepSummary{
-		Total:        len(works),
-		WithFullText: 0, // phase A: metadata-only
-		ByType:       make(map[string]int),
-		ByEra:        map[string]int{"pre_1999": 0, "1999_plus": 0, "unknown": 0},
+		Total:           len(works),
+		WithFullText:    stats.WithFullText,
+		ByType:          make(map[string]int),
+		ByEra:           map[string]int{"pre_1999": 0, "1999_plus": 0, "unknown": 0},
+		MatchedByType:   stats.MatchedByType,
+		UnmatchedByType: stats.UnmatchedByType,
+		FetchFailures:   stats.FetchFailures,
 	}
 	for _, w := range works {
 		s.ByType[w.PrepType]++
