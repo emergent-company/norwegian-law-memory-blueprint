@@ -13,7 +13,7 @@ import (
 const (
 	// manifestVersion is the schema version of seed/manifest.json. Bump when the
 	// manifest shape changes.
-	manifestVersion = 4
+	manifestVersion = 5
 	// parserVersion identifies the parser/source-hash pipeline that produced the
 	// manifest. Bump when parseDocument or the source-hash computation changes
 	// materially, so a manifest built by an older parser is distinguishable.
@@ -70,23 +70,33 @@ type manifestQuality struct {
 	ContentUnavailableRefs []string `json:"content_unavailable_refs"`
 }
 
+// manifestPreparatoryWorks records the anchor-derived forarbeid coverage (phase A:
+// metadata-only, no full text).
+type manifestPreparatoryWorks struct {
+	Total        int            `json:"total"`
+	WithFullText int            `json:"with_full_text"`
+	ByType       map[string]int `json:"by_type"`
+	ByEra        map[string]int `json:"by_era"`
+}
+
 // seedManifest is the on-disk seed/manifest.json schema. It contains no
 // timestamps, so two dumps over identical inputs are byte-identical.
 type seedManifest struct {
-	ManifestVersion int                    `json:"manifest_version"`
-	ParserVersion   string                 `json:"parser_version"`
-	Dataset         string                 `json:"dataset"`
-	Source          string                 `json:"source"`
-	License         string                 `json:"license"`
-	LicenseURL      string                 `json:"license_url"`
-	Attribution     string                 `json:"attribution"`
-	ChangesMade     bool                   `json:"changes_made"`
-	NoticeFile      string                 `json:"notice_file"`
-	SourceArchives  []sourceArchive        `json:"source_archives"`
-	Documents       map[string]manifestDoc `json:"documents"`
-	Counts          manifestCounts         `json:"counts"`
-	Coverage        manifestCoverage       `json:"coverage"`
-	Quality         manifestQuality        `json:"quality"`
+	ManifestVersion  int                      `json:"manifest_version"`
+	ParserVersion    string                   `json:"parser_version"`
+	Dataset          string                   `json:"dataset"`
+	Source           string                   `json:"source"`
+	License          string                   `json:"license"`
+	LicenseURL       string                   `json:"license_url"`
+	Attribution      string                   `json:"attribution"`
+	ChangesMade      bool                     `json:"changes_made"`
+	NoticeFile       string                   `json:"notice_file"`
+	SourceArchives   []sourceArchive          `json:"source_archives"`
+	Documents        map[string]manifestDoc   `json:"documents"`
+	Counts           manifestCounts           `json:"counts"`
+	Coverage         manifestCoverage         `json:"coverage"`
+	Quality          manifestQuality          `json:"quality"`
+	PreparatoryWorks manifestPreparatoryWorks `json:"preparatory_works"`
 }
 
 func sha256Hex(b []byte) string {
@@ -113,7 +123,7 @@ func hashFile(path string) (string, int64, error) {
 // documents map is keyed by ref_id; each hash is the source-bytes hash. A doc
 // with no hash (old cache written by a pre-hash binary) is recorded as
 // "unknown" and a single warning is emitted.
-func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objCount, relCount int, objByType map[string]int, cov coverageSummary) seedManifest {
+func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objCount, relCount int, objByType map[string]int, cov coverageSummary, preps []prepWork) seedManifest {
 	m := seedManifest{
 		ManifestVersion: manifestVersion,
 		ParserVersion:   parserVersion,
@@ -162,6 +172,15 @@ func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objC
 	m.Quality = manifestQuality{
 		ContentUnavailable:     len(unavailable),
 		ContentUnavailableRefs: unavailable,
+	}
+
+	// Preparatory works summary.
+	ps := summarizePreparatoryWorks(preps)
+	m.PreparatoryWorks = manifestPreparatoryWorks{
+		Total:        ps.Total,
+		WithFullText: ps.WithFullText,
+		ByType:       ps.ByType,
+		ByEra:        ps.ByEra,
 	}
 
 	// Deterministic order for source_archives regardless of load order.

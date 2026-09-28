@@ -89,10 +89,10 @@ func TestTokenCoverage(t *testing.T) {
 func TestManifestProvenanceAndCoverage(t *testing.T) {
 	docs := []LovDoc{{RefID: "a", DocType: "Law", SourceSHA256: "h1", Coverage: 0.99}}
 	cov := computeCoverage(docs)
-	m := buildManifest(docs, nil, "laws", 1, 0, nil, cov)
+	m := buildManifest(docs, nil, "laws", 1, 0, nil, cov, nil)
 
-	if m.ManifestVersion != 4 {
-		t.Fatalf("ManifestVersion = %d; want 4", m.ManifestVersion)
+	if m.ManifestVersion != 5 {
+		t.Fatalf("ManifestVersion = %d; want 5", m.ManifestVersion)
 	}
 	if m.Source != "Lovdata" || m.License != "NLOD-2.0" || m.LicenseURL != "https://data.norge.no/nlod/en/2.0" {
 		t.Fatalf("provenance fields wrong: %+v", m)

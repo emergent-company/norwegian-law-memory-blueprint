@@ -172,6 +172,38 @@ objectTypes:
         type: string
         description: Optional heading for this paragraph
 
+  - name: PreparatoryWork
+    label: Preparatory Work
+    description: "A forarbeid (NOU, Ot.prp., Prop., Innst., Lovvedtak, …) referenced by a law or regulation"
+    properties:
+      name:
+        type: string
+        description: Display name (anchor text, e.g. Prop. 71 LS (2025–2026))
+      ref_id:
+        type: string
+        description: Canonical forarbeid slug (e.g. prop-71-ls-202526)
+      prep_type:
+        type: string
+        description: "Classification (proposisjon, innstilling, lovvedtak, nou, melding, dok, representantforslag, lovanm, unknown)"
+      session:
+        type: string
+        description: Parliamentary session (e.g. 2025-2026)
+      document_number:
+        type: string
+        description: Document number within the session (e.g. 71)
+      year:
+        type: string
+        description: Session start year (or the NOU year)
+      source:
+        type: string
+        description: Provenance of the reference (lovdata-ref)
+      source_url:
+        type: string
+        description: URL to the forarbeid on Lovdata
+      content_available:
+        type: boolean
+        description: Whether full text is available (false in metadata-only phase)
+
   - name: EUDirective
     label: EU Directive
     description: "An EU/EEA directive referenced by or implemented in Norwegian law"
@@ -234,6 +266,12 @@ objectTypes:
         description: English preferred label (duplicate of name for clarity)
 
 relationshipTypes:
+  - name: PREPARES
+    label: Prepares
+    description: A PreparatoryWork (forarbeid) underpins a Law or Regulation
+    sourceType: PreparatoryWork
+    targetType: Law
+
   - name: ADMINISTERED_BY
     label: Administered By
     description: Law or Regulation is administered by a Ministry
