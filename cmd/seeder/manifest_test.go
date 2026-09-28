@@ -20,8 +20,8 @@ func TestManifestJSONDeterministic(t *testing.T) {
 	objByType := map[string]int{"Law": 2, "Regulation": 1}
 	cov := coverageSummary{Docs: 3, Mean: 0.985, Min: 0.97, DocsBelow099: 1}
 
-	m1 := buildManifest(docs, archives, "both", 3, 5, objByType, cov, nil)
-	m2 := buildManifest(docs, archives, "both", 3, 5, objByType, cov, nil)
+	m1 := buildManifest(docs, archives, "both", 3, 5, objByType, cov, nil, prepFullTextStats{})
+	m2 := buildManifest(docs, archives, "both", 3, 5, objByType, cov, nil, prepFullTextStats{})
 
 	b1, err := json.MarshalIndent(m1, "", "  ")
 	if err != nil {
@@ -67,8 +67,8 @@ func TestManifestUnchangedCorpus(t *testing.T) {
 		{RefID: "a", DocType: "Law", SourceSHA256: "h1"},
 		{RefID: "b", DocType: "Law", SourceSHA256: "h2"},
 	}
-	old := buildManifest(docs, nil, "laws", 2, 0, nil, coverageSummary{}, nil)
-	new := buildManifest(docs, nil, "laws", 2, 0, nil, coverageSummary{}, nil)
+	old := buildManifest(docs, nil, "laws", 2, 0, nil, coverageSummary{}, nil, prepFullTextStats{})
+	new := buildManifest(docs, nil, "laws", 2, 0, nil, coverageSummary{}, nil, prepFullTextStats{})
 	ch := diffManifests(old, new)
 	if ch.Added != 0 || ch.Changed != 0 || ch.Removed != 0 || ch.Unchanged != 2 {
 		t.Fatalf("diff = %+v; want added=0 changed=0 removed=0 unchanged=2", ch)
@@ -87,8 +87,8 @@ func TestManifestChangeDetection(t *testing.T) {
 		{RefID: "d", DocType: "Regulation", SourceSHA256: "h4"},  // added
 		// "c" removed
 	}
-	old := buildManifest(docsOld, nil, "both", 3, 0, nil, coverageSummary{}, nil)
-	new := buildManifest(docsNew, nil, "both", 3, 0, nil, coverageSummary{}, nil)
+	old := buildManifest(docsOld, nil, "both", 3, 0, nil, coverageSummary{}, nil, prepFullTextStats{})
+	new := buildManifest(docsNew, nil, "both", 3, 0, nil, coverageSummary{}, nil, prepFullTextStats{})
 
 	ch := diffManifests(old, new)
 	if ch.Added != 1 || ch.Changed != 1 || ch.Removed != 1 || ch.Unchanged != 1 {
@@ -106,7 +106,7 @@ func TestManifestOldCacheUnknownHash(t *testing.T) {
 		{RefID: "a", DocType: "Law", SourceSHA256: ""},
 		{RefID: "b", DocType: "Law", SourceSHA256: "h2"},
 	}
-	m := buildManifest(docs, nil, "laws", 2, 0, nil, coverageSummary{}, nil)
+	m := buildManifest(docs, nil, "laws", 2, 0, nil, coverageSummary{}, nil, prepFullTextStats{})
 	if m.Documents["a"].SourceSHA256 != "unknown" {
 		t.Fatalf("empty hash not recorded as 'unknown': %+v", m.Documents["a"])
 	}

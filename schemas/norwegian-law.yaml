@@ -196,10 +196,19 @@ objectTypes:
         description: Session start year (or the NOU year)
       source:
         type: string
-        description: Provenance of the reference (lovdata-ref)
+        description: Provenance of the reference (lovdata-ref or stortinget)
       source_url:
         type: string
-        description: URL to the forarbeid on Lovdata
+        description: URL to the forarbeid source (Lovdata or Stortinget/PDF)
+      title:
+        type: string
+        description: Stortinget publication title (when full text matched)
+      content:
+        type: string
+        description: Full Markdown text (when available)
+      source_hash:
+        type: string
+        description: SHA-256 of the raw source XML (change detection)
       content_available:
         type: boolean
         description: Whether full text is available (false in metadata-only phase)
@@ -271,6 +280,12 @@ relationshipTypes:
     description: A PreparatoryWork (forarbeid) underpins a Law or Regulation
     sourceType: PreparatoryWork
     targetType: Law
+
+  - name: DERIVES_FROM
+    label: Derives From
+    description: A PreparatoryWork (innstilling/lovvedtak) builds on another PreparatoryWork (proposisjon/NOU)
+    sourceType: PreparatoryWork
+    targetType: PreparatoryWork
 
   - name: ADMINISTERED_BY
     label: Administered By

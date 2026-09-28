@@ -89,7 +89,7 @@ func TestTokenCoverage(t *testing.T) {
 func TestManifestProvenanceAndCoverage(t *testing.T) {
 	docs := []LovDoc{{RefID: "a", DocType: "Law", SourceSHA256: "h1", Coverage: 0.99}}
 	cov := computeCoverage(docs)
-	m := buildManifest(docs, nil, "laws", 1, 0, nil, cov, nil)
+	m := buildManifest(docs, nil, "laws", 1, 0, nil, cov, nil, prepFullTextStats{})
 
 	if m.ManifestVersion != 5 {
 		t.Fatalf("ManifestVersion = %d; want 5", m.ManifestVersion)

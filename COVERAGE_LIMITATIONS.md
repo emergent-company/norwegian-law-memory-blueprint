@@ -10,11 +10,13 @@ bounds below.
 - **No court decisions / case law.** Only primary legislation (acts, central
   regulations, EU directive metadata) is ingested. There are no `Høyesterett` /
   appellate / district-court judgments and no `Rt.` / `HR-` citations.
-- **Preparatory works (`forarbeider`) are metadata-only.** ~598 NOU / Ot.prp. /
-  Prop. / Innst. / Lovvedtak / committee documents are captured as anchor-derived
-  `PreparatoryWork` objects (`prep_type`, session, number, year, `name`), with
-  **no full text**. Issue #12 phase B will add Stortinget full text for the
-  referenced subset.
+- **Preparatory works (`forarbeider`) are partial.** ~598 anchor-derived
+  `PreparatoryWork` objects (`prep_type`, session, number, year, `name`) are
+  captured. **Innstillinger and lovvedtak (1999+) carry Stortinget full text**
+  (`title`, `content`, `source: stortinget`); **proposisjoner and NOU remain
+  metadata-only** because regjeringen.no has no API and Lovdata's text is
+  subscription-gated. `DERIVES_FROM` edges link innstillinger to the
+  proposisjon/NOU they build on where both are present.
 - **No municipal or regional regulations.** Only *central* government
   regulations (`forskrift/…` from Lovdata's `gjeldende-sentrale-forskrifter`)
   are present. County/municipal bylaws and local regulations are out of scope.

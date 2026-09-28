@@ -705,7 +705,7 @@ func TestDuplicateRefIDDedupeFirstWins(t *testing.T) {
 		{RefID: "lov/2020-01-01-1", DocType: "Law", Title: "First", Content: "body one", Paragraphs: []LovParagraph{{SectionID: "p1", Content: "text", Position: 1}}},
 		{RefID: "lov/2020-01-01-1", DocType: "Law", Title: "Second", Content: "body two", Paragraphs: []LovParagraph{{SectionID: "p1", Content: "text", Position: 1}}},
 	}
-	recs, _ := buildSeedObjectRecords(docs, nil, nil)
+	recs := buildSeedObjectRecords(docs, nil, nil, nil)
 	lawCount := 0
 	lawTitle := ""
 	for _, r := range recs {
@@ -774,7 +774,7 @@ func TestContentUnavailablePlaceholder(t *testing.T) {
 		t.Fatalf("Paragraphs = %d; want 0", len(doc.Paragraphs))
 	}
 
-	recs, _ := buildSeedObjectRecords([]LovDoc{*doc}, nil, nil)
+	recs := buildSeedObjectRecords([]LovDoc{*doc}, nil, nil, nil)
 	var reg *seedObjectRecord
 	for i := range recs {
 		if recs[i].Type == "Regulation" {
@@ -813,7 +813,7 @@ func TestShortDocumentWithoutMarkerNotFlagged(t *testing.T) {
 		t.Fatalf("ContentUnavailable = true; want false (no error marker)")
 	}
 
-	recs, _ := buildSeedObjectRecords([]LovDoc{*doc}, nil, nil)
+	recs := buildSeedObjectRecords([]LovDoc{*doc}, nil, nil, nil)
 	var reg *seedObjectRecord
 	for i := range recs {
 		if recs[i].Type == "Regulation" {

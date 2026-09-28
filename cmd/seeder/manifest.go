@@ -73,10 +73,13 @@ type manifestQuality struct {
 // manifestPreparatoryWorks records the anchor-derived forarbeid coverage (phase A:
 // metadata-only, no full text).
 type manifestPreparatoryWorks struct {
-	Total        int            `json:"total"`
-	WithFullText int            `json:"with_full_text"`
-	ByType       map[string]int `json:"by_type"`
-	ByEra        map[string]int `json:"by_era"`
+	Total           int            `json:"total"`
+	WithFullText    int            `json:"with_full_text"`
+	ByType          map[string]int `json:"by_type"`
+	ByEra           map[string]int `json:"by_era"`
+	MatchedByType   map[string]int `json:"matched_by_type"`
+	UnmatchedByType map[string]int `json:"unmatched_by_type"`
+	FetchFailures   []string       `json:"fetch_failures"`
 }
 
 // seedManifest is the on-disk seed/manifest.json schema. It contains no
@@ -123,7 +126,7 @@ func hashFile(path string) (string, int64, error) {
 // documents map is keyed by ref_id; each hash is the source-bytes hash. A doc
 // with no hash (old cache written by a pre-hash binary) is recorded as
 // "unknown" and a single warning is emitted.
-func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objCount, relCount int, objByType map[string]int, cov coverageSummary, preps []prepWork) seedManifest {
+func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objCount, relCount int, objByType map[string]int, cov coverageSummary, preps []prepWork, prepStats prepFullTextStats) seedManifest {
 	m := seedManifest{
 		ManifestVersion: manifestVersion,
 		ParserVersion:   parserVersion,
@@ -175,12 +178,15 @@ func buildManifest(docs []LovDoc, archives []sourceArchive, dataset string, objC
 	}
 
 	// Preparatory works summary.
-	ps := summarizePreparatoryWorks(preps)
+	ps := summarizePreparatoryWorks(preps, prepStats)
 	m.PreparatoryWorks = manifestPreparatoryWorks{
-		Total:        ps.Total,
-		WithFullText: ps.WithFullText,
-		ByType:       ps.ByType,
-		ByEra:        ps.ByEra,
+		Total:           ps.Total,
+		WithFullText:    ps.WithFullText,
+		ByType:          ps.ByType,
+		ByEra:           ps.ByEra,
+		MatchedByType:   ps.MatchedByType,
+		UnmatchedByType: ps.UnmatchedByType,
+		FetchFailures:   ps.FetchFailures,
 	}
 
 	// Deterministic order for source_archives regardless of load order.

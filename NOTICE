@@ -69,6 +69,21 @@ Metadata is retrieved through the Publications Office SPARQL endpoint
 CELLAR content-delivery service. The data has been parsed and restructured into
 the `seed/` object/relationship format by this project.
 
+## Stortinget — Norwegian Licence for Open Government Data (NLOD 2.0)
+
+Forarbeid (preparatory works) full text is sourced from the **Stortinget data
+API** (`https://data.stortinget.no`), made available by the **Stortinget** under
+the **Norwegian Licence for Open Government Data (NLOD 2.0)**:
+
+- Source: Stortinget (data.stortinget.no)
+- Licence: <https://data.norge.no/nlod/en/2.0>
+
+Stortinget skal oppgis som kilde: *«Inneholder data under Norsk lisens for
+offentlige data (NLOD) tilgjengeliggjort av Stortinget.»* English: *"Contains
+data under the Norwegian Licence for Open Government Data (NLOD) distributed by
+the Stortinget."* The data has been parsed (XML → Markdown) and restructured by
+this project.
+
 ## Note on this repository's own licence
 
 The repository metadata (`schemas/norwegian-law.yaml`) declares `license: MIT`

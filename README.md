@@ -113,6 +113,7 @@ format.
 | [Lovdata public datasets](https://lovdata.no/info/utviklerinfo) (`gjeldende-lover.tar.bz2`, `gjeldende-sentrale-forskrifter.tar.bz2`) | NLOD 2.0 |
 | [EUR-Lex](https://eur-lex.europa.eu) directive metadata | Public |
 | [Publications Office EuroVoc SPARQL](https://publications.europa.eu/webapi/rdf/sparql) | Public |
+| [Stortinget data API](https://data.stortinget.no) (forarbeider full text) | NLOD 2.0 |
 
 ## Regenerating the corpus
 

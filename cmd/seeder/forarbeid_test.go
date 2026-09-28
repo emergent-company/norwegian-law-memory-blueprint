@@ -110,7 +110,7 @@ func TestAggregatePreparatoryWorksDedupe(t *testing.T) {
 		t.Fatalf("first-wins name = %q", works[0].Name)
 	}
 
-	records, _ := buildSeedObjectRecords(docs, nil, nil)
+	records := buildSeedObjectRecords(docs, nil, nil, aggregatePreparatoryWorks(docs))
 	prepCount := 0
 	for _, r := range records {
 		if r.Type == "PreparatoryWork" {
@@ -144,7 +144,7 @@ func TestPreparesNoDanglingEdge(t *testing.T) {
 	docs := []LovDoc{
 		{RefID: "lov/2020-01-01-1", DocType: "Law", Title: "One", ForarbeidRefs: []string{"prop-1-s-202526"}, ForarbeidNames: map[string]string{"prop-1-s-202526": "Prop. 1 S"}},
 	}
-	records, _ := buildSeedObjectRecords(docs, nil, nil)
+	records := buildSeedObjectRecords(docs, nil, nil, aggregatePreparatoryWorks(docs))
 	objectKeys := map[string]bool{}
 	for _, r := range records {
 		objectKeys[r.Key] = true
