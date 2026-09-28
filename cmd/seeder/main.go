@@ -283,8 +283,8 @@ type LovDoc struct {
 	AmendsRefs         []string
 	SeeAlsoRefs        []string
 	EEAReferences      string
-	EUDirectiveIDs     []string
-	DocType            string // "Law" | "Regulation"
+	EUCelexIDs         []string // CELEX ids (uppercase) extracted from header eeaReferences
+	DocType            string   // "Law" | "Regulation"
 	References         []string
 	Content            string // Full Markdown of law body
 	Paragraphs         []LovParagraph
@@ -332,10 +332,9 @@ type EuroVocConcept struct {
 // ─── Regex ────────────────────────────────────────────────────────────────────
 
 var (
-	refPattern       = regexp.MustCompile(`^(?:lov|forskrift|res)/\d{4}-\d{2}-\d{2}`)
-	directivePattern = regexp.MustCompile(`\b(\d{4}/[\d]+/(?:EF|EØF|EU|EEC|EC|EØF))\b`)
-	celexPattern     = regexp.MustCompile(`\b(3\d{7}[A-Z]\d+)\b`)
-	eurovocPattern   = regexp.MustCompile(`eurovoc\.europa\.eu/(\d+)`)
+	refPattern     = regexp.MustCompile(`^(?:lov|forskrift|res)/\d{4}-\d{2}-\d{2}`)
+	celexPattern   = regexp.MustCompile(`\b(3\d{7}[A-Z]\d+)\b`)
+	eurovocPattern = regexp.MustCompile(`eurovoc\.europa\.eu/(\d+)`)
 	// romanOnlyPattern matches a bare Roman numeral (I, II, III, …). Callers
 	// strip a trailing period ("I.") before matching. The pattern deliberately
 	// has no optional-period suffix: with an all-optional Roman expression that
@@ -833,9 +832,7 @@ func parseDocument(content []byte, docType string) *LovDoc {
 					doc.AppliesTo = strings.TrimSpace(strings.TrimPrefix(text, "Gjelder for"))
 				case "eeaReferences":
 					doc.EEAReferences = text
-					for _, m := range directivePattern.FindAllStringSubmatch(text, -1) {
-						doc.EUDirectiveIDs = appendUniq(doc.EUDirectiveIDs, strings.ToUpper(m[1]))
-					}
+					doc.EUCelexIDs = extractEUCelex(text)
 				case "ministry":
 					for _, li := range findAll(n, "li") {
 						mn := strings.TrimSpace(nodeText(li))
@@ -1051,39 +1048,35 @@ var httpClient = &http.Client{
 }
 
 func directiveToCELEX(id string) string {
-	parts := strings.Split(strings.ToUpper(id), "/")
-	if len(parts) < 3 {
-		return ""
-	}
-	num, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return ""
-	}
-	return fmt.Sprintf("3%sL%04d", parts[0], num)
+	// Canonical mapper: passes through an explicit CELEX and maps a directive
+	// "YYYY/NNN[/XX]" form. See euRefToCELEX in eu_ref.go.
+	return euRefToCELEX(id)
 }
 
-func fetchEURLex(ctx context.Context, directiveID string) (*EUDirective, error) {
-	celexL := directiveToCELEX(directiveID)
-	celexR := strings.Replace(celexL, "L", "R", 1)
+func fetchEURLex(ctx context.Context, ref string) (*EUDirective, error) {
+	// ref is canonicalised to CELEX (an explicit CELEX passes through; a
+	// directive "YYYY/NNN[/XX]" form is mapped). EU objects are keyed by CELEX.
+	celex := euRefToCELEX(ref)
+	celexR := strings.Replace(celex, "L", "R", 1)
 
-	dir := &EUDirective{DirectiveID: directiveID, CelexID: celexL}
+	dir := &EUDirective{CelexID: celex}
 
 	// SPARQL metadata is authoritative. Fall back to the legacy HTML scrape only
 	// when CELLAR yields nothing usable.
-	meta, _ := fetchDirectiveMeta(ctx, celexL)
+	meta, _ := fetchDirectiveMeta(ctx, celex)
 	if meta == nil && celexR != "" {
 		meta, _ = fetchDirectiveMeta(ctx, celexR)
 	}
 	if meta != nil && (meta.FullTitle != "" || meta.Form != "") {
 		mergeDirectiveMeta(dir, meta)
-	} else if legacy := fetchLegacyEURLex(ctx, directiveID, celexL, celexR); legacy != nil {
+	} else if legacy := fetchLegacyEURLex(ctx, ref, celex, celexR); legacy != nil {
 		mergeDirectiveMeta(dir, legacy)
 	}
 	dir.ShortTitle = deriveShortTitle(dir.FullTitle)
 
 	// CELLAR full-text (unchanged working path)
-	if celexL != "" {
-		uuid := cellarUUID(ctx, celexL)
+	if celex != "" {
+		uuid := cellarUUID(ctx, celex)
 		if uuid == "" && celexR != "" {
 			uuid = cellarUUID(ctx, celexR)
 		}
@@ -1103,7 +1096,7 @@ func fetchEURLex(ctx context.Context, directiveID string) (*EUDirective, error) 
 
 	// OJ reference: decode the oj: id and enrich with the issue publication date.
 	if strings.HasPrefix(dir.OJReference, "oj:") {
-		dir.OJReference = fetchOJReference(ctx, celexL, dir.OJReference)
+		dir.OJReference = fetchOJReference(ctx, celex, dir.OJReference)
 	}
 
 	return dir, nil
@@ -1673,8 +1666,8 @@ SELECT ?id ?label WHERE {
 func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirective, []*EuroVocConcept) {
 	allIDs := make(map[string]bool)
 	for _, d := range docs {
-		for _, did := range d.EUDirectiveIDs {
-			allIDs[did] = true
+		for _, celex := range d.EUCelexIDs {
+			allIDs[strings.ToUpper(celex)] = true
 		}
 	}
 	ids := make([]string, 0, len(allIDs))
@@ -1695,15 +1688,15 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 	for _, id := range ids {
 		sem <- struct{}{}
 		wg.Add(1)
-		go func(did string) {
+		go func(celex string) {
 			defer wg.Done()
 			defer func() { <-sem }()
 			if ctx.Err() != nil {
 				return
 			}
-			dir, err := fetchEURLex(ctx, did)
+			dir, err := fetchEURLex(ctx, celex)
 			if err != nil {
-				dir = &EUDirective{DirectiveID: did, CelexID: directiveToCELEX(did)}
+				dir = &EUDirective{CelexID: strings.ToUpper(celex)}
 			}
 			mu.Lock()
 			directives = append(directives, dir)
@@ -2147,9 +2140,11 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 			name = dir.CelexID
 		}
 		props := map[string]any{
-			"name":         name,
-			"celex_id":     dir.CelexID,
-			"directive_id": dir.DirectiveID,
+			"name":     name,
+			"celex_id": dir.CelexID,
+		}
+		if dir.DirectiveID != "" {
+			props["directive_id"] = dir.DirectiveID
 		}
 		if dir.FullTitle != "" {
 			props["full_title"] = dir.FullTitle
@@ -2253,10 +2248,9 @@ func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, dir
 func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, objectKeys map[string]bool) []seedRelationshipRecord {
 	var records []seedRelationshipRecord
 
-	dirByID := make(map[string]*EUDirective, len(directives))
+	dirByCELEX := make(map[string]*EUDirective, len(directives))
 	for _, dir := range directives {
-		dirByID[dir.DirectiveID] = dir
-		dirByID[strings.Replace(dir.DirectiveID, "EF", "EU", 1)] = dir
+		dirByCELEX[strings.ToUpper(dir.CelexID)] = dir
 	}
 
 	for _, d := range docs {
@@ -2300,11 +2294,12 @@ func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, obje
 				})
 			}
 		}
-		for _, did := range d.EUDirectiveIDs {
-			if dir := dirByID[did]; dir != nil {
+		for _, celex := range d.EUCelexIDs {
+			celex = strings.ToUpper(celex)
+			if dir := dirByCELEX[celex]; dir != nil {
 				records = append(records, seedRelationshipRecord{
 					Type: "IMPLEMENTS_EEA", SrcKey: d.RefID, DstKey: "eu_" + dir.CelexID,
-					Properties: map[string]any{"directive_id": did},
+					Properties: map[string]any{"source": "eea_references"},
 				})
 			}
 		}

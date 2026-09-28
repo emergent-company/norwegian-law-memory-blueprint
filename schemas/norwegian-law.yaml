@@ -182,9 +182,6 @@ objectTypes:
       celex_id:
         type: string
         description: EUR-Lex CELEX identifier (e.g. 32014L0026)
-      directive_id:
-        type: string
-        description: Human-readable directive ID (e.g. 2014/26/EU)
       full_title:
         type: string
         description: Full official title from EUR-Lex

@@ -57,6 +57,11 @@ bounds below.
   **Norwegian titles are not available**: CELLAR exposes EU official-language
   expressions only, so `full_title` is English. Norwegian/EØS wording must come
   from Lovdata/EFTA.
+- **EU node identity is `celex_id`** (uppercase, e.g. `32014L0026`). The former
+  `directive_id` property was **removed** in this change: the human-readable form
+  (with its language suffix, e.g. `2014/26/EU`) is not recoverable from CELLAR,
+  and deriving a partial form would invent data. Use `name` / `full_title` for
+  display, and `celex_id` for joins.
 - **EuroVoc labels are English only** (`label_en`); EuroVoc has no Norwegian
   labels. Concept keys use the numeric notation (`eurovoc_<id>`).
 - `directory_code` holds CELLAR's human-readable label, not the numeric
