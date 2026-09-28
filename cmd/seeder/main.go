@@ -283,8 +283,10 @@ type LovDoc struct {
 	AmendsRefs         []string
 	SeeAlsoRefs        []string
 	EEAReferences      string
-	EUCelexIDs         []string // CELEX ids (uppercase) extracted from header eeaReferences
-	DocType            string   // "Law" | "Regulation"
+	EUCelexIDs         []string          // CELEX ids (uppercase) extracted from header eeaReferences
+	ForarbeidRefs      []string          // canonical forarbeid slugs (sorted)
+	ForarbeidNames     map[string]string // slug -> anchor display text
+	DocType            string            // "Law" | "Regulation"
 	References         []string
 	Content            string // Full Markdown of law body
 	Paragraphs         []LovParagraph
@@ -797,6 +799,7 @@ func parseDocument(content []byte, docType string) *LovDoc {
 		return nil
 	}
 	doc.ContentUnavailable = isContentUnavailable(root)
+	doc.ForarbeidRefs, doc.ForarbeidNames = collectForarbeid(root)
 
 	var currentDtClass string
 	var walkMeta func(*html.Node)
@@ -2008,7 +2011,7 @@ func normalizeDateProps(objType string, props map[string]any, normCounts map[str
 // buildSeedObjectRecords builds the full ordered list of objects as key/property
 // records, independent of any server. Both the upload path (ingestObjects) and
 // the dump path consume these records, so the two can never diverge.
-func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) []seedObjectRecord {
+func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept) ([]seedObjectRecord, []prepWork) {
 	var records []seedObjectRecord
 
 	normCounts := make(map[string]int)
@@ -2216,17 +2219,42 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		})
 	}
 
+	// Preparatory works (forarbeider): metadata-only, anchor-derived.
+	preps := aggregatePreparatoryWorks(docs)
+	for _, pw := range preps {
+		props := map[string]any{
+			"name":              pw.Name,
+			"ref_id":            pw.Slug,
+			"prep_type":         pw.PrepType,
+			"source":            "lovdata-ref",
+			"source_url":        "https://lovdata.no/forarbeid/" + pw.Slug,
+			"content_available": false,
+		}
+		if pw.Session != "" {
+			props["session"] = pw.Session
+		}
+		if pw.DocNumber != "" {
+			props["document_number"] = pw.DocNumber
+		}
+		if pw.Year != "" {
+			props["year"] = pw.Year
+		}
+		records = append(records, seedObjectRecord{
+			Type: "PreparatoryWork", Key: "forarbeid/" + pw.Slug, Properties: props,
+		})
+	}
+
 	normParts := make([]string, 0, len(normCounts))
 	for _, k := range sortedMapKeys(normCounts) {
 		normParts = append(normParts, fmt.Sprintf("%s=%d", k, normCounts[k]))
 	}
 	log.Printf("  Date normalization: normalized [%s], raw-preserved: %d", strings.Join(normParts, " "), rawMoved)
 
-	return dedupeSeedObjects(records)
+	return dedupeSeedObjects(records), preps
 }
 
 func ingestObjects(ctx context.Context, client *graph.Client, docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, batchSz, nWorkers int) map[string]string {
-	records := buildSeedObjectRecords(docs, directives, concepts)
+	records, _ := buildSeedObjectRecords(docs, directives, concepts)
 	items := make([]graph.CreateObjectRequest, 0, len(records))
 	for _, r := range records {
 		items = append(items, graph.CreateObjectRequest{
@@ -2302,6 +2330,12 @@ func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, obje
 					Properties: map[string]any{"source": "eea_references"},
 				})
 			}
+		}
+		for _, slug := range d.ForarbeidRefs {
+			records = append(records, seedRelationshipRecord{
+				Type: "PREPARES", SrcKey: "forarbeid/" + slug, DstKey: d.RefID,
+				Properties: map[string]any{},
+			})
 		}
 		for _, p := range d.Paragraphs {
 			if p.Content == "" || p.SectionID == "" {
@@ -2805,7 +2839,7 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 		return fmt.Errorf("coverage gate: mean coverage %.4f is below --min-coverage %.4f (docs=%d); refusing to write seed", cov.Mean, minCoverage, cov.Docs)
 	}
 
-	objRecords := buildSeedObjectRecords(docs, directives, concepts)
+	objRecords, preps := buildSeedObjectRecords(docs, directives, concepts)
 	objectKeys := make(map[string]bool, len(objRecords))
 	for _, r := range objRecords {
 		objectKeys[r.Key] = true
@@ -2869,7 +2903,7 @@ func dumpSeed(dir string, docs []LovDoc, directives []*EUDirective, concepts []*
 	log.Printf("Seed export complete: %d objects, %d relationships -> %s", objectCount, relCount, filepath.Join(dir, "seed"))
 
 	// Build the change-detection manifest and diff against any prior one.
-	mf := buildManifest(docs, archives, dataset, objectCount, relCount, objByTypeCounts, cov)
+	mf := buildManifest(docs, archives, dataset, objectCount, relCount, objByTypeCounts, cov, preps)
 	manifestPath := filepath.Join(dir, "seed", "manifest.json")
 	if old, ok, err := loadManifest(manifestPath); err != nil {
 		log.Printf("  [manifest] cannot read existing manifest: %v", err)

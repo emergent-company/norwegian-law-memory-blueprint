@@ -1,5 +1,5 @@
 {
-  "manifest_version": 4,
+  "manifest_version": 5,
   "parser_version": "1",
   "dataset": "both",
   "source": "Lovdata",
@@ -23491,8 +23491,8 @@
     }
   },
   "counts": {
-    "objects": 146406,
-    "relationships": 172330,
+    "objects": 146976,
+    "relationships": 172925,
     "by_type": {
       "EUDirective": 1516,
       "EuroVocConcept": 738,
@@ -23500,6 +23500,7 @@
       "LegalArea": 283,
       "LegalParagraph": 137984,
       "Ministry": 18,
+      "PreparatoryWork": 570,
       "Regulation": 5111
     }
   },
@@ -23515,5 +23516,24 @@
     "content_unavailable_refs": [
       "forskrift/2020-03-09-720"
     ]
+  },
+  "preparatory_works": {
+    "total": 570,
+    "with_full_text": 0,
+    "by_type": {
+      "dok": 4,
+      "innstilling": 194,
+      "lovanm": 4,
+      "lovvedtak": 148,
+      "melding": 1,
+      "nou": 13,
+      "proposisjon": 202,
+      "representantforslag": 4
+    },
+    "by_era": {
+      "1999_plus": 550,
+      "pre_1999": 20,
+      "unknown": 0
+    }
   }
 }
