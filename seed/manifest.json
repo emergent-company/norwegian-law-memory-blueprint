@@ -23491,11 +23491,11 @@
     }
   },
   "counts": {
-    "objects": 145082,
-    "relationships": 167422,
+    "objects": 146406,
+    "relationships": 172330,
     "by_type": {
-      "EUDirective": 619,
-      "EuroVocConcept": 311,
+      "EUDirective": 1516,
+      "EuroVocConcept": 738,
       "Law": 756,
       "LegalArea": 283,
       "LegalParagraph": 137984,
