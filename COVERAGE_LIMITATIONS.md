@@ -45,9 +45,18 @@ bounds below.
 ## Known parse limits
 
 - **~42,800 `LegalParagraph` rows (31%) still have an empty `paragraph_num`.**
-  These are historic/edge acts whose headers carry no `legalArticleValue` (or a
-  non-`§` numbering such as `ledd`/`kapittel`). Their `section_id` is populated,
-  but section-number (`§ N` / `§ N-M`) lookups against them cannot resolve.
+  These are historic/edge acts and delegation/annex fragments whose headers carry
+  no `legalArticleValue` (or a non-`§` numbering such as `ledd`/`kapittel`). Their
+  `section_id` is populated, but section-number (`§ N` / `§ N-M`) lookups against
+  them cannot resolve.
+  - These rows are **not left unlabeled**: `section_label` is always populated —
+    `§ N` when a statutory § header exists, otherwise a structural position
+    derived from the section id at ingestion (e.g. `Kapittel 1, ledd 1`), and
+    `name` falls back to that label instead of the raw `section_id` key.
+  - The seeder deliberately does **not** reconstruct a statutory § from the
+    `section_id`: its `kapittel`/`paragraf` numbers are Lovdata HTML structural
+    indices, not statutory numbers (e.g. `lov/1915-08-13-5#kapittel-8-paragraf-4`
+    is statutory `§ 121 d`).
 - **Footnotes and the table of contents are intentionally excluded** from the
   rendered `content` Markdown. The body text of provisions is preserved, but
   footnote text and the source TOC are dropped.

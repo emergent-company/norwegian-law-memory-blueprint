@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -827,4 +828,104 @@ func TestShortDocumentWithoutMarkerNotFlagged(t *testing.T) {
 	if _, has := reg.Properties["content_unavailable"]; has {
 		t.Fatalf("content_unavailable must NOT be set: %+v", reg.Properties)
 	}
+}
+
+func TestHumanizeSectionID(t *testing.T) {
+	cases := map[string]string{
+		"kapittel-3-ledd-2":   "Kapittel 3, ledd 2",
+		"ledd-1":              "ledd 1",
+		"kapittel-3-nummer-4": "Kapittel 3, nr. 4",
+		"kapittel-1-kapittel-1-kapittel-1-ledd-1": "Kapittel 1, ledd 1",
+		"kapittel-1-paragraf-3":                   "Kapittel 1, paragraf 3",
+		"kapittel-1-del-1-ledd-1":                 "Kapittel 1, del 1, ledd 1",
+		"":                                        "",
+	}
+	for in, want := range cases {
+		if got := humanizeSectionID(in); got != want {
+			t.Errorf("humanizeSectionID(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestParagraphSectionLabel(t *testing.T) {
+	cases := []struct {
+		paraNum, sectionID, title, want string
+	}{
+		// Statutory § wins over the structural key.
+		{"§ 8-10", "kapittel-3-paragraf-4", "Finansiell bistand", "§ 8-10"},
+		// No § header -> human-readable structural position, never the raw key.
+		{"", "kapittel-3-ledd-2", "", "Kapittel 3, ledd 2"},
+		{"", "", "Formål", "Formål"},
+		{"", "", "", ""},
+	}
+	for _, c := range cases {
+		if got := paragraphSectionLabel(c.paraNum, c.sectionID, c.title); got != c.want {
+			t.Errorf("paragraphSectionLabel(%q,%q,%q) = %q, want %q", c.paraNum, c.sectionID, c.title, got, c.want)
+		}
+	}
+}
+
+// TestLegalParagraphSeedLabels asserts the emitted (seed/ingest) LegalParagraph
+// properties are human-readable: a statutory § article carries a non-empty
+// paragraph_num and a "§ N" name/section_label, and a headerless legalP fragment
+// (delegation regulations, annex text) gets a structural section_label instead of
+// the raw machine key.
+func TestLegalParagraphSeedLabels(t *testing.T) {
+	artDoc := parseDocument([]byte(legalArticleFixture), "Law")
+	fragDoc := parseDocument([]byte(legalPOnlyFixture), "Regulation")
+	if artDoc == nil || fragDoc == nil {
+		t.Fatal("parseDocument returned nil")
+	}
+
+	recs := buildSeedObjectRecords([]LovDoc{*artDoc, *fragDoc}, nil, nil, nil)
+
+	type props map[string]any
+	byKey := map[string]props{}
+	for _, r := range recs {
+		if r.Type == "LegalParagraph" {
+			byKey[r.Key] = r.Properties
+		}
+	}
+
+	// Representative statutory input: § 1 of lov/2005-06-17-90.
+	stat := byKey["lov/2005-06-17-90#paragraf-1"]
+	if stat == nil {
+		t.Fatalf("no statutory LegalParagraph emitted; keys=%v", keysOf(byKey))
+	}
+	if b, err := json.Marshal(stat); err == nil {
+		t.Logf("statutory LegalParagraph properties: %s", b)
+	}
+	if stat["paragraph_num"] != "§ 1" {
+		t.Errorf("paragraph_num = %v, want § 1", stat["paragraph_num"])
+	}
+	if stat["section_label"] != "§ 1" {
+		t.Errorf("section_label = %v, want § 1", stat["section_label"])
+	}
+	if name, _ := stat["name"].(string); !strings.HasPrefix(name, "§ 1") {
+		t.Errorf("name = %q, want § 1 prefix", name)
+	}
+
+	// Headerless fragment: no statutory § exists, but the label must be
+	// human-readable, never the raw section_id.
+	frag := byKey["forskrift/2024-07-08-1622#kapittel-1-ledd-1"]
+	if frag == nil {
+		t.Fatalf("no fragment LegalParagraph emitted; keys=%v", keysOf(byKey))
+	}
+	if b, err := json.Marshal(frag); err == nil {
+		t.Logf("headerless fragment properties: %s", b)
+	}
+	if frag["section_label"] != "Kapittel 1, ledd 1" {
+		t.Errorf("fragment section_label = %v, want \"Kapittel 1, ledd 1\"", frag["section_label"])
+	}
+	if name, _ := frag["name"].(string); name == "" || name == frag["section_id"] {
+		t.Errorf("fragment name = %q, must be non-empty and not the raw section_id", name)
+	}
+}
+
+func keysOf[V any](m map[string]V) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
 }
