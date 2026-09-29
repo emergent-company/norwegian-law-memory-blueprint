@@ -2008,6 +2008,79 @@ func normalizeDateProps(objType string, props map[string]any, normCounts map[str
 
 // ─── Object ingestion (Phase 1) ───────────────────────────────────────────────
 
+// structuralSectionWords maps Lovdata section-id tokens to human-readable
+// words for building a fallback section label. Note that "paragraf" is rendered
+// as the word, NOT "§": Lovdata's kapittel/paragraf ids are HTML structural
+// indices, not statutory numbers — e.g. lov/1915-08-13-5#kapittel-8-paragraf-4
+// is statutory § 121 d. Only a legalArticleValue header yields a real §.
+var structuralSectionWords = map[string]string{
+	"kapittel":        "Kapittel",
+	"paragraf":        "paragraf",
+	"ledd":            "ledd",
+	"nummer":          "nr.",
+	"punkt":           "punkt",
+	"del":             "del",
+	"avsnitt":         "avsnitt",
+	"dokumentendring": "dokumentendring",
+	"endring":         "endring",
+}
+
+// humanizeSectionID turns a Lovdata section id (e.g. "kapittel-3-ledd-2") into a
+// readable structural position (e.g. "Kapittel 3, ledd 2"). Consecutive
+// identical segments are collapsed because nested <section> elements in EU and
+// annex texts repeat the same "kapittel-1" id at several levels.
+func humanizeSectionID(sectionID string) string {
+	parts := strings.Split(sectionID, "-")
+	var segs []string
+	for i := 0; i < len(parts); {
+		w := parts[i]
+		if w == "" {
+			i++
+			continue
+		}
+		num := ""
+		if i+1 < len(parts) && isDigits(parts[i+1]) {
+			num = parts[i+1]
+			i += 2
+		} else {
+			i++
+		}
+		label, ok := structuralSectionWords[strings.ToLower(w)]
+		if !ok {
+			label = strings.ToUpper(w[:1]) + w[1:]
+		}
+		if num != "" {
+			label += " " + num
+		}
+		if len(segs) > 0 && segs[len(segs)-1] == label {
+			continue
+		}
+		segs = append(segs, label)
+	}
+	return strings.Join(segs, ", ")
+}
+
+// paragraphSectionLabel returns the first-class, human-readable section label
+// for a LegalParagraph:
+//
+//   - the statutory paragraph number when the source carried a § header
+//     (e.g. "§ 8-10"), else
+//   - a humanised structural position derived from the section id
+//     (e.g. "Kapittel 1, ledd 1").
+//
+// It never returns the raw machine key, and deliberately never reconstructs a
+// statutory § from the structural section id. It returns "" only when every
+// input is empty.
+func paragraphSectionLabel(paragraphNum, sectionID, title string) string {
+	if s := strings.TrimSpace(paragraphNum); s != "" {
+		return s
+	}
+	if s := humanizeSectionID(sectionID); s != "" {
+		return s
+	}
+	return strings.TrimSpace(title)
+}
+
 // buildSeedObjectRecords builds the full ordered list of objects as key/property
 // records, independent of any server. Both the upload path (ingestObjects) and
 // the dump path consume these records, so the two can never diverge.
@@ -2107,17 +2180,20 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 				continue
 			}
 			pKey := d.RefID + "#" + p.SectionID
-			pName := p.ParagraphNum
-			if p.Title != "" {
-				pName += " " + p.Title
+			pLabel := paragraphSectionLabel(p.ParagraphNum, p.SectionID, p.Title)
+			pName := strings.TrimSpace(p.ParagraphNum + " " + p.Title)
+			if pName == "" {
+				// Top-level legalP fragments and annex text carry no § header;
+				// fall back to the human-readable structural label rather than
+				// the raw section id so agents need not reverse-engineer keys.
+				pName = pLabel
 			}
-			if strings.TrimSpace(pName) == "" {
-				// Top-level legalP chunks carry no § number/title; fall back to
-				// the section id so the object never has an empty name.
+			if pName == "" {
 				pName = p.SectionID
 			}
 			pProps := map[string]any{
 				"name":          pName,
+				"section_label": pLabel,
 				"content":       p.Content,
 				"section_id":    p.SectionID,
 				"paragraph_num": p.ParagraphNum,

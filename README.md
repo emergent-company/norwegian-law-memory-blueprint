@@ -102,6 +102,26 @@ and the relationship files dominate the size. Large types are split at 50 MB
 into `<Type>.001.jsonl`, `<Type>.002.jsonl`, … (the Memory CLI's blueprint
 loader reassembles them transparently).
 
+### `LegalParagraph` section labels
+
+Every `LegalParagraph` carries a first-class, human-readable `section_label`, so
+consumers never have to reverse-engineer the `section_id` key:
+
+- `paragraph_num` — the statutory paragraph number as printed when the source
+  carried a `legalArticleValue` header (e.g. `§ 8-10`, `§ 121 d`).
+- `section_label` — `paragraph_num` when present (`§ 8-10`); otherwise a
+  structural position derived from the section id at ingestion
+  (e.g. `Kapittel 1, ledd 1`). It is never the raw `section_id` and is never
+  empty for a paragraph with a section id.
+- `name` — `paragraph_num` + optional title (`§ 8-10 Finansiell bistand`), or
+  the `section_label` when there is no § header.
+
+`section_id` remains the load-bearing join key (e.g.
+`kapittel-3-paragraf-4`) and is unchanged. Note that its `kapittel`/`paragraf`
+numbers are Lovdata **HTML structural indices, not statutory numbers** — e.g.
+`lov/1915-08-13-5#kapittel-8-paragraf-4` is statutory `§ 121 d` — so the seeder
+never derives a § from the key.
+
 Alternatively, `memory blueprints dump <output-dir>` exports any already-populated
 project back into the same `seed/objects/*.jsonl` + `seed/relationships/*.jsonl`
 format.
@@ -316,7 +336,9 @@ parser defect. The dominant causes of unresolved refs, in order:
 1. **Documents without parsed `§` numbering.** ~4,183 of 5,661 laws/regulations
    have *zero* paragraphs with a non-empty `paragraph_num` (historic acts such as
    `lov/1687-04-15` and many regulations use `ledd`/chapter numbering the seeder
-   did not convert to `§ N`). Their inline `§` refs cannot be resolved.
+   did not convert to `§ N`). Their inline `§` refs cannot be resolved. These
+   rows now carry a human-readable `section_label` (e.g. `Kapittel 1, ledd 1`),
+   but the label is a structural position, not a statutory §.
 2. **References to non-ingested sections.** Some laws reference sections of
    themselves that are absent from the seed (e.g. `lov/1999-03-26-14`
    (skatteloven) body text cites `§ 14-41`, but chapter 14 was not ingested).
