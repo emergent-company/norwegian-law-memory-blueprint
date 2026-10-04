@@ -3,6 +3,8 @@
 # Compiled binary (the bare name would also match the cmd/seeder/ dir, so be specific)
 /seeder
 /cmd/seeder/seeder
+/seedfill
+/cmd/seedfill/seedfill
 
 # Seeder state files (the tracked blueprint seed data lives in seed/ and is NOT ignored)
 idmap.json

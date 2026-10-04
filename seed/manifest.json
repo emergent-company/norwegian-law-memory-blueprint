@@ -8,18 +8,7 @@
   "attribution": "Data from Lovdata (https://lovdata.no/), licensed under the Norwegian Licence for Open Government Data (NLOD) 2.0. The data has been parsed, restructured and rendered into a knowledge-graph seed; changes were made.",
   "changes_made": true,
   "notice_file": "NOTICE",
-  "source_archives": [
-    {
-      "name": "gjeldende-lover.tar.bz2",
-      "sha256": "6250f46086702c0f48f23c402cf4333970534acb541272ddfab7287717795477",
-      "size": 5810986
-    },
-    {
-      "name": "gjeldende-sentrale-forskrifter.tar.bz2",
-      "sha256": "2d859f2c89f4acde9cac5d905ec71a78c84ddc853eb0aefa97debe091deea4ba",
-      "size": 21335245
-    }
-  ],
+  "source_archives": null,
   "documents": {
     "forskrift/1896-06-26-9805": {
       "type": "Regulation",

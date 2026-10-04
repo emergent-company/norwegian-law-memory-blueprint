@@ -73,7 +73,7 @@ systemPrompt: |
      time — use `ask_user` to clarify instead of guessing.
 
 flowType: reactive
-visibility: public
+visibility: project
 maxSteps: 30
 defaultTimeout: 600
 
