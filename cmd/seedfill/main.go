@@ -18,21 +18,30 @@ package main
 // properties into the server's canonical RFC3339 form (after the schema pack
 // changed those properties from `string` to `date`), plus a --retype-via-upsert
 // mode that does the same via object upsert (full property replace) for when
-// by-id writes (bulk-update / PATCH) are broken on the target server.
+// by-id writes (bulk-update / PATCH) are broken on the target server, and a
+// --sync-props mode that PATCHes seed object properties onto objects that already
+// exist (matched by seed key) without touching anything else.
 //
 // Usage:
 //   ./seedfill --server http://localhost:3012 --token <token> --project <id>
 //   ./seedfill --server <url> --token <t> --project <id> --dry-run   # diff only
 //   ./seedfill --server <url> --token <t> --project <id> --retype-dates --dry-run
 //   ./seedfill --server <url> --token <t> --project <id> --retype-via-upsert --dry-run
+//   ./seedfill --server <url> --token <t> --project <id> --sync-props --dry-run
+//   ./seedfill --server <url> --token <t> --project <id> --sync-props-and-fill
+//   ./seedfill --server <url> --token <t> --project <id> --page-size 250
+//   ./seedfill --server <url> --token <t> --project <id> --http-timeout 45s
 //
 // Environment variables (all overridable by flags):
-//   MEMORY_SERVER          server URL
-//   MEMORY_PROJECT_TOKEN   project API token
-//   MEMORY_PROJECT_ID      project ID
-//   SEED_DIR               blueprint directory containing seed/ (default ".")
-//   SEED_RETYPE_DATES      "1"/"true" to enable --retype-dates
-//   SEED_RETYPE_VIA_UPSERT "1"/"true" to enable --retype-via-upsert
+//   MEMORY_SERVER           server URL
+//   MEMORY_PROJECT_TOKEN    project API token
+//   MEMORY_PROJECT_ID       project ID
+//   SEED_DIR                blueprint directory containing seed/ (default ".")
+//   SEED_RETYPE_DATES       "1"/"true" to enable --retype-dates
+//   SEED_RETYPE_VIA_UPSERT  "1"/"true" to enable --retype-via-upsert
+//   SEED_SYNC_PROPS         "1"/"true" to enable --sync-props
+//   SEEDFILL_PAGE_SIZE      list page size for enumeration (default 250)
+//   SEEDFILL_HTTP_TIMEOUT   HTTP client timeout (duration, default "60s")
 
 import (
 	"bufio"
@@ -58,10 +67,6 @@ import (
 )
 
 const (
-	// listPageSize is the page size used when enumerating existing objects and
-	// relationships. Large pages minimise the number of round-trips.
-	listPageSize = 1000
-
 	// setSep separates the components of a relationship set key so it is
 	// collision-free.
 	setSep = "\x00"
@@ -80,12 +85,16 @@ type config struct {
 	dir               string
 	workers           int
 	batchSz           int
+	pageSize          int
+	httpTimeout       time.Duration
 	dryRun            bool
 	objectsOnly       bool
 	relationshipsOnly bool
 	retypeDates       bool
 	retypeAndFill     bool
 	retypeViaUpsert   bool
+	syncProps         bool
+	syncPropsAndFill  bool
 }
 
 func envOr(envKey, defaultVal string) string {
@@ -123,12 +132,16 @@ func parseConfig() config {
 	dir := flag.String("dir", envOr("SEED_DIR", "."), "Blueprint directory containing seed/ (default .)")
 	workers := flag.Int("workers", envIntOr("SEEDFILL_WORKERS", 4), "Parallel bulk-create workers")
 	batchSz := flag.Int("batch", envIntOr("SEEDFILL_BATCH", 100), "Batch size for bulk API calls (max 100)")
+	pageSize := flag.Int("page-size", envIntOr("SEEDFILL_PAGE_SIZE", 250), "Page size for object/relationship enumeration (max 1000)")
+	httpTimeoutFlag := flag.String("http-timeout", envOr("SEEDFILL_HTTP_TIMEOUT", "60s"), "HTTP client timeout (duration string, e.g. 60s)")
 	dryRun := flag.Bool("dry-run", false, "Compute the diff and print the summary without writing anything")
 	objectsOnly := flag.Bool("objects-only", false, "Only fill missing objects (skip relationships)")
 	relationshipsOnly := flag.Bool("relationships-only", false, "Only fill missing relationships (skip object creation)")
 	retypeDates := flag.Bool("retype-dates", envBoolOr("SEED_RETYPE_DATES", false), "Coerce existing objects' date-typed properties to canonical RFC3339 (skips gap-filling unless --retype-and-fill)")
 	retypeAndFill := flag.Bool("retype-and-fill", false, "Run --retype-dates, then the gap-fill pass")
 	retypeViaUpsert := flag.Bool("retype-via-upsert", envBoolOr("SEED_RETYPE_VIA_UPSERT", false), "Coerce date-typed properties to canonical RFC3339 via upsert (full property replace); use when bulk-update/by-id patch is broken")
+	syncProps := flag.Bool("sync-props", envBoolOr("SEED_SYNC_PROPS", false), "Sync seed object properties onto existing objects (PATCH by id, merge only changed keys); skips gap-filling")
+	syncPropsAndFill := flag.Bool("sync-props-and-fill", false, "Run --sync-props, then the normal object+relationship gap-fill")
 
 	flag.Parse()
 
@@ -144,6 +157,20 @@ func parseConfig() config {
 	if w < 1 {
 		w = 1
 	}
+	ps := *pageSize
+	if ps > 1000 {
+		log.Printf("Note: max page size is 1000; capping from %d", ps)
+		ps = 1000
+	}
+	if ps < 1 {
+		ps = 1
+	}
+	httpTimeout := 60 * time.Second
+	if t, err := time.ParseDuration(*httpTimeoutFlag); err == nil && t > 0 {
+		httpTimeout = t
+	} else {
+		log.Printf("Note: invalid --http-timeout %q; using default 60s", *httpTimeoutFlag)
+	}
 
 	return config{
 		serverURL:         *serverURL,
@@ -152,12 +179,16 @@ func parseConfig() config {
 		dir:               *dir,
 		workers:           w,
 		batchSz:           sz,
+		pageSize:          ps,
+		httpTimeout:       httpTimeout,
 		dryRun:            *dryRun,
 		objectsOnly:       *objectsOnly,
 		relationshipsOnly: *relationshipsOnly,
 		retypeDates:       *retypeDates,
 		retypeAndFill:     *retypeAndFill,
 		retypeViaUpsert:   *retypeViaUpsert,
+		syncProps:         *syncProps,
+		syncPropsAndFill:  *syncPropsAndFill,
 	}
 }
 
@@ -327,6 +358,63 @@ func buildDesiredProps(o seedObjectLine) map[string]any {
 	return desired
 }
 
+// buildSyncPropsDelta computes the minimal property patch to bring an existing
+// live object in line with the seed object's full property set, or nil if nothing
+// needs changing. Date-typed fields reuse the date idempotency (dateValuesEqual)
+// and the raw-companion replacement semantics of buildDesiredProps; every other
+// field is compared with jsonEqual (deep-equal), included only when the live
+// value is absent or differs. A nil value in the returned map means "delete this
+// key". Idempotent: a second run over now-canonical data yields nil.
+func buildSyncPropsDelta(o seedObjectLine, liveProps map[string]any) map[string]any {
+	fields := dateFieldsByType[o.Type]
+	patch := make(map[string]any)
+
+	// Names already decided via date-specific logic; anything else in the seed
+	// falls through to plain deep-equal below.
+	handled := make(map[string]bool)
+
+	for _, f := range fields {
+		if v, ok := o.Properties[f.name]; ok {
+			if isDateValue(v) {
+				handled[f.name] = true
+				liveVal, exists := liveProps[f.name]
+				if !exists || !dateValuesEqual(liveVal, v) {
+					patch[f.name] = v
+				}
+			}
+			// Not a valid date → fall through to plain deep-equal below.
+			continue
+		}
+		if f.raw != "" {
+			if raw, ok := o.Properties[f.raw]; ok {
+				handled[f.raw] = true
+				// Desired: date field absent, raw companion set.
+				if _, has := liveProps[f.name]; has {
+					patch[f.name] = nil // delete stale date field
+				}
+				if lv, ok := liveProps[f.raw]; !ok || !jsonEqual(lv, raw) {
+					patch[f.raw] = raw
+				}
+			}
+		}
+	}
+
+	for k, v := range o.Properties {
+		if handled[k] {
+			continue
+		}
+		liveVal, exists := liveProps[k]
+		if !exists || !jsonEqual(liveVal, v) {
+			patch[k] = v
+		}
+	}
+
+	if len(patch) == 0 {
+		return nil
+	}
+	return patch
+}
+
 // computeDelta returns the minimal property patch to bring a live object in line
 // with the desired state, or nil if nothing needs changing. A nil value in the
 // returned map means "delete this key".
@@ -359,6 +447,24 @@ func deltaJSON(delta map[string]any) string {
 		return fmt.Sprintf("%v", delta)
 	}
 	return string(b)
+}
+
+// jsonEqual reports whether two values are deep-equal by comparing their
+// canonical JSON forms. Both sides originate from JSON unmarshalling, so numbers
+// are float64 and maps are map[string]any; marshalling to JSON and comparing the
+// bytes avoids reflect.DeepEqual's type sensitivity and handles nested
+// objects/arrays/numbers correctly. json.Marshal emits map keys in sorted order,
+// so the comparison is deterministic.
+func jsonEqual(a, b any) bool {
+	aj, err := json.Marshal(a)
+	if err != nil {
+		return false
+	}
+	bj, err := json.Marshal(b)
+	if err != nil {
+		return false
+	}
+	return string(aj) == string(bj)
 }
 
 // ─── Seed loading ─────────────────────────────────────────────────────────────
@@ -514,7 +620,7 @@ func normalizeID(anyIDToEntity map[string]string, id string) string {
 // relationship endpoints. When captureProps is set it also returns each object's
 // Properties and Labels keyed by object key. Pagination terminates on an empty
 // page or a nil NextCursor.
-func enumerateObjects(ctx context.Context, client *graph.Client, types []string, captureProps bool) (map[string]string, map[string]string, map[string]map[string]any, map[string][]string, error) {
+func enumerateObjects(ctx context.Context, client *graph.Client, types []string, captureProps bool, pageSize int) (map[string]string, map[string]string, map[string]map[string]any, map[string][]string, error) {
 	keyToID := make(map[string]string)
 	anyIDToEntity := make(map[string]string)
 	var keyToProps map[string]map[string]any
@@ -528,7 +634,7 @@ func enumerateObjects(ctx context.Context, client *graph.Client, types []string,
 		cursor := ""
 		page := 0
 		for {
-			opts := &graph.ListObjectsOptions{Type: typ, Limit: listPageSize}
+			opts := &graph.ListObjectsOptions{Type: typ, Limit: pageSize}
 			if cursor != "" {
 				opts.Cursor = cursor
 			}
@@ -536,11 +642,14 @@ func enumerateObjects(ctx context.Context, client *graph.Client, types []string,
 			var err error
 			for attempt := 1; ; attempt++ {
 				resp, err = client.ListObjects(ctx, opts)
-				if err == nil || !retryable(err) || attempt >= 6 {
+				if err == nil || !retryable(err) || attempt >= 30 {
 					break
 				}
 				backoff := time.Duration(attempt) * 2 * time.Second
-				log.Printf("  enumerate objects: type=%s page=%d error: %v - retry %d/5 in %s", typ, page+1, err, attempt, backoff)
+				if backoff > 20*time.Second {
+					backoff = 20 * time.Second
+				}
+				log.Printf("  enumerate objects: type=%s page=%d error: %v - retry %d/30 in %s", typ, page+1, err, attempt, backoff)
 				select {
 				case <-ctx.Done():
 					return nil, nil, nil, nil, ctx.Err()
@@ -593,13 +702,13 @@ func enumerateObjects(ctx context.Context, client *graph.Client, types []string,
 
 // enumerateRelationships pages ListRelationships per seed type and returns the set
 // of existing (type, srcEntityID, dstEntityID) triples so re-runs stay idempotent.
-func enumerateRelationships(ctx context.Context, client *graph.Client, types []string, anyIDToEntity map[string]string) (map[string]struct{}, error) {
+func enumerateRelationships(ctx context.Context, client *graph.Client, types []string, anyIDToEntity map[string]string, pageSize int) (map[string]struct{}, error) {
 	set := make(map[string]struct{})
 	for _, typ := range types {
 		cursor := ""
 		page := 0
 		for {
-			opts := &graph.ListRelationshipsOptions{Type: typ, Limit: listPageSize}
+			opts := &graph.ListRelationshipsOptions{Type: typ, Limit: pageSize}
 			if cursor != "" {
 				opts.Cursor = cursor
 			}
@@ -607,11 +716,14 @@ func enumerateRelationships(ctx context.Context, client *graph.Client, types []s
 			var err error
 			for attempt := 1; ; attempt++ {
 				resp, err = client.ListRelationships(ctx, opts)
-				if err == nil || !retryable(err) || attempt >= 6 {
+				if err == nil || !retryable(err) || attempt >= 30 {
 					break
 				}
 				backoff := time.Duration(attempt) * 2 * time.Second
-				log.Printf("  enumerate relationships: type=%s page=%d error: %v - retry %d/5 in %s", typ, page+1, err, attempt, backoff)
+				if backoff > 20*time.Second {
+					backoff = 20 * time.Second
+				}
+				log.Printf("  enumerate relationships: type=%s page=%d error: %v - retry %d/30 in %s", typ, page+1, err, attempt, backoff)
 				select {
 				case <-ctx.Done():
 					return nil, ctx.Err()
@@ -649,12 +761,22 @@ func enumerateRelationships(ctx context.Context, client *graph.Client, types []s
 // retryable reports whether an error is worth retrying. The dev server returns
 // 502/503/504 under bulk-write load, and transient connection errors surface as
 // EOF/reset/timeout, so back off and retry those instead of dropping the batch.
+// During a dev restart the auth endpoint also flaps, briefly returning 401
+// `invalid_token` / `unauthorized` even for a valid token; treat those as
+// transient too so a long run rides through the restart window instead of
+// aborting.
 func retryable(err error) bool {
 	if err == nil {
 		return false
 	}
 	s := strings.ToLower(err.Error())
-	for _, m := range []string{"502", "503", "504", "bad gateway", "service unavailable", "gateway timeout", "connection reset", "broken pipe", "eof", "timeout", "deadline exceeded", "temporarily unavailable"} {
+	for _, m := range []string{
+		"502", "503", "504",
+		"401", "invalid_token", "unauthorized",
+		"bad gateway", "service unavailable", "gateway timeout",
+		"connection reset", "broken pipe", "eof", "timeout",
+		"deadline exceeded", "temporarily unavailable",
+	} {
 		if strings.Contains(s, m) {
 			return true
 		}
@@ -713,13 +835,13 @@ func bulkCreateObjects(ctx context.Context, client *graph.Client, cfg config, it
 				}
 				res, err := client.BulkCreateObjects(ctx, &graph.BulkCreateObjectsRequest{Items: wi.batch})
 				attempts := 0
-				for err != nil && attempts < 10 {
+				for err != nil && attempts < 20 {
 					attempts++
 					if !retryable(err) {
 						break
 					}
 					backoff := retryBackoff(attempts)
-					log.Printf("  [objects] batch %d error: %v - retry %d/10 in %s", wi.idx, err, attempts, backoff)
+					log.Printf("  [objects] batch %d error: %v - retry %d/20 in %s", wi.idx, err, attempts, backoff)
 					select {
 					case <-ctx.Done():
 						return
@@ -846,13 +968,13 @@ func bulkCreateRelationships(ctx context.Context, client *graph.Client, cfg conf
 				}
 				res, err := client.BulkCreateRelationships(ctx, &graph.BulkCreateRelationshipsRequest{Items: wi.batch})
 				attempts := 0
-				for err != nil && attempts < 10 {
+				for err != nil && attempts < 20 {
 					attempts++
 					if !retryable(err) {
 						break
 					}
 					backoff := retryBackoff(attempts)
-					log.Printf("  [rels] batch %d error: %v - retry %d/10 in %s", wi.idx, err, attempts, backoff)
+					log.Printf("  [rels] batch %d error: %v - retry %d/20 in %s", wi.idx, err, attempts, backoff)
 					select {
 					case <-ctx.Done():
 						return
@@ -957,13 +1079,13 @@ func bulkUpdateObjects(ctx context.Context, client *graph.Client, cfg config, pa
 				}
 				res, err := client.BulkUpdateObjects(ctx, &graph.BulkUpdateObjectsRequest{Items: items})
 				attempts := 0
-				for err != nil && attempts < 10 {
+				for err != nil && attempts < 20 {
 					attempts++
 					if !retryable(err) {
 						break
 					}
 					backoff := retryBackoff(attempts)
-					log.Printf("  [retype] batch %d error: %v - retry %d/10 in %s", wi.idx, err, attempts, backoff)
+					log.Printf("  [retype] batch %d error: %v - retry %d/20 in %s", wi.idx, err, attempts, backoff)
 					select {
 					case <-ctx.Done():
 						return
@@ -1035,7 +1157,7 @@ func runRetypeDates(ctx context.Context, client *graph.Client, cfg config, objec
 	}
 
 	// Enumerate live objects for the date-typed types, capturing properties.
-	keyToID, _, keyToProps, _, err := enumerateObjects(ctx, client, dateTypeList(), true)
+	keyToID, _, keyToProps, _, err := enumerateObjects(ctx, client, dateTypeList(), true, cfg.pageSize)
 	if err != nil {
 		return fmt.Errorf("enumerate objects: %w", err)
 	}
@@ -1074,6 +1196,58 @@ func runRetypeDates(ctx context.Context, client *graph.Client, cfg config, objec
 	log.Printf("──────────────────────────────────────────────")
 	log.Printf("retype-dates: objects scanned=%d needing patch=%d applied=%d failed=%d",
 		scanned, len(patches), applied, failed)
+	return nil
+}
+
+// ─── Seed property sync pass ──────────────────────────────────────────────────
+
+// runSyncProps PATCHes seed-object properties onto objects that already exist in
+// the live project, matched by seed key. Only the changed properties are sent
+// (PATCH merges), so live-only keys (labels, status, assignee, unknown props) are
+// preserved automatically. It skips gap-filling entirely. Idempotent: a second
+// run over now-canonical data reports zero patches.
+func runSyncProps(ctx context.Context, client *graph.Client, cfg config, objects []seedObjectLine) error {
+	objTypes := collectObjectTypes(objects)
+	keyToID, _, keyToProps, _, err := enumerateObjects(ctx, client, objTypes, true, cfg.pageSize)
+	if err != nil {
+		return fmt.Errorf("enumerate objects: %w", err)
+	}
+
+	existing := 0
+	var patches []retypePatch
+	for _, o := range objects {
+		id := keyToID[o.Key]
+		if id == "" {
+			continue // not live; gap-fill's job, not sync-props'
+		}
+		existing++
+		delta := buildSyncPropsDelta(o, keyToProps[o.Key])
+		if delta == nil {
+			continue
+		}
+		patches = append(patches, retypePatch{key: o.Key, id: id, delta: delta})
+	}
+
+	log.Printf("sync-props: objects scanned=%d existing=%d needing patch=%d",
+		len(objects), existing, len(patches))
+
+	if cfg.dryRun {
+		for i, p := range patches {
+			if i < 5 {
+				log.Printf("  [dry-run] would patch key=%s delta=%s", p.key, deltaJSON(p.delta))
+			}
+		}
+		if len(patches) > 5 {
+			log.Printf("  [dry-run] ...and %d more", len(patches)-5)
+		}
+		log.Printf("  [dry-run] would apply %d patches (nothing written)", len(patches))
+		return nil
+	}
+
+	applied, failed := bulkUpdateObjects(ctx, client, cfg, patches)
+	log.Printf("──────────────────────────────────────────────")
+	log.Printf("sync-props: objects scanned=%d existing=%d needing patch=%d applied=%d failed=%d",
+		len(objects), existing, len(patches), applied, failed)
 	return nil
 }
 
@@ -1179,13 +1353,13 @@ func upsertObjects(ctx context.Context, client *graph.Client, cfg config, candid
 				}
 				_, err := client.UpsertObject(ctx, req)
 				attempts := 0
-				for err != nil && attempts < 10 {
+				for err != nil && attempts < 20 {
 					attempts++
 					if !retryable(err) {
 						break
 					}
 					backoff := retryBackoff(attempts)
-					log.Printf("  [retype-upsert] key=%s error: %v - retry %d/10 in %s", wi.c.o.Key, err, attempts, backoff)
+					log.Printf("  [retype-upsert] key=%s error: %v - retry %d/20 in %s", wi.c.o.Key, err, attempts, backoff)
 					select {
 					case <-ctx.Done():
 						return
@@ -1233,7 +1407,7 @@ func upsertObjects(ctx context.Context, client *graph.Client, cfg config, candid
 // reports zero candidates.
 func runRetypeViaUpsert(ctx context.Context, client *graph.Client, cfg config, objects []seedObjectLine) error {
 	// Enumerate live objects for the date-typed types, capturing properties and labels.
-	keyToID, _, keyToProps, keyToLabels, err := enumerateObjects(ctx, client, dateTypeList(), true)
+	keyToID, _, keyToProps, keyToLabels, err := enumerateObjects(ctx, client, dateTypeList(), true, cfg.pageSize)
 	if err != nil {
 		return fmt.Errorf("enumerate objects: %w", err)
 	}
@@ -1271,7 +1445,7 @@ func main() {
 	}
 
 	start := time.Now()
-	httpClient := &http.Client{Timeout: 5 * time.Minute}
+	httpClient := &http.Client{Timeout: cfg.httpTimeout}
 	client := graph.NewClient(httpClient, cfg.serverURL, auth.NewAPITokenProvider(cfg.token), "", cfg.projectID)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1296,11 +1470,21 @@ func main() {
 
 	// Determine which passes run. --retype-via-upsert is an alternative retype
 	// path (used when bulk-update/by-id patch is broken); it takes precedence
-	// over --retype-dates. Either retype mode alone skips gap-filling;
-	// --retype-and-fill runs the delta retype then the gap-fill.
+	// over --retype-dates. --sync-props syncs seed properties onto existing
+	// objects and stops; --sync-props-and-fill syncs then gap-fills. Either retype
+	// mode alone skips gap-filling; --retype-and-fill runs the delta retype then
+	// the gap-fill.
+	runSync := cfg.syncProps || cfg.syncPropsAndFill
 	runRetypeUpsert := cfg.retypeViaUpsert
 	runRetypeDelta := (cfg.retypeDates || cfg.retypeAndFill) && !cfg.retypeViaUpsert
-	runFill := (!cfg.retypeDates && !cfg.retypeViaUpsert) || cfg.retypeAndFill
+	runFill := (!cfg.syncProps && !cfg.retypeDates && !cfg.retypeViaUpsert) ||
+		cfg.syncPropsAndFill || cfg.retypeAndFill
+
+	if runSync {
+		if err := runSyncProps(ctx, client, cfg, objects); err != nil {
+			log.Fatalf("sync-props: %v", err)
+		}
+	}
 
 	if runRetypeUpsert {
 		if err := runRetypeViaUpsert(ctx, client, cfg, objects); err != nil {
@@ -1317,7 +1501,7 @@ func main() {
 	if runFill {
 		// 1. Enumerate live objects (needed for object diff and endpoint resolution).
 		objTypes := collectObjectTypes(objects)
-		keyToID, anyIDToEntity, _, _, err := enumerateObjects(ctx, client, objTypes, false)
+		keyToID, anyIDToEntity, _, _, err := enumerateObjects(ctx, client, objTypes, false, cfg.pageSize)
 		if err != nil {
 			log.Fatalf("enumerate objects: %v", err)
 		}
@@ -1328,7 +1512,7 @@ func main() {
 		var liveRels map[string]struct{}
 		if !cfg.objectsOnly {
 			relTypes := collectRelTypes(rels)
-			liveRels, err = enumerateRelationships(ctx, client, relTypes, anyIDToEntity)
+			liveRels, err = enumerateRelationships(ctx, client, relTypes, anyIDToEntity, cfg.pageSize)
 			if err != nil {
 				log.Fatalf("enumerate relationships: %v", err)
 			}

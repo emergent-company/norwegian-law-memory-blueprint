@@ -223,13 +223,23 @@ go build ./cmd/seedfill/
 
 # Both passes
 ./seedfill --server <url> --token <token> --project <id> --dir . --retype-and-fill
+
+# Sync seed properties onto objects that already exist (PATCH by id, merge only
+# changed keys), skipping gap-filling
+./seedfill --server <url> --token <token> --project <id> --dir . --sync-props
+
+# Sync seed properties, then fill missing objects + relationships
+./seedfill --server <url> --token <token> --project <id> --dir . --sync-props-and-fill
 ```
 
 `--retype-dates` is idempotent — a second run reports zero patches — and by
 default skips gap-filling unless `--retype-and-fill` is also set. Respects
-`--dry-run`, `--batch` (max 100) and `--workers` (default 4). Env fallbacks:
-`MEMORY_SERVER`, `MEMORY_PROJECT_TOKEN`, `MEMORY_PROJECT_ID`, `SEED_DIR`,
-`SEED_RETYPE_DATES`.
+`--dry-run`, `--batch` (max 100), `--workers` (default 4), `--page-size`
+(default 250, max 1000; the object/relationship enumeration page size) and
+`--http-timeout` (default `60s`; the HTTP client timeout, lowered from 5m so
+retries cycle faster during dev-server flaps). Env fallbacks: `MEMORY_SERVER`,
+`MEMORY_PROJECT_TOKEN`, `MEMORY_PROJECT_ID`, `SEED_DIR`, `SEED_RETYPE_DATES`,
+`SEEDFILL_PAGE_SIZE`, `SEEDFILL_HTTP_TIMEOUT`.
 
 `--retype-via-upsert` re-coerces the same date fields but through
 `PUT /api/graph/objects/upsert` (resolved by `type`+`key`, not by id), which
@@ -237,6 +247,16 @@ still works when by-id writes are down. Upsert **replaces** the object's
 properties, so it sends each object's complete seed property set and passes
 through the live labels. It is likewise idempotent and skips gap-filling unless
 `--retype-and-fill` is also set. Env fallback: `SEED_RETYPE_VIA_UPSERT`.
+
+`--sync-props` PATCHes seed object properties onto objects that already exist in
+the live project, matched by seed `key`. Only the changed properties are sent —
+`PATCH` merges, so labels, status, assignee, and any live-only properties are
+preserved — and non-date fields are compared with a canonical-JSON deep-equal
+while date-typed fields reuse the same RFC3339 idempotency as `--retype-dates`.
+It is idempotent (a second run reports zero patches), respects `--dry-run`, and
+skips gap-filling entirely. `--sync-props-and-fill` runs the sync pass first,
+then the normal object + relationship gap-fill. Env fallback for `--sync-props`:
+`SEED_SYNC_PROPS`.
 
 ## Citation verification (`lovcite`)
 

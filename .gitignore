@@ -3,12 +3,19 @@
 # Compiled binary (the bare name would also match the cmd/seeder/ dir, so be specific)
 /seeder
 /cmd/seeder/seeder
+/seedfill
+/cmd/seedfill/seedfill
 
 # Seeder state files (the tracked blueprint seed data lives in seed/ and is NOT ignored)
 idmap.json
 state.json
 rels_done.txt
 rels_failed.jsonl
+
+# Local secrets / environment — never commit (keep .env.example)
+.env
+.env.*
+!.env.example
 
 # Temporary data cache
 /tmp/
