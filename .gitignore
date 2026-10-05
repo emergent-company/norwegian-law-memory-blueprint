@@ -13,6 +13,13 @@ rels_failed.jsonl
 # Temporary data cache
 /tmp/
 
+# Evaluation dataset cache and generated output (public but copyrighted PDFs;
+# generated dataset is not committed)
+/evals/cache/
+/evals/dataset/
+/evals/results/
+/evals/generated/
+
 # OS-generated files
 .DS_Store
 Thumbs.db

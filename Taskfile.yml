@@ -13,3 +13,14 @@ tasks:
   e2e:         { desc: "Run e2e (requires TEST_SERVER_URL + TEST_API_TOKEN)", cmds: [go test ./tests/e2e/ -v -count=1 -timeout 30m] }
   e2e:install: { desc: "Install blueprint then run all e2e", cmds: ["LAW_E2E_INSTALL=1 go test ./tests/e2e/ -v -count=1 -timeout 60m"] }
   e2e:compile: { desc: "Compile e2e tests only", cmds: [go test ./tests/e2e/ -run XXX_NONE -count=1] }
+
+  # --- Evaluation suite (see tests/eval/README.md) ---
+  # Fetch + build the UiO exam dataset (network + seed/; cache in evals/cache/).
+  eval:dataset: { desc: "Fetch UiO exams + build evals/dataset/uio.jsonl", cmds: ["go run ./cmd/loveval fetch --source uio", "go run ./cmd/loveval build"] }
+  eval:gen:     { desc: "Generate synthetic + corpus-retrieval eval items", cmds: ["go run ./cmd/lovevalgen synthetic --limit 200", "go run ./cmd/lovevalgen retrieval --limit 100"] }
+  eval:gen:nordercase: { desc: "Download + map Nor-CaseHOLD (out-of-graph, reference only)", cmds: ["go run ./cmd/lovevalgen nordercase"] }
+  # Offline: validates the committed dataset + resolves every gold_ref. No creds.
+  eval:offline: { desc: "Validate eval dataset offline (no creds)", cmds: ["go test ./tests/eval/ -run TestDatasetIntegrity -v -count=1"] }
+  # Live: drives the agent; requires TEST_SERVER_URL + TEST_API_TOKEN.
+  eval:        { desc: "Run live agent evaluation (requires TEST_SERVER_URL + TEST_API_TOKEN)", cmds: ["go test ./tests/eval/ -run TestAgentEval -v -count=1 -timeout 60m"] }
+  eval:compile: { desc: "Compile eval tests only", cmds: ["go test ./tests/eval/ -run XXX_NONE -count=1"] }
