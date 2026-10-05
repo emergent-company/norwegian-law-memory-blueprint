@@ -30,16 +30,18 @@ package main
 //   ./seedfill --server <url> --token <t> --project <id> --sync-props --dry-run
 //   ./seedfill --server <url> --token <t> --project <id> --sync-props-and-fill
 //   ./seedfill --server <url> --token <t> --project <id> --page-size 250
+//   ./seedfill --server <url> --token <t> --project <id> --http-timeout 45s
 //
 // Environment variables (all overridable by flags):
-//   MEMORY_SERVER          server URL
-//   MEMORY_PROJECT_TOKEN   project API token
-//   MEMORY_PROJECT_ID      project ID
-//   SEED_DIR               blueprint directory containing seed/ (default ".")
-//   SEED_RETYPE_DATES      "1"/"true" to enable --retype-dates
-//   SEED_RETYPE_VIA_UPSERT "1"/"true" to enable --retype-via-upsert
-//   SEED_SYNC_PROPS        "1"/"true" to enable --sync-props
-//   SEEDFILL_PAGE_SIZE     list page size for enumeration (default 250)
+//   MEMORY_SERVER           server URL
+//   MEMORY_PROJECT_TOKEN    project API token
+//   MEMORY_PROJECT_ID       project ID
+//   SEED_DIR                blueprint directory containing seed/ (default ".")
+//   SEED_RETYPE_DATES       "1"/"true" to enable --retype-dates
+//   SEED_RETYPE_VIA_UPSERT  "1"/"true" to enable --retype-via-upsert
+//   SEED_SYNC_PROPS         "1"/"true" to enable --sync-props
+//   SEEDFILL_PAGE_SIZE      list page size for enumeration (default 250)
+//   SEEDFILL_HTTP_TIMEOUT   HTTP client timeout (duration, default "60s")
 
 import (
 	"bufio"
@@ -84,6 +86,7 @@ type config struct {
 	workers           int
 	batchSz           int
 	pageSize          int
+	httpTimeout       time.Duration
 	dryRun            bool
 	objectsOnly       bool
 	relationshipsOnly bool
@@ -130,6 +133,7 @@ func parseConfig() config {
 	workers := flag.Int("workers", envIntOr("SEEDFILL_WORKERS", 4), "Parallel bulk-create workers")
 	batchSz := flag.Int("batch", envIntOr("SEEDFILL_BATCH", 100), "Batch size for bulk API calls (max 100)")
 	pageSize := flag.Int("page-size", envIntOr("SEEDFILL_PAGE_SIZE", 250), "Page size for object/relationship enumeration (max 1000)")
+	httpTimeoutFlag := flag.String("http-timeout", envOr("SEEDFILL_HTTP_TIMEOUT", "60s"), "HTTP client timeout (duration string, e.g. 60s)")
 	dryRun := flag.Bool("dry-run", false, "Compute the diff and print the summary without writing anything")
 	objectsOnly := flag.Bool("objects-only", false, "Only fill missing objects (skip relationships)")
 	relationshipsOnly := flag.Bool("relationships-only", false, "Only fill missing relationships (skip object creation)")
@@ -161,6 +165,12 @@ func parseConfig() config {
 	if ps < 1 {
 		ps = 1
 	}
+	httpTimeout := 60 * time.Second
+	if t, err := time.ParseDuration(*httpTimeoutFlag); err == nil && t > 0 {
+		httpTimeout = t
+	} else {
+		log.Printf("Note: invalid --http-timeout %q; using default 60s", *httpTimeoutFlag)
+	}
 
 	return config{
 		serverURL:         *serverURL,
@@ -170,6 +180,7 @@ func parseConfig() config {
 		workers:           w,
 		batchSz:           sz,
 		pageSize:          ps,
+		httpTimeout:       httpTimeout,
 		dryRun:            *dryRun,
 		objectsOnly:       *objectsOnly,
 		relationshipsOnly: *relationshipsOnly,
@@ -1434,7 +1445,7 @@ func main() {
 	}
 
 	start := time.Now()
-	httpClient := &http.Client{Timeout: 5 * time.Minute}
+	httpClient := &http.Client{Timeout: cfg.httpTimeout}
 	client := graph.NewClient(httpClient, cfg.serverURL, auth.NewAPITokenProvider(cfg.token), "", cfg.projectID)
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -234,10 +234,12 @@ go build ./cmd/seedfill/
 
 `--retype-dates` is idempotent — a second run reports zero patches — and by
 default skips gap-filling unless `--retype-and-fill` is also set. Respects
-`--dry-run`, `--batch` (max 100), `--workers` (default 4) and `--page-size`
-(default 250, max 1000; the object/relationship enumeration page size). Env
-fallbacks: `MEMORY_SERVER`, `MEMORY_PROJECT_TOKEN`, `MEMORY_PROJECT_ID`,
-`SEED_DIR`, `SEED_RETYPE_DATES`, `SEEDFILL_PAGE_SIZE`.
+`--dry-run`, `--batch` (max 100), `--workers` (default 4), `--page-size`
+(default 250, max 1000; the object/relationship enumeration page size) and
+`--http-timeout` (default `60s`; the HTTP client timeout, lowered from 5m so
+retries cycle faster during dev-server flaps). Env fallbacks: `MEMORY_SERVER`,
+`MEMORY_PROJECT_TOKEN`, `MEMORY_PROJECT_ID`, `SEED_DIR`, `SEED_RETYPE_DATES`,
+`SEEDFILL_PAGE_SIZE`, `SEEDFILL_HTTP_TIMEOUT`.
 
 `--retype-via-upsert` re-coerces the same date fields but through
 `PUT /api/graph/objects/upsert` (resolved by `type`+`key`, not by id), which
