@@ -12,6 +12,11 @@ state.json
 rels_done.txt
 rels_failed.jsonl
 
+# Local secrets / environment — never commit (keep .env.example)
+.env
+.env.*
+!.env.example
+
 # Temporary data cache
 /tmp/
 
