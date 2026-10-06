@@ -241,6 +241,12 @@ retries cycle faster during dev-server flaps). Env fallbacks: `MEMORY_SERVER`,
 `MEMORY_PROJECT_TOKEN`, `MEMORY_PROJECT_ID`, `SEED_DIR`, `SEED_RETYPE_DATES`,
 `SEEDFILL_PAGE_SIZE`, `SEEDFILL_HTTP_TIMEOUT`.
 
+> **Load shedding.** Newer servers return `429 shed: system under load, request
+> shed` under write pressure; `seedfill` treats `429`/`shed` as retryable with
+> backoff (up to 60s) instead of failing the batch permanently. A full backfill
+> is still I/O-bound, so run it gently — e.g. `--workers 1 --batch 20` — and
+> expect hours for ~100k objects. Re-runs are idempotent and resumable.
+
 `--retype-via-upsert` re-coerces the same date fields but through
 `PUT /api/graph/objects/upsert` (resolved by `type`+`key`, not by id), which
 still works when by-id writes are down. Upsert **replaces** the object's
