@@ -17,6 +17,15 @@ func fastPoll(t *testing.T) {
 	t.Cleanup(func() { pollInterval = old })
 }
 
+// setRunTimeout overrides the run timeout and poll interval for one test,
+// restoring both afterwards.
+func setRunTimeout(t *testing.T, timeout, interval time.Duration) {
+	t.Helper()
+	oldTimeout, oldInterval := runTimeout, pollInterval
+	runTimeout, pollInterval = timeout, interval
+	t.Cleanup(func() { runTimeout, pollInterval = oldTimeout, oldInterval })
+}
+
 func TestSendAgentTriggerHappyPath(t *testing.T) {
 	fastPoll(t)
 
@@ -86,6 +95,57 @@ func TestSendAgentTriggerNon2xx(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "401") {
 		t.Errorf("error = %q, want it to mention status 401", err)
+	}
+}
+
+func TestSendAgentTriggerInputRequired(t *testing.T) {
+	fastPoll(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/projects/p1/agents/a1/trigger":
+			writeJSON(w, http.StatusOK, `{"success":true,"runId":"run-7"}`)
+		case "/api/projects/p1/agents/a1/runs":
+			writeJSON(w, http.StatusOK, `{"runs":[{"id":"run-7","status":"input-required","summary":{}}]}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	_, err := sendAgentTrigger(context.Background(), srv.URL, "tok", "p1", "a1", "q")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "input-required") {
+		t.Errorf("error = %q, want it to contain %q", err, "input-required")
+	}
+	if !strings.Contains(err.Error(), "clarification") {
+		t.Errorf("error = %q, want it to contain %q", err, "clarification")
+	}
+}
+
+func TestSendAgentTriggerTimeout(t *testing.T) {
+	setRunTimeout(t, 150*time.Millisecond, 20*time.Millisecond)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/projects/p1/agents/a1/trigger":
+			writeJSON(w, http.StatusOK, `{"success":true,"runId":"run-5"}`)
+		case "/api/projects/p1/agents/a1/runs":
+			writeJSON(w, http.StatusOK, `{"runs":[{"id":"run-5","status":"working","summary":{}}]}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	_, err := sendAgentTrigger(context.Background(), srv.URL, "tok", "p1", "a1", "q")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "did not reach a terminal state") {
+		t.Errorf("error = %q, want it to contain %q", err, "did not reach a terminal state")
 	}
 }
 

@@ -20,6 +20,10 @@ const triggerRequestTimeout = 11 * time.Minute
 // It is a var so tests can shorten it.
 var pollInterval = 2 * time.Second
 
+// runTimeout bounds how long a single item's run is allowed to poll before
+// giving up. It is a var so tests can shorten it.
+var runTimeout = 10 * time.Minute
+
 // triggerResponse is the JSON body of a successful /trigger POST.
 type triggerResponse struct {
 	Success  bool   `json:"success"`
@@ -54,7 +58,16 @@ func sendAgentTrigger(ctx context.Context, base, token, projectID, agentID, ques
 	if err != nil {
 		return "", err
 	}
-	return awaitRun(ctx, base, token, projectID, agentID, runID)
+
+	// Bound the polling phase so no single status can hang the whole run. Use
+	// the caller's deadline when it fires earlier than runTimeout.
+	pollCtx := ctx
+	if deadline, ok := ctx.Deadline(); !ok || time.Until(deadline) > runTimeout {
+		var cancel context.CancelFunc
+		pollCtx, cancel = context.WithTimeout(ctx, runTimeout)
+		defer cancel()
+	}
+	return awaitRun(pollCtx, base, token, projectID, agentID, runID)
 }
 
 // triggerAgent posts the prompt to the trigger endpoint and returns the run id.
@@ -109,27 +122,70 @@ func awaitRun(ctx context.Context, base, token, projectID, agentID, runID string
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 
+	lastStatus := ""
 	for {
 		run, found, err := fetchRun(ctx, client, url, token, runID)
 		if err != nil {
 			return "", err
 		}
 		if found {
-			switch run.Status {
-			case "completed":
+			lastStatus = run.Status
+			switch {
+			case run.Status == "completed":
 				return finalResponse(run)
-			case "failed", "cancelled", "skipped":
+			case isClarificationStatus(run.Status):
+				return "", clarificationError(runID, run.Status)
+			case isFailedStatus(run.Status):
 				return "", runFailure(runID, run)
+			case isInProgressStatus(run.Status):
+				// keep polling
+			default:
+				return "", fmt.Errorf("run %s ended in unrecognised state %q", runID, run.Status)
 			}
-			// "working"/"pending"/unknown: keep polling.
 		}
 
 		select {
 		case <-ctx.Done():
-			return "", fmt.Errorf("agent run %s did not finish before deadline: %w", runID, ctx.Err())
+			return "", fmt.Errorf("run %s did not reach a terminal state within %s (last status %q)", runID, runTimeout, lastStatus)
 		case <-ticker.C:
 		}
 	}
+}
+
+// isClarificationStatus reports whether a status means the agent asked for
+// clarification instead of answering.
+func isClarificationStatus(s string) bool {
+	switch s {
+	case "input-required", "input_required", "paused", "awaiting-input", "awaiting_input", "requires-input":
+		return true
+	default:
+		return false
+	}
+}
+
+// isFailedStatus reports whether a status is a terminal failure.
+func isFailedStatus(s string) bool {
+	switch s {
+	case "failed", "cancelled", "skipped":
+		return true
+	default:
+		return false
+	}
+}
+
+// isInProgressStatus reports whether a status means the run is still working.
+func isInProgressStatus(s string) bool {
+	switch s {
+	case "working", "pending", "queued", "running", "submitted", "started", "":
+		return true
+	default:
+		return false
+	}
+}
+
+// clarificationError renders an error for a run that asked for clarification.
+func clarificationError(runID, status string) error {
+	return fmt.Errorf("run %s ended in state %q (agent requested clarification instead of answering)", runID, status)
 }
 
 // fetchRun fetches the runs list and returns the entry matching runID, if found.
