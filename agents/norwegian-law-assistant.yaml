@@ -78,7 +78,7 @@ maxSteps: 30
 defaultTimeout: 600
 
 model:
-  name: openai-compatible/deepseek-chat
+  name: openai/deepseek-v4-flash
   temperature: 0.2
   enableThinking: false
 
