@@ -18,10 +18,40 @@ go run ./cmd/loveval build --limit 2                       # smoke test: cap ite
 # OCR control (see "OCR fallback" below)
 go run ./cmd/loveval build --no-ocr                        # disable OCR entirely
 go run ./cmd/loveval build --ocr-max-pages 20              # cap OCR pages per paper (default 40)
+
+# Conversion via the local xberg service (see "Text conversion backends")
+task eval:xberg                                            # start xberg on :8000
+go run ./cmd/loveval build --converter xberg               # use xberg for all conversion
+go run ./cmd/loveval build --converter xberg --xberg-url http://localhost:8000
 ```
 
 `pdftotext` (poppler-utils) must be on `PATH`; the build fails with a clear
 error otherwise.
+
+## Text conversion backends
+
+`--converter` selects how PDFs are turned into text:
+
+- `pdftotext` (default): local `pdftotext`, with the tesseract OCR fallback below.
+- `xberg`: the local xberg document-extraction service
+  (`ghcr.io/xberg-io/xberg:1.3.0`, `POST /extract`). Start it with
+  `task eval:xberg` (publishes `:8000`); stop with `task eval:xberg:stop`.
+  Relevant flags: `--xberg-url` (default `$XBERG_SERVICE_URL` or
+  `http://localhost:8000`), `--xberg-timeout-ms` (default `300000`),
+  `--xberg-force-ocr`, `--xberg-ocr-lang` (default `nor`),
+  `--xberg-ocr-backend` (default tesseract when a language is set).
+
+xberg conversion is hybrid, because xberg's own PDF OCR path performs poorly on
+scanned UiO papers:
+
+1. `pdftotext` is run purely as a text-layer detector.
+2. Text-layer PDF → the PDF bytes are sent to xberg `/extract`.
+3. Scanned PDF → pages are rendered with `pdftoppm -r 300 -png` and the PNGs are
+   sent to xberg as `image/png` in one request (xberg does the OCR on the
+   rendered images). This is the path that recovers clean Norwegian text.
+4. Any xberg error/empty result falls back to the local `pdftotext`+tesseract
+   path; a failure never aborts the run. `xberg used:` in the summary counts
+   items whose `question` came from xberg.
 
 ## OCR fallback
 
@@ -53,7 +83,7 @@ Fetch is idempotent: a URL already cached with a matching SHA-256 is skipped.
 
 ```json
 {"id":"uio-jus1111-v26","course":"JUS1111","semester":"v26",
- "question":"<full exam paper text, empty if image-only>",
+ "question":"<full exam paper text; empty only if extraction failed>",
  "gold_points":["<one paragraph/bullet from the sensorveiledning, trimmed>"],
  "gold_refs":["lov/2002-06-21-34#§16"],
  "legal_area":"","language":"nb",

@@ -18,11 +18,32 @@ func runBuild(args []string) int {
 	limit := fs.Int("limit", 0, "max items to emit (0 = unlimited)")
 	ocrMaxPages := fs.Int("ocr-max-pages", evaldata.DefaultOCRMaxPages, "max pages to OCR per scanned exam paper")
 	noOCR := fs.Bool("no-ocr", false, "disable OCR fallback for image-only exam papers")
+	converter := fs.String("converter", "pdftotext", "text converter: \"pdftotext\" or \"xberg\"")
+	xbergURL := fs.String("xberg-url", xbergDefaultURL(), "xberg service base URL (default: $XBERG_SERVICE_URL or http://localhost:8000)")
+	xbergTimeoutMs := fs.Int("xberg-timeout-ms", evaldata.DefaultXbergTimeoutMs, "xberg request timeout in milliseconds")
+	xbergForceOCR := fs.Bool("xberg-force-ocr", false, "request forced OCR via xberg")
+	xbergOCRLang := fs.String("xberg-ocr-lang", "nor", "xberg OCR language(s), \"+\"-separated (e.g. nor, nor+eng)")
+	xbergOCRBackend := fs.String("xberg-ocr-backend", "", "xberg OCR backend (e.g. tesseract)")
 	_ = fs.Parse(args)
 
 	if *source != "uio" {
 		fmt.Fprintf(os.Stderr, "build: unsupported source %q (only \"uio\")\n", *source)
 		return 2
+	}
+	if *converter != "pdftotext" && *converter != "xberg" {
+		fmt.Fprintf(os.Stderr, "build: unsupported converter %q (must be \"pdftotext\" or \"xberg\")\n", *converter)
+		return 2
+	}
+
+	var xbergCfg *evaldata.XbergConfig
+	if *converter == "xberg" {
+		xbergCfg = &evaldata.XbergConfig{
+			BaseURL:     *xbergURL,
+			TimeoutMs:   *xbergTimeoutMs,
+			ForceOCR:    *xbergForceOCR,
+			OCRLanguage: *xbergOCRLang,
+			OCRBackend:  *xbergOCRBackend,
+		}
 	}
 
 	res, err := evaldata.BuildDataset(evaldata.BuildConfig{
@@ -33,6 +54,8 @@ func runBuild(args []string) int {
 		Limit:       *limit,
 		OCRMaxPages: *ocrMaxPages,
 		NoOCR:       *noOCR,
+		Converter:   *converter,
+		Xberg:       xbergCfg,
 		Logf:        func(f string, a ...interface{}) { fmt.Fprintf(os.Stderr, f+"\n", a...) },
 	})
 	if err != nil {
@@ -58,13 +81,26 @@ func runBuild(args []string) int {
 	fmt.Printf("items:            %d\n", s.Items)
 	fmt.Printf("with gold points: %d\n", s.WithGoldPoints)
 	fmt.Printf("no veiledning:    %d\n", s.NoVeiledning)
+	fmt.Printf("converter:        %s\n", *converter)
 	fmt.Printf("ocr used:         %d\n", s.OCRUsed)
+	if *converter == "xberg" {
+		fmt.Printf("xberg used:       %d\n", s.XbergUsed)
+	}
 	fmt.Printf("gold refs:        %d resolved, %d unresolved\n", s.ResolvedRefs, s.UnresolvedRefs)
 	fmt.Printf("output:           %s\n", *out)
 	if len(res.Unresolved) > 0 {
 		fmt.Printf("unresolved:       %s\n", unresolvedPath)
 	}
 	return 0
+}
+
+// xbergDefaultURL returns the default xberg base URL: $XBERG_SERVICE_URL when
+// set, else http://localhost:8000.
+func xbergDefaultURL() string {
+	if v := os.Getenv("XBERG_SERVICE_URL"); v != "" {
+		return v
+	}
+	return evaldata.DefaultXbergBaseURL
 }
 
 // unresolvedSidecar derives evals/dataset/uio.unresolved.json from the out path.

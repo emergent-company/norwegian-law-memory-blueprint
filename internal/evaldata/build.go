@@ -20,6 +20,8 @@ type BuildConfig struct {
 	Limit       int    // max items to emit; 0 = unlimited
 	OCRMaxPages int    // max pages to OCR per scanned paper (0 -> default)
 	NoOCR       bool   // disable OCR fallback for image-only exam papers
+	Converter   string // "" or "pdftotext" => local; "xberg" => service
+	Xberg       *XbergConfig
 	Logf        func(string, ...interface{})
 }
 
@@ -32,6 +34,7 @@ type BuildStats struct {
 	WithGoldPoints int `json:"with_gold_points"`
 	NoVeiledning   int `json:"no_veiledning"`
 	OCRUsed        int `json:"ocr_used"`
+	XbergUsed      int `json:"xberg_used"`
 	ResolvedRefs   int `json:"resolved_refs"`
 	UnresolvedRefs int `json:"unresolved_refs"`
 }
@@ -104,7 +107,7 @@ func BuildDataset(cfg BuildConfig) (*BuildResult, error) {
 			break
 		}
 
-		item, unresolved, ocrUsed, err := buildItem(cfg, srcDir, course, semester, *oppgave, veiledning, abbrevs, idx)
+		item, unresolved, ocrUsed, xbergUsed, err := buildItem(cfg, srcDir, course, semester, *oppgave, veiledning, abbrevs, idx)
 		if err != nil {
 			return nil, err
 		}
@@ -113,6 +116,9 @@ func BuildDataset(cfg BuildConfig) (*BuildResult, error) {
 		res.Stats.Items++
 		if ocrUsed {
 			res.Stats.OCRUsed++
+		}
+		if xbergUsed {
+			res.Stats.XbergUsed++
 		}
 		if len(item.GoldPoints) > 0 {
 			res.Stats.WithGoldPoints++
@@ -157,9 +163,9 @@ func pickVeiledning(langs map[string]ManifestEntry, pref string) *ManifestEntry 
 }
 
 // buildItem assembles one evaluation item from a paired (or unpaired) document
-// set, returning the item, any unresolved references, and whether OCR was used
-// for the question.
-func buildItem(cfg BuildConfig, srcDir, course, semester string, oppgave ManifestEntry, veiledning *ManifestEntry, abbrevs AbbrevMap, idx *lovcite.Index) (Item, []UnresolvedRef, bool, error) {
+// set, returning the item, any unresolved references, and whether OCR/xberg was
+// used for the question.
+func buildItem(cfg BuildConfig, srcDir, course, semester string, oppgave ManifestEntry, veiledning *ManifestEntry, abbrevs AbbrevMap, idx *lovcite.Index) (Item, []UnresolvedRef, bool, bool, error) {
 	it := NewItem()
 	it.ID = fmt.Sprintf("%s-%s-%s", cfg.Source, strings.ToLower(course), semester)
 	it.Course = course
@@ -174,11 +180,13 @@ func buildItem(cfg BuildConfig, srcDir, course, semester string, oppgave Manifes
 	res, err := ExtractText(filepath.Join(srcDir, oppgave.LocalPath), ExtractOptions{
 		OCRMaxPages: cfg.OCRMaxPages,
 		NoOCR:       cfg.NoOCR,
+		Converter:   cfg.Converter,
+		Xberg:       cfg.Xberg,
 		Logf:        cfg.Logf,
 	})
 	// A PDF that fails extraction yields an empty question rather than
 	// aborting the whole run.
-	question, ocrUsed := res.Text, res.OCRUsed
+	question, ocrUsed, xbergUsed := res.Text, res.OCRUsed, res.XbergUsed
 	if err != nil {
 		question, ocrUsed = res.Text, false
 	}
@@ -186,10 +194,7 @@ func buildItem(cfg BuildConfig, srcDir, course, semester string, oppgave Manifes
 
 	if veiledning != nil {
 		it.VeiledningURL = veiledning.URL
-		veilText, err := PDFToText(filepath.Join(srcDir, veiledning.LocalPath))
-		if err != nil {
-			veilText = ""
-		}
+		veilText := veiledningText(cfg, filepath.Join(srcDir, veiledning.LocalPath))
 		it.GoldPoints = SplitPoints(veilText)
 		cands := ExtractRefs(veilText, abbrevs)
 		resolved, unresolved := ResolveCandidates(cands, idx)
@@ -200,7 +205,7 @@ func buildItem(cfg BuildConfig, srcDir, course, semester string, oppgave Manifes
 		// needs_curation stays true: legal_area/difficulty are placeholders and
 		// gold-point quality is unverified in this initial pass.
 		it.Answerable = len(it.GoldPoints) > 0 || len(it.GoldRefs) > 0
-		return it, unresolved, ocrUsed, nil
+		return it, unresolved, ocrUsed, xbergUsed, nil
 	}
 
 	// No veiledning: still emit the item, flagged for curation.
@@ -208,7 +213,31 @@ func buildItem(cfg BuildConfig, srcDir, course, semester string, oppgave Manifes
 	it.GoldRefs = []string{}
 	it.NeedsCuration = true
 	it.Answerable = false
-	return it, nil, ocrUsed, nil
+	return it, nil, ocrUsed, xbergUsed, nil
+}
+
+// veiledningText extracts a sensorveiledning's text, using the xberg service
+// when configured and the local pdftotext path otherwise. On any error it
+// returns "" so the item is emitted without gold points, matching the original
+// empty-text-on-error behaviour.
+func veiledningText(cfg BuildConfig, path string) string {
+	if cfg.Converter == "xberg" && cfg.Xberg != nil {
+		res, err := ExtractText(path, ExtractOptions{
+			NoOCR:     true,
+			Converter: cfg.Converter,
+			Xberg:     cfg.Xberg,
+			Logf:      cfg.Logf,
+		})
+		if err != nil {
+			return ""
+		}
+		return res.Text
+	}
+	text, err := PDFToText(path)
+	if err != nil {
+		return ""
+	}
+	return text
 }
 
 // WriteUnresolved writes unresolved references as JSONL sidecar.
