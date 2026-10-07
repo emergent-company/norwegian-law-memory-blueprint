@@ -97,6 +97,28 @@ func TestExtractRefsNoAttribution(t *testing.T) {
 	}
 }
 
+func TestExtractRefsExplicitActKey(t *testing.T) {
+	text := "Skatteloven (lov/1999-03-26-14) § 6-1 gir grunnlag."
+	got := ExtractRefs(text, testAbbrevs())
+	want := []RefCandidate{
+		{ActKey: "lov/1999-03-26-14", Section: "6-1", Raw: "§ 6-1"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %+v, want %+v", got, want)
+	}
+}
+
+func TestExtractRefsExplicitActKeyInLink(t *testing.T) {
+	text := "Se [forskriften](/objects/forskrift/2006-02-17-204) § 2."
+	got := ExtractRefs(text, testAbbrevs())
+	want := []RefCandidate{
+		{ActKey: "forskrift/2006-02-17-204", Section: "2", Raw: "§ 2"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %+v, want %+v", got, want)
+	}
+}
+
 func TestResolveCandidates(t *testing.T) {
 	dir := writeRefSeed(t)
 	idx, err := lovcite.Build(dir, lovcite.BuildOptions{})

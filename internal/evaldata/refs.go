@@ -34,6 +34,12 @@ type actMention struct {
 	act string
 }
 
+// explicitActKeyRegex matches an explicit corpus act key written out in prose
+// or a link path, e.g. "lov/1999-03-26-14" or "forskrift/2006-02-17-204".
+// Boundary validity is checked manually (see tokenBoundaryOK), like the
+// abbreviation tokens.
+var explicitActKeyRegex = regexp.MustCompile(`(?i)(?:lov|forskrift)/\d{4}-\d{2}-\d{2}-\d+`)
+
 // actTokenRegex builds a single case-insensitive regex matching any mappable
 // act token. Keys are ordered longest-first so the longest token wins (e.g.
 // "sktfvl" before "fvl"). No \b is used because many names contain non-ASCII
@@ -93,6 +99,20 @@ func ExtractRefs(text string, m AbbrevMap) []RefCandidate {
 				mentions = append(mentions, actMention{pos: loc[0], act: act})
 			}
 		}
+
+		// Explicit corpus act keys (lov/…, forskrift/…) written in the text also
+		// count as act mentions, so following § tokens attribute to them.
+		for _, loc := range explicitActKeyRegex.FindAllStringIndex(line, -1) {
+			if !tokenBoundaryOK(line, loc[0], loc[1]) {
+				continue
+			}
+			key := strings.ToLower(line[loc[0]:loc[1]])
+			if key == "" || mentionAt(mentions, loc[0]) {
+				continue
+			}
+			mentions = append(mentions, actMention{pos: loc[0], act: key})
+		}
+		sort.SliceStable(mentions, func(i, j int) bool { return mentions[i].pos < mentions[j].pos })
 
 		// Section references from lovcite.
 		secRefs := lovcite.ExtractSectionRefs(line)
@@ -161,6 +181,17 @@ func nearestBefore(mentions []actMention, pos int) string {
 		act = m.act
 	}
 	return act
+}
+
+// mentionAt reports whether mentions already contains an actMention at pos, so
+// an explicit act key never double-counts an abbreviation at the same position.
+func mentionAt(mentions []actMention, pos int) bool {
+	for _, m := range mentions {
+		if m.pos == pos {
+			return true
+		}
+	}
+	return false
 }
 
 // distinctActs returns the unique act keys in mentions, in first-seen order.
