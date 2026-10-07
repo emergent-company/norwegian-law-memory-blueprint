@@ -122,6 +122,26 @@ func TestAgentEval(t *testing.T) {
 		t.Skip("set TEST_SERVER_URL and TEST_API_TOKEN (or MEMORY_SERVER_URL / MEMORY_PROJECT_API_KEY) to run live agent eval")
 	}
 
+	transport := os.Getenv("EVAL_TRANSPORT")
+	if transport == "" {
+		transport = "a2a"
+	}
+	var ask func(ctx context.Context, question string) (string, error)
+	if transport == "trigger" {
+		projectID := envFirst("TEST_PROJECT_ID", "EVAL_PROJECT_ID")
+		agentID := os.Getenv("EVAL_AGENT_ID")
+		if projectID == "" || agentID == "" {
+			t.Skip("trigger transport requires TEST_PROJECT_ID (or EVAL_PROJECT_ID) and EVAL_AGENT_ID")
+		}
+		ask = func(ctx context.Context, question string) (string, error) {
+			return sendAgentTrigger(ctx, base, token, projectID, agentID, question)
+		}
+	} else {
+		ask = func(ctx context.Context, question string) (string, error) {
+			return sendAgentMessage(ctx, base, token, question)
+		}
+	}
+
 	idx, abbrevs, err := buildOffline()
 	if err != nil {
 		t.Fatalf("build offline index: %v", err)
@@ -155,7 +175,7 @@ func TestAgentEval(t *testing.T) {
 	minRecall := floatEnv("EVAL_MIN_POINT_RECALL", 0)
 
 	judge, judgeOn := judgeFromEnv()
-	t.Logf("live eval: %d items, judge=%v", len(items), judgeOn)
+	t.Logf("live eval: %d items, judge=%v, transport=%s", len(items), judgeOn, transport)
 
 	ctx := context.Background()
 	results := make([]ItemResult, 0, len(items))
@@ -172,7 +192,7 @@ func TestAgentEval(t *testing.T) {
 			GoldRefs:   it.GoldRefs,
 		}
 
-		answer, aerr := sendAgentMessage(ctx, base, token, it.Question)
+		answer, aerr := ask(ctx, it.Question)
 		if aerr != nil {
 			ir.Error = aerr.Error()
 			results = append(results, ir)
