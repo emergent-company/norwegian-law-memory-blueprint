@@ -12,6 +12,10 @@ Two tests:
 
 ```sh
 go test ./tests/eval/ -run TestDatasetIntegrity -v -count=1
+
+# Validate a different set offline, e.g. a freshly built one:
+EVAL_DATASET=evals/dataset/uio.jsonl \
+  go test ./tests/eval/ -run TestDatasetIntegrity -v -count=1
 ```
 
 ## Run live (against a deployed agent)

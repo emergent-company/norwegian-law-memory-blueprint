@@ -60,7 +60,13 @@ func TestDatasetIntegrity(t *testing.T) {
 		t.Fatalf("build offline index: %v", err)
 	}
 
-	paths, err := resolveDatasets(integrityDatasetSpec)
+	// EVAL_DATASET overrides the committed set, e.g. to validate a freshly
+	// built dataset (evals/dataset/uio.jsonl) offline.
+	spec := os.Getenv("EVAL_DATASET")
+	if spec == "" {
+		spec = integrityDatasetSpec
+	}
+	paths, err := resolveDatasets(spec)
 	if err != nil {
 		t.Fatalf("resolve datasets: %v", err)
 	}
