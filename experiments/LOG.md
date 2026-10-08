@@ -123,11 +123,53 @@ losing recall**.
 
 ---
 
+## E11 — `search-hybrid`-only on the full committed set
+- **Change**: agent `tools[]` = `search-hybrid` only.
+- **Dataset**: committed 72 (69 scored)
+- **Result**: `0.331 / 0.504 / 0.259 / 0.591`
+- **Baseline** (deployed full set, E10): `0.558 / 0.815 / 0.443 / 0.888`
+- **Verdict**: **REJECT** — the 6-item probe (E5/E6) misled. `entity-search` /
+  `entity-query` act-pinning is essential: hybrid-only cratered skatterett 0.000,
+  personvern 0.091, trygderett 0.143 (though utlendingsrett rose to 0.646).
+  Tools restored to full.
+
+## E12 — weak-area deep-dive (utlendingsrett + gjeldsrett)
+- **Change**: none — investigation of the two weakest areas (deployed config).
+- **Dataset**: 8 items (5 gjeldsrett, 3 utlendingsrett)
+- **Result**: `0.491 / 0.875 / 0.350 / 0.859`
+  - gjeldsrett `0.494 / 0.900`; utlendingsrett `0.484 / 0.833`.
+- **Variance finding**: utlendingsrett scored **0.265 (E10) vs 0.484 (E12)** on the
+  same 3 items → large run-to-run variance; do not read small-area deltas
+  (<~8 items) as signal.
+- **Transcript findings** (per run, tool mix):
+  - `legal-aid-gjeld-inkasso-001` (recall 0.5): used **only**
+    `entity-search`+`entity-query` (no semantic search) → anchored on the wrong
+    act; gold `inkassoloven §1` missed; cited non-resolving `lov/1976-12-17-100#§3a`.
+  - `legal-aid-utlending-permanent-001` (recall 0.5): only **2× `search-hybrid`**,
+    no act pinning → cited `utlendingsforskriften` §§ instead of `utlendingsloven
+    §60` (statute vs regulation confusion).
+  - `legal-aid-utlending-asyl-001`: **13× `entity-query`** (enumeration) →
+    recall 1.0 but precision 0.43.
+  - `legal-aid-gjeld-lonnstrekk-001`: now finds `tvl §7-1` (recall 1.0) but
+    precision 0.15 (over-citation).
+- **Root causes**: (a) wrong-act selection — new/replacement acts (innkrevings-
+  loven 2025) shadow the consolidated act, and `forskrift` is cited for a
+  `lov` rule; (b) strategy monoculture — some runs skip act pinning entirely;
+  (c) over-citation persists after retrieval.
+- **Harness note**: runs-list order is not item order; map runs→items by reading
+  the `user` message from `/agent-runs/{id}/steps`.
+
+---
+
 ## Proposed / not yet run
-- **E11 — `search-hybrid`-only on the 72-item set**: the probe (E5/E6) suggested
-  hybrid-only may beat the full toolset; needs the larger set to separate.
+- **E13 — act-selection guard**: prompt rules — (1) never prefer a 2025/2026
+  replacement act over the consolidated act unless the question is time-specific;
+  (2) prefer the statute (`lov`) over its regulation (`forskrift`) unless the
+  regulation is the operative instrument; (3) require at least one act-pinning
+  step plus one act-scoped paragraph query (no single-strategy runs);
+  (4) tighten the citation cap. Measure on the committed 72 (repeat ×2 for
+  variance).
 - **E9 — gold_refs quality gate for the UiO set**: only emit refs whose § is
-  adjacent to the act mention (already tightened in E4); measure residual
-  precision by spot-checking N veiledninger.
-- **E12 — utlendingsrett/gjeldsrett deep-dive**: lowest scores (0.265/0.424);
-  inspect transcripts for act-selection vs corpus gaps.
+  adjacent to the act mention (tightened in E4); measure residual precision.
+- **E14 — reduce `entity-query` enumeration**: cap/deprioritise unfiltered
+  `LegalParagraph` type queries (seen: 13 calls in E12).
