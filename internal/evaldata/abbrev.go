@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 )
 
 // AbbrevMap maps a normalised act token (abbreviation, short-title name, or
@@ -41,6 +42,35 @@ type tokenRank struct {
 	token string
 	rank  int
 	key   string
+}
+
+// genericTokenDenylist holds normalised tokens that are common Norwegian words
+// or document-structure terms. They must never act as act-name tokens, or a
+// law name like "(CFE-avtalen)" would register "avtalen" and steal §
+// attributions from unrelated text.
+var genericTokenDenylist = map[string]bool{
+	"lov": true, "loven": true, "lova": true, "lovene": true,
+	"avtale": true, "avtalen": true, "avtalene": true,
+	"forskrift": true, "forskriften": true, "forskrifta": true,
+	"konvensjon": true, "konvensjonen": true,
+	"direktiv": true, "direktivet": true,
+	"paragraf": true, "paragrafen": true,
+	"kapittel": true, "kapittelet": true,
+	"ledd": true, "stk": true, "nr": true, "mv": true, "m.v": true,
+	"mfl": true, "m.fl": true, "jf": true, "se": true,
+	"og": true, "om": true, "i": true, "av": true, "for": true,
+	"den": true, "det": true, "de": true, "som": true, "til": true,
+	"med": true, "på": true, "er": true,
+	"innledning": true, "formål": true, "virkeområde": true,
+}
+
+// isGenericToken reports whether a normalised token is a generic word or too
+// short to be a distinctive act token, and therefore must not be registered.
+func isGenericToken(norm string) bool {
+	if genericTokenDenylist[norm] {
+		return true
+	}
+	return utf8.RuneCountInString(norm) < 3
 }
 
 // isAmendmentLaw reports whether a law's name (lowercased) identifies it as an
@@ -133,7 +163,7 @@ func lawNameTokens(shortTitle, name string) []tokenRank {
 
 	add := func(tok string, rank int) {
 		norm := NormalizeActToken(tok)
-		if norm == "" {
+		if norm == "" || isGenericToken(norm) {
 			return
 		}
 		if prev, ok := seen[norm]; ok && prev >= rank {

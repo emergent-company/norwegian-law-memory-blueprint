@@ -74,10 +74,12 @@ func actTokenRegex(m AbbrevMap) *regexp.Regexp {
 // ExtractRefs extracts every act-attributed section reference from Norwegian
 // exam text, expanding abbreviations to corpus act keys via m.
 //
-// Attribution is a line-wise streaming pass: the most recently mentioned act
-// (on the same line, or carried forward from earlier lines) owns each § token.
-// A trailing dot on an abbreviation is tolerated. References that cannot be
-// attributed to any act are dropped (they cannot be resolved).
+// Attribution is a line-wise pass. A § token is owned by the nearest act
+// mention on the same line (or, with a single distinct act on the line, that
+// act). Cross-line attribution is bounded: an act carries forward only from an
+// immediately preceding non-empty "heading" line that named exactly one act and
+// had no § reference. References that cannot be attributed to any act are
+// dropped (they cannot be resolved).
 func ExtractRefs(text string, m AbbrevMap) []RefCandidate {
 	re := actTokenRegex(m)
 	if re == nil {
@@ -138,8 +140,16 @@ func ExtractRefs(text string, m AbbrevMap) []RefCandidate {
 			})
 		}
 
-		if len(mentions) > 0 {
-			currentAct = mentions[len(mentions)-1].act
+		// Bounded carry-forward: only a heading line (exactly one act mention
+		// and no § reference) carries its act to following lines. Empty lines
+		// neither establish nor clear a heading.
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		if len(mentions) == 1 && len(secRefs) == 0 {
+			currentAct = mentions[0].act
+		} else {
+			currentAct = ""
 		}
 	}
 	return out

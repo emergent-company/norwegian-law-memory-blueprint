@@ -44,12 +44,13 @@ func writeRefSeed(t *testing.T) string {
 
 func testAbbrevs() AbbrevMap {
 	return AbbrevMap{
-		"fkjl":                "lov/2002-06-21-34",
-		"forbrukerkjøpsloven": "lov/2002-06-21-34",
-		"strl":                "lov/2005-05-20-28",
-		"straffeloven":        "lov/2005-05-20-28",
-		"avtl":                "lov/1918-05-31-4",
-		"avtaleloven":         "lov/1918-05-31-4",
+		"fkjl":                         "lov/2002-06-21-34",
+		"forbrukerkjøpsloven":          "lov/2002-06-21-34",
+		"strl":                         "lov/2005-05-20-28",
+		"straffeloven":                 "lov/2005-05-20-28",
+		"avtl":                         "lov/1918-05-31-4",
+		"avtaleloven":                  "lov/1918-05-31-4",
+		"forretningshemmelighetsloven": "lov/2020-03-27-15",
 	}
 }
 
@@ -77,15 +78,27 @@ func TestExtractRefsTrailingDotAndFullName(t *testing.T) {
 	}
 }
 
+// TestExtractRefsCarryForwardAcrossLines checks the bounded cross-line carry: an
+// act heading line (one act, no §) carries its act to the immediately following
+// § line, but a § line resets the heading so later unattributed § tokens drop.
 func TestExtractRefsCarryForwardAcrossLines(t *testing.T) {
-	text := "Vurder forholdet etter avtaleloven.\n\nHer gjelder § 36.\n\nOg § 33."
+	text := "Forretningshemmelighetsloven\n\n§ 2 gir grunnlag."
 	got := ExtractRefs(text, testAbbrevs())
 	want := []RefCandidate{
-		{ActKey: "lov/1918-05-31-4", Section: "36", Raw: "§ 36"},
-		{ActKey: "lov/1918-05-31-4", Section: "33", Raw: "§ 33"},
+		{ActKey: "lov/2020-03-27-15", Section: "2", Raw: "§ 2"},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %+v, want %+v", got, want)
+	}
+}
+
+// TestExtractRefsNoUnboundedCarry verifies that an act named on a distant line
+// does not absorb § references separated by an intervening non-heading line.
+func TestExtractRefsNoUnboundedCarry(t *testing.T) {
+	text := "Avtaleloven er utgangspunktet.\n\nEn mellomliggende setning uten lovhenvisning.\n\n§ 36 må vurderes."
+	got := ExtractRefs(text, testAbbrevs())
+	if len(got) != 0 {
+		t.Fatalf("got %+v, want empty (unbounded carry removed)", got)
 	}
 }
 
@@ -116,6 +129,29 @@ func TestExtractRefsExplicitActKeyInLink(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %+v, want %+v", got, want)
+	}
+}
+
+// TestExtractRefsGenericWordNotAttributed verifies that generic words like
+// "avtalen"/"loven" are not act tokens, so a § following them is not attributed
+// to a law whose name merely contained the word (e.g. CFE-avtalen).
+func TestExtractRefsGenericWordNotAttributed(t *testing.T) {
+	dir := t.TempDir()
+	obj := filepath.Join(dir, "objects")
+	if err := os.MkdirAll(obj, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	law := `{"type":"Law","key":"lov/1992-05-29-50","properties":{"short_title":"CFE-avtalen","name":"Lov om inspeksjoner i samsvar med Avtalen om konvensjonelle styrker i Europa (CFE-avtalen)"}}` + "\n"
+	if err := os.WriteFile(filepath.Join(obj, "Law.jsonl"), []byte(law), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	m, err := BuildAbbrevMap(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := ExtractRefs("avtalen § 2 og loven § 3.", m)
+	if len(got) != 0 {
+		t.Fatalf("got %+v, want empty (generic words must not attribute §)", got)
 	}
 }
 

@@ -148,3 +148,26 @@ func TestBuildAbbrevMapSkipsAmendmentAct(t *testing.T) {
 		t.Errorf("Lookup(sktl) = %q, want lov/1999-03-26-14", got)
 	}
 }
+
+// TestBuildAbbrevMapDenylist verifies generic words are never registered as act
+// tokens, while distinctive names and abbreviations survive.
+func TestBuildAbbrevMapDenylist(t *testing.T) {
+	m, err := BuildAbbrevMap(repoSeedDir(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tok := range []string{"loven", "avtalen", "m.v"} {
+		if got := m.Lookup(tok); got != "" {
+			t.Errorf("Lookup(%q) = %q, want empty (generic word must not map)", tok, got)
+		}
+	}
+	if got := m.Lookup("forretningshemmelighetsloven"); got == "" {
+		t.Error("Lookup(forretningshemmelighetsloven) = empty, want a key")
+	}
+	if got := m.Lookup("aml"); got != "lov/2005-06-17-62" {
+		t.Errorf("Lookup(aml) = %q, want lov/2005-06-17-62", got)
+	}
+	if got := m.Lookup("sktl"); got != "lov/1999-03-26-14" {
+		t.Errorf("Lookup(sktl) = %q, want lov/1999-03-26-14", got)
+	}
+}
