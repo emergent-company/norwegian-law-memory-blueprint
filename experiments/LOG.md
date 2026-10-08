@@ -161,15 +161,34 @@ losing recall**.
 
 ---
 
+## E13 — act-selection guard
+- **Change**: prompt — (7) prefer the consolidated act over a later
+  replacement/reprint, and the statute (`lov`) over its regulation (`forskrift`)
+  unless the regulation governs the point; (8) require ≥2 retrieval steps
+  (act-pinning + act-scoped paragraph query), no single-search answers, no whole
+  type enumeration; (9) pre-answer self-check that each cited section was read,
+  belongs to the governing act, and supports its statement.
+- **Dataset**: committed 72 (69 scored)
+- **Result**: `0.611 / 0.902 / 0.482 / 0.944`  · refusals 3/3 · 0 errors
+- **Baseline** (E10): `0.558 / 0.815 / 0.443 / 0.888`
+- **Deltas**: F1 **+0.053**, recall +0.087, precision +0.039, res_rate +0.056.
+  Every area improved: utlendingsrett `0.265 → 0.575`, gjeldsrett `0.424 → 0.554`,
+  personvern `0.426 → 0.444`, skatterett `0.551 → 0.609`, trygderett `0.589 →
+  0.677`, husleierett `0.658 → 0.676`.
+- **Verdict**: **KEEP** (F1 gain above the ±0.03 noise band, recall not lost, all
+  areas up).
+- **Invalid first attempt (discarded)**: an earlier run collapsed to
+  `0.282/0.388/0.232/0.426` with **38× HTTP 502** — memory-server was redeployed
+  mid-run, not a prompt effect. Re-run after the server came back healthy.
+- **Follow-up**: consider a repeat to bound overall-run variance (E-type).
+
+---
+
 ## Proposed / not yet run
-- **E13 — act-selection guard**: prompt rules — (1) never prefer a 2025/2026
-  replacement act over the consolidated act unless the question is time-specific;
-  (2) prefer the statute (`lov`) over its regulation (`forskrift`) unless the
-  regulation is the operative instrument; (3) require at least one act-pinning
-  step plus one act-scoped paragraph query (no single-strategy runs);
-  (4) tighten the citation cap. Measure on the committed 72 (repeat ×2 for
-  variance).
+- **E14 — cap `entity-query` enumeration**: deprioritise/cap unfiltered
+  `LegalParagraph` type queries (seen: 13 calls in E12) — likely helps
+  precision and latency.
 - **E9 — gold_refs quality gate for the UiO set**: only emit refs whose § is
   adjacent to the act mention (tightened in E4); measure residual precision.
-- **E14 — reduce `entity-query` enumeration**: cap/deprioritise unfiltered
-  `LegalParagraph` type queries (seen: 13 calls in E12).
+- **E15 — variance study**: repeat the deployed config ×2–3 on the committed 72
+  to quantify overall-metric variance (E12 showed large small-area swings).
