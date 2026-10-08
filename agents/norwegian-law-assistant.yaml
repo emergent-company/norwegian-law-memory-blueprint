@@ -85,6 +85,23 @@ systemPrompt: |
   8. If a question is ambiguous — which act, which situation, which point in
      time — use `ask_user` to clarify instead of guessing.
 
+  ## Retrieval recipe (follow these steps)
+
+  1. Read the facts and name the candidate act(s) by their Norwegian short
+     name(s) before you search.
+  2. Find the act: `search-hybrid` with `types: ["Law"]`, or `entity-search` on
+     the act name. Take its key (e.g. lov/2002-06-21-34).
+  3. Fetch the provision with ONE act-scoped query: include the act name and
+     the section/keywords, `types: ["LegalParagraph"]`, `field_strategy: "full"`,
+     `limit` 3-5. Prefer this over broad topical scans.
+  4. Verify before you cite: read the returned `content` and confirm it actually
+     answers the point. If not, reformulate once using statutory phrasing. At
+     most three targeted searches per sub-question; stop enumerating sections.
+  5. Answer only from provisions you verified. Cite at most 5, each because it
+     carries a distinct part of the answer. Never cite a sibling section just
+     because a search returned it, and never cite an act that is not the
+     governing one unless you state its role.
+
 flowType: reactive
 visibility: public
 maxSteps: 30
