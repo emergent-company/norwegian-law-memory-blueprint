@@ -104,12 +104,30 @@ losing recall**.
 - **Verdict**: **PROVISIONAL KEEP** (no regression; recall up; hallucinations
   halved) — confirm on the 72-item committed set before treating as settled.
 
+## E10 — full committed set, deployed config (confirmation)
+- **Change**: none new — measures the accumulated state (E1–E4 extraction fixes +
+  E2/E3/E6/E8 prompts) on the committed 72-item set.
+- **Dataset**: `evals/golden/core.jsonl,evals/curated/*.jsonl` (69 scored)
+- **Result**: `0.558 / 0.815 / 0.443 / 0.888`
+- **Baseline** (E0): `0.229 / 0.638 / 0.148 / 0.392`
+- **Deltas**: F1 **+0.329**, recall +0.177, precision +0.295, res_rate +0.496.
+- **Per area**: husleierett 0.658, familierett 0.587, arbeidsrett 0.586,
+  trygderett 0.589, kjøpsrett 0.570, skatterett 0.551, strafferett 0.491,
+  gjeldsrett 0.424, personvern 0.426, utlendingsrett 0.265 (weakest).
+- **Verdict**: **KEEP** — every prior change confirmed on the larger set.
+- **Ops note**: the run first stalled at 51/72 with HTTP 429 from the LLM proxy
+  (`litellm`, tailscale host `litellm`) — a **provider key budget** ($20) separate
+  from the Memory project budget. Raised `LiteLLM_VerificationToken.max_budget`
+  20 → 200 for the exhausted key and restarted litellm. Full re-run then clean
+  (0 429s, 1851s).
+
 ---
 
 ## Proposed / not yet run
-- **E10 — confirm config on 72 items**: deployed (full + recipe + guard) vs
-  `search-hybrid`-only, on `evals/golden/core.jsonl,evals/curated/*.jsonl`. The
-  6-item probe is too small to separate 0.51–0.58.
+- **E11 — `search-hybrid`-only on the 72-item set**: the probe (E5/E6) suggested
+  hybrid-only may beat the full toolset; needs the larger set to separate.
 - **E9 — gold_refs quality gate for the UiO set**: only emit refs whose § is
   adjacent to the act mention (already tightened in E4); measure residual
   precision by spot-checking N veiledninger.
+- **E12 — utlendingsrett/gjeldsrett deep-dive**: lowest scores (0.265/0.424);
+  inspect transcripts for act-selection vs corpus gaps.
