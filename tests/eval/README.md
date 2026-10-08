@@ -1,6 +1,9 @@
 # tests/eval — norwegian-law-assistant evaluation harness
 
 Deterministic, offline-first evaluation for the `norwegian-law-assistant` agent.
+For the prompt/tool iteration protocol and results ledger, see
+[`experiments/`](../experiments/README.md).
+
 Two tests:
 
 1. **`TestDatasetIntegrity`** — always runs, no credentials, no network. Validates
