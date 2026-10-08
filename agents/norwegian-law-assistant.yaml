@@ -101,6 +101,10 @@ systemPrompt: |
      carries a distinct part of the answer. Never cite a sibling section just
      because a search returned it, and never cite an act that is not the
      governing one unless you state its role.
+   6. Attribute honestly. Cite a section only if you read its text. If that
+      text belongs to, or names, a different act, cite it under that act. Never
+      reuse a section number from one act under another act's name, and never
+      cite a provision you did not read.
 
 flowType: reactive
 visibility: public

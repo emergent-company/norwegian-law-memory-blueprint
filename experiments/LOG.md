@@ -82,16 +82,34 @@ losing recall**.
   within noise).
 - **Commit**: `c0d8ede`
 
+## E7 — lean toolset (`search-hybrid` + `entity-search`)
+- **Change**: agent `tools[]` reduced to `search-hybrid`, `entity-search`.
+- **Dataset**: probe (6)
+- **Result**: `0.515 / 0.917 / 0.377 / 0.958`
+- **Baseline** (full toolset + recipe, E6): `0.531 / 0.917 / 0.403 / 0.950`
+- **Verdict**: **REJECT** (F1 −0.016, precision −0.026, recall unchanged).
+  Toolset restored to full.
+- **Note**: runner left the def patched after the run; restored from snapshot.
+  Harness lesson: always restore/verify the agent def after an experiment.
+
+## E8 — hallucination guard
+- **Change**: prompt — cite a section only if you read its text; if the text
+  belongs to / names a different act, cite it under that act; never reuse a
+  section number across acts; never cite an unread provision.
+- **Dataset**: probe (6)
+- **Result**: `0.541 / 1.000 / 0.383 / 0.938`
+- **Baseline** (full toolset + recipe, E6): `0.531 / 0.917 / 0.403 / 0.950`
+- **Deltas**: F1 **+0.010** (within noise), recall **+0.083** (virksomhet now
+  recall 1.0), precision −0.020, res −0.012; **fabricated refs 5 → 2**.
+- **Verdict**: **PROVISIONAL KEEP** (no regression; recall up; hallucinations
+  halved) — confirm on the 72-item committed set before treating as settled.
+
 ---
 
 ## Proposed / not yet run
-- **E7 — lean toolset**: `search-hybrid` + `entity-search` only (no
-  `entity-query`). Hypothesis from E5: recovers recall lost by full toolset at
-  lower cost.
-- **E8 — hallucination guard**: prompt — cite a § only if its text was read; if
-  that text names a different act, attribute there; never reuse a section number
-  across acts. Targets non-resolving refs seen in E5/E6 (e.g. `sktl §5-30` leaking
-  to `energiloven`/`mva`).
+- **E10 — confirm config on 72 items**: deployed (full + recipe + guard) vs
+  `search-hybrid`-only, on `evals/golden/core.jsonl,evals/curated/*.jsonl`. The
+  6-item probe is too small to separate 0.51–0.58.
 - **E9 — gold_refs quality gate for the UiO set**: only emit refs whose § is
   adjacent to the act mention (already tightened in E4); measure residual
   precision by spot-checking N veiledninger.
