@@ -184,11 +184,41 @@ losing recall**.
 
 ---
 
+## E16 — answer-quality judge enabled (litellm)
+- **Change**: no code change — turn the existing judge on:
+  `JUDGE_BASE_URL=http://100.113.48.6:4000/v1`,
+  `JUDGE_MODEL=gemini/gemini-3.1-flash-lite-preview`,
+  `JUDGE_API_KEY=<litellm key>`. (Chosen because it is an independent model
+  family from the agent and returns strict JSON with a Norwegian `reason`;
+  `deepseek-v4-pro` also worked.)
+- **Dataset**: committed 72 (69 scored), deployed config.
+- **Result**: citation `0.592 / 0.873 / 0.467 / 0.925` · **point_recall 0.919**
+  · refusal 3/3 · 1 item error · 0 judge errors · 2052s.
+- **Baseline** (E13, judge off): `0.611 / 0.902 / 0.482 / 0.944`.
+- **Interpretation**: citation F1 is statistically the same as E13 (single-run
+  variance). The new signal is **~92% gold-point coverage** — the answers are
+  substantively good even where citation precision is noisy (0.47). point_recall
+  ≫ citation F1 confirms the citation metric *understates* answer quality on
+  broad questions (it over-penalises extra-but-valid citations).
+- **Invalid first attempt (discarded)**: 26× HTTP 502 (memory-server redeployed
+  mid-run); re-ran healthy.
+- **Verdict**: keep the judge enabled for subsequent experiments; move the
+  keep/revert rule to **two-dimensional** (citation F1 *and* point_recall must
+  not regress).
+
+### Memory-side fixes (proposed from this work) — status
+- **#1646** kill switch not enforced on all entry points → fixed (#1647), deployed.
+- **#1694** `project_info` injection opt-in + cross-surface → merged (#1704) and
+  **deployed** (def API now exposes `includeProjectInfo`, default `false`).
+- **#1695** per-agent graph data-type scoping → merged (#1706/#1707); not yet
+  visible on the dev def API (`objectTypes` absent) — pending deploy.
+
+---
+
 ## Proposed / not yet run
-- **E14 — cap `entity-query` enumeration**: deprioritise/cap unfiltered
-  `LegalParagraph` type queries (seen: 13 calls in E12) — likely helps
-  precision and latency.
-- **E9 — gold_refs quality gate for the UiO set**: only emit refs whose § is
-  adjacent to the act mention (tightened in E4); measure residual precision.
-- **E15 — variance study**: repeat the deployed config ×2–3 on the committed 72
-  to quantify overall-metric variance (E12 showed large small-area swings).
+- **E17 — judge bake-off**: compare `gemini-3.1-flash-lite-preview` vs
+  `deepseek-v4-pro` vs a human-scored sample (~30 items) for agreement, to
+  validate the judge before trusting point_recall as a gate.
+- **E14 — cap `entity-query` enumeration** (seen: 13 calls in E12).
+- **E15 — variance study**: repeat deployed config ×2–3 on the committed 72.
+- **E9 — gold_refs quality gate for the UiO set**.
