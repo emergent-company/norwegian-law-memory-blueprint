@@ -262,9 +262,26 @@ losing recall**.
 
 ---
 
+## E17 — judge validity (inter-model agreement)
+- **Method**: re-judge the **same 68 answers** (E15b report) with two judges —
+  `deepseek-v4-flash` and `gemini/gemini-3.1-flash-lite-preview` (offline, no
+  agent runs).
+- **Result**: mean `point_recall` 0.860 (deepseek) vs **0.929** (gemini). Exact
+  per-item agreement **85%**; the other 15% differ by **>0.10** (max **0.50**).
+  **Faithfulness agreement only 66%.**
+- **Interpretation**: judge output is **not item-level reliable** and is
+  judge-model dependent (gemini systematically more generous, +0.069). `point_recall`
+  / `faithful` are usable only as **aggregate directional signals**, never as
+  per-item gates; absolute calibration still needs a human-scored sample
+  (true bake-off).
+- **Verdict**: measurement — constrains judge usage; keep `deepseek-v4-flash` for
+  internal consistency (same model as agent, self-preference caveat).
+
+---
+
 ## Proposed / not yet run
-- **E17 — judge bake-off**: `deepseek-v4-flash` vs `gemini-3.1-flash-lite-preview`
-  vs a human-scored sample (~30 items) for agreement, before trusting
-  `point_recall` as a gate.
-- **E14 — cap `entity-query` enumeration** (seen: 13 calls in E12).
+- **E17b — human bake-off**: hand-score ~30 committed items; measure each judge's
+  agreement with human `covered`/`faithful` before trusting aggregate `point_recall`.
+- **E14 — cap `entity-query` enumeration** (seen: 13 calls in E12; E13 already
+  added a prompt rule against it — verify it worked from transcripts).
 - **E9 — gold_refs quality gate for the UiO set**.

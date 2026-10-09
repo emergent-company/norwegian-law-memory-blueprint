@@ -91,3 +91,8 @@ generated UiO set (`evals/dataset/uio.jsonl`, 599 items, `needs_curation`).
 plus the optional LLM judge `point_recall`. Precision is strict: any cited ref
 that isn't in `gold_refs` counts against it, so over-citation shows up as low
 precision even when the extra refs are valid.
+
+Judge caveat (E17): `point_recall` / `faithful` are **aggregate directional
+signals only** — two judge models agreed exactly on 85% of items but disagreed
+by >0.10 on 15% (max 0.50), and on faithfulness only 66%. Never gate on
+per-item judge output; absolute calibration needs a human-scored sample.
