@@ -206,12 +206,24 @@ losing recall**.
   keep/revert rule to **two-dimensional** (citation F1 *and* point_recall must
   not regress).
 
+### E16c — judge model = `deepseek-v4-flash` (canonical)
+- **Change**: judge model switched to `deepseek-v4-flash`, per request.
+- **Result**: citation `0.584 / 0.873 / 0.458 / 0.953` · **point_recall 0.877**
+  · 0 errors · 4538s.
+- **vs E16b (gemini judge)**: pt_recall `0.919 → 0.877` (Δ ≈ −0.04); citation
+  metrics unchanged. Judge-model choice shifts `point_recall` measurably.
+  Caveat: judge and agent are now the same model (`deepseek-v4-flash`) →
+  self-preference bias possible. Run **E17** bake-off before using pt_recall as a
+  hard gate.
+
 ### Memory-side fixes (proposed from this work) — status
 - **#1646** kill switch not enforced on all entry points → fixed (#1647), deployed.
 - **#1694** `project_info` injection opt-in + cross-surface → merged (#1704) and
   **deployed** (def API now exposes `includeProjectInfo`, default `false`).
-- **#1695** per-agent graph data-type scoping → merged (#1706/#1707); not yet
-  visible on the dev def API (`objectTypes` absent) — pending deploy.
+- **#1695** per-agent graph data-type scoping → merged (#1706/#1707) and
+  **deployed**: the def API accepts/returns top-level `objectTypes` /
+  `relationshipTypes` (verified PATCH→GET). Earlier "absent" checks used wrong
+  field names (`allowedObjectTypes`/`capabilities` are unrelated).
 
 ---
 
