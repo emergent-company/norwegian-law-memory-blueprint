@@ -227,10 +227,27 @@ losing recall**.
 
 ---
 
+## E18 — scope agent `objectTypes` to the law corpus
+- **Change**: def `objectTypes = [Law, LegalParagraph, Regulation, Ministry,
+  LegalArea, EUDirective, EuroVocConcept]` (relationshipTypes empty = all). Uses
+  the now-deployed #1695 feature.
+- **Dataset**: committed 72, judge `deepseek-v4-flash`.
+- **Result**: `0.594 / 0.870 / 0.469 / 0.970` · **point_recall 0.848** · 0 errors.
+- **Baseline** (E16c): `0.584 / 0.873 / 0.458 / 0.953` · pt_recall 0.877.
+- **Deltas**: F1 +0.010, recall −0.003, precision +0.011, res_rate +0.017,
+  pt_recall −0.029 → **all within the ±0.03 noise band**.
+- **Verdict**: **REJECT** on metrics (no demonstrated improvement). Scoping is
+  *neutral* — no harm, and it hard-restricts the agent's data surface. Reverted
+  the def scope; recorded as an available **guardrail** to enable if we want the
+  restriction without a metric cost.
+
+---
+
 ## Proposed / not yet run
-- **E17 — judge bake-off**: compare `gemini-3.1-flash-lite-preview` vs
-  `deepseek-v4-pro` vs a human-scored sample (~30 items) for agreement, to
-  validate the judge before trusting point_recall as a gate.
+- **E17 — judge bake-off**: `deepseek-v4-flash` vs `gemini-3.1-flash-lite-preview`
+  vs a human-scored sample (~30 items) for agreement, before trusting
+  `point_recall` as a gate.
+- **E15 — variance study**: repeat deployed config ×2–3 on the committed 72 to
+  put error bars on deltas (E10/E13/E16/E16c/E18 differ within noise).
 - **E14 — cap `entity-query` enumeration** (seen: 13 calls in E12).
-- **E15 — variance study**: repeat deployed config ×2–3 on the committed 72.
 - **E9 — gold_refs quality gate for the UiO set**.
