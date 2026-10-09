@@ -243,11 +243,28 @@ losing recall**.
 
 ---
 
+## E15 — variance study (deployed config ×3)
+- **Change**: none — repeat the deployed config to bound run-to-run variance.
+- **Samples** (judge `deepseek-v4-flash`):
+  | run | F1 | recall | prec | res | pt_recall |
+  |---|---|---|---|---|---|
+  | E16c | 0.584 | 0.873 | 0.458 | 0.953 | 0.877 |
+  | E15a | 0.569 | 0.833 | 0.449 | 0.924 | 0.872 |
+  | E15b | 0.595 | 0.873 | 0.470 | 0.942 | 0.853 |
+- **Aggregate (n=3, mean ± sd)**: F1 **0.583 ± 0.013**, recall 0.860 ± 0.023,
+  precision 0.459 ± 0.011, res_rate 0.940 ± 0.015, pt_recall 0.867 ± 0.013.
+- **Implication**: overall-metric 1-sd noise is ~0.013 F1 → require **ΔF1 ≳ 0.03
+  (~2 sd)** to call a change real. Area-level metrics stay volatile (E12:
+  utlendingsrett 0.265↔0.484 on identical items) — do not read small-area deltas.
+- **Re-check**: E13's `0.611` (vs deployed mean 0.583) is ≈2 sd high — consistent
+  with the act-selection-guard being a real, if modest, gain.
+- **Verdict**: measurement — updates the keep/revert noise rule.
+
+---
+
 ## Proposed / not yet run
 - **E17 — judge bake-off**: `deepseek-v4-flash` vs `gemini-3.1-flash-lite-preview`
   vs a human-scored sample (~30 items) for agreement, before trusting
   `point_recall` as a gate.
-- **E15 — variance study**: repeat deployed config ×2–3 on the committed 72 to
-  put error bars on deltas (E10/E13/E16/E16c/E18 differ within noise).
 - **E14 — cap `entity-query` enumeration** (seen: 13 calls in E12).
 - **E9 — gold_refs quality gate for the UiO set**.

@@ -13,8 +13,12 @@ without a material regression elsewhere. Otherwise it is **reverted**.
 - Guardrails: **recall must not drop** (a precision win that loses recall is a
   loss); watch `resolution_rate` (citations that don't exist) and
   `hallucinated_refs`.
-- Tolerance: treat deltas smaller than ±0.03 F1 as noise; re-run before
-  concluding.
+- Tolerance (measured, E15): overall citation F1 has a run-to-run sd of ≈0.013
+  (n=3) → require **ΔF1 ≳ 0.03 (~2 sd)** before calling a change real. Per-area
+  metrics are far noisier (E12: utlendingsrett swung 0.265↔0.484 on identical
+  items) — never judge on a single small area.
+- Two-dimensional from E16: also watch **point_recall** (judge) — a change must
+  not regress answer coverage while raising citation F1.
 - Record every experiment in `experiments/LOG.md`, **including rejected ones**,
   with the numbers that justified the verdict.
 
