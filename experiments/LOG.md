@@ -292,8 +292,24 @@ losing recall**.
 
 ---
 
-## Proposed / not yet run
-- **E17b — human bake-off**: hand-score ~30 committed items; measure each judge's
-  agreement with human `covered`/`faithful` before trusting aggregate `point_recall`.
-- **E9 — gold_refs quality gate for the UiO set**: tighten extraction further and
-  spot-check residual precision.
+## E9 — UiO gold-ref quality gate
+- **Method**: 40 items with `gold_refs`; extract each veiledning text
+  (`pdftotext`) and check every gold ref's act is *named* in it (any law-name
+  token). A crude name-token matcher (misses abbrev / §-only citations), so the
+  result is an **upper bound** on mis-attribution.
+- **Result**: 216 refs, **36 act-not-mentioned (16.7%)**. Examples:
+  `lov/1814-05-17#§97`, `lov/1961-02-03#§2`, `lov/1969-06-13-26#§5-1`.
+- **Interpretation**: residual extraction imprecision persists after E4; the UiO
+  set is `needs_curation`. It stays a **raw/coverage** artifact — the committed
+  **golden/curated** sets remain the scoring signal.
+- **Options**: (a) leave as-is (eval on committed sets only); (b) tighten further
+  (risks dropping true refs — refs often cited by abbreviation or §-only);
+  (c) curate UiO `gold_refs` (LLM/human) before any UiO-item scoring.
+- **Verdict**: measurement + decision — do not score on the UiO set as-is.
+
+---
+
+## Remaining / optional
+- **E17b — human bake-off**: hand-score ~30 committed items to calibrate the
+  judge absolutely (needs a human).
+- **E9c — curate UiO gold_refs** (if we ever want to score the 599-item set).
