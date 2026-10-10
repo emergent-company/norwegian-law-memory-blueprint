@@ -279,9 +279,21 @@ losing recall**.
 
 ---
 
+## E14 — "entity-query enumeration" check (transcripts)
+- **Method**: count `entity-query` calls and *unfiltered* type-only enumerations
+  (`type_name` set, **no** `ids`/`filters`/`key_prefix`) per run; PRE-E13
+  (E11/E12 window) vs POST-E13, from `/tool-calls`.
+- **Result**: unfiltered enumerations = **0/run in both windows**. PRE-E13:
+  `entity-query` 1.95/run (max 8); POST-E13: 3.20/run (max 12). All `entity-query`
+  calls carried ids/filters — i.e. per-act lookups, not blanket scans.
+- **Verdict**: **HYPOTHESIS REJECTED** — the E12 "13 `entity-query`" on one item
+  were *filtered* per-act queries, not type enumeration. E13's anti-enumeration
+  rule is a harmless no-op (nothing to fix). E14 closed; no change.
+
+---
+
 ## Proposed / not yet run
 - **E17b — human bake-off**: hand-score ~30 committed items; measure each judge's
   agreement with human `covered`/`faithful` before trusting aggregate `point_recall`.
-- **E14 — cap `entity-query` enumeration** (seen: 13 calls in E12; E13 already
-  added a prompt rule against it — verify it worked from transcripts).
-- **E9 — gold_refs quality gate for the UiO set**.
+- **E9 — gold_refs quality gate for the UiO set**: tighten extraction further and
+  spot-check residual precision.
