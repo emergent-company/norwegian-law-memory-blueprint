@@ -17,6 +17,10 @@ type DownloadResult struct {
 	Bytes  int64
 }
 
+// maxDownloadBytes caps how much of a response body is copied to disk, bounding
+// memory/disk use on a pathological upstream (64 MiB).
+const maxDownloadBytes = 64 << 20
+
 // Download fetches rawURL to destPath, creating parent directories. It returns
 // the SHA-256 and byte count of the saved file.
 func Download(client *http.Client, rawURL, destPath string) (DownloadResult, error) {
@@ -43,7 +47,7 @@ func Download(client *http.Client, rawURL, destPath string) (DownloadResult, err
 		return DownloadResult{}, err
 	}
 	h := sha256.New()
-	n, err := io.Copy(io.MultiWriter(f, h), resp.Body)
+	n, err := io.Copy(io.MultiWriter(f, h), io.LimitReader(resp.Body, maxDownloadBytes))
 	if cerr := f.Close(); err == nil {
 		err = cerr
 	}

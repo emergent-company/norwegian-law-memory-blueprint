@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // norCaseHOLDTestURL is the canonical test split of the Nor-CaseHOLD dataset
@@ -82,7 +83,8 @@ func GenerateNorCaseHOLD(cfg NorCaseHOLDConfig) (*NorCaseHOLDResult, error) {
 
 // fetchNorCaseHOLD streams the JSONL dataset from url, decoding line by line.
 func fetchNorCaseHOLD(url string) ([]NorCaseHOLDRow, error) {
-	resp, err := http.Get(url)
+	client := &http.Client{Timeout: 60 * time.Second}
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("fetch nor-casehold: %w", err)
 	}
@@ -92,7 +94,7 @@ func fetchNorCaseHOLD(url string) ([]NorCaseHOLDRow, error) {
 	}
 
 	var rows []NorCaseHOLDRow
-	dec := json.NewDecoder(resp.Body)
+	dec := json.NewDecoder(io.LimitReader(resp.Body, 64<<20)) // 64 MiB cap
 	for {
 		var r NorCaseHOLDRow
 		if err := dec.Decode(&r); err == io.EOF {
