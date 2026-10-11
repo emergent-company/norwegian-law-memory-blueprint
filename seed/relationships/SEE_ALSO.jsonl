@@ -1527,6 +1527,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-01-19-298","dstKey":"forskrift/1967-03-17-3462"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-01-19-298","dstKey":"forskrift/2003-09-29-1196"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-01-19-298","dstKey":"forskrift/2019-03-29-424"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2004-01-19-298","dstKey":"forskrift/2026-09-16-1833"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-01-28-424","dstKey":"lov/2009-05-29-30"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-02-04-447","dstKey":"lov/2005-05-27-31"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-02-04-448","dstKey":"lov/1995-05-12-23"}
@@ -1646,6 +1647,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-10-01-1339","dstKey":"forskrift/2003-09-29-1196"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-10-01-1339","dstKey":"forskrift/2009-08-20-1530"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-10-01-1339","dstKey":"forskrift/2019-03-29-424"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2004-10-01-1339","dstKey":"forskrift/2026-09-16-1832"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-10-01-1340","dstKey":"lov/1981-12-18-90"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-10-01-1340","dstKey":"forskrift/1995-12-22-1036"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-10-04-1316","dstKey":"lov/2003-12-19-124"}
@@ -1666,6 +1668,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-12-01-1558","dstKey":"forskrift/2024-04-05-570"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-12-01-1558","dstKey":"forskrift/2009-12-15-1523"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-12-01-1558","dstKey":"lov/2004-12-17-101"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2004-12-01-1558","dstKey":"forskrift/2026-09-29-1933"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-12-06-1573","dstKey":"lov/2004-05-28-29"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-12-17-1661","dstKey":"lov/2004-07-02-64"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2004-12-17-1661","dstKey":"forskrift/2018-06-15-876"}
@@ -1731,6 +1734,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2005-04-12-319","dstKey":"forskrift/2003-12-19-1790"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2005-04-12-319","dstKey":"forskrift/2004-05-05-884"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2005-04-12-319","dstKey":"forskrift/2013-07-01-814"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2005-04-12-319","dstKey":"forskrift/2026-10-01-1998"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2005-04-29-418","dstKey":"lov/1993-06-11-101"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2005-04-29-418","dstKey":"forskrift/1999-12-10-1273"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2005-05-04-403","dstKey":"lov/1936-07-10-6"}
@@ -1897,7 +1901,6 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2006-09-01-1019","dstKey":"lov/2006-08-18-61"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2006-09-07-1062","dstKey":"lov/1998-07-17-56"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2006-09-08-1040","dstKey":"lov/2021-04-16-18"}
-{"type":"SEE_ALSO","srcKey":"forskrift/2006-09-08-1041","dstKey":"forskrift/2026-09-14-1810"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2006-10-11-1148","dstKey":"forskrift/2003-12-19-1790"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2006-10-11-1148","dstKey":"lov/2004-12-17-101"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2006-10-11-1148","dstKey":"forskrift/2004-05-05-884"}
@@ -2002,6 +2005,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2007-07-02-850","dstKey":"lov/2007-02-16-9"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2007-07-02-850","dstKey":"forskrift/2007-06-29-848"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2007-07-02-850","dstKey":"forskrift/2007-06-29-849"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2007-07-02-877","dstKey":"forskrift/2026-10-02-1991"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2007-07-02-877","dstKey":"forskrift/2026-07-01-1458"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2007-08-20-987","dstKey":"lov/1992-05-15-47"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2007-08-20-987","dstKey":"forskrift/2007-04-26-474"}
@@ -2138,6 +2142,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2008-04-03-320","dstKey":"forskrift/2022-06-02-977"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2008-04-16-362","dstKey":"forskrift/2003-09-29-1196"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2008-04-16-362","dstKey":"forskrift/2008-02-07-111"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2008-04-16-362","dstKey":"forskrift/2026-09-16-1830"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2008-05-07-438","dstKey":"lov/1981-03-13-6"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2008-05-07-438","dstKey":"forskrift/1983-07-08-1245"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2008-05-07-438","dstKey":"lov/2003-12-19-124"}
@@ -2300,6 +2305,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2009-06-12-637","dstKey":"forskrift/2003-09-29-1196"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2009-06-12-637","dstKey":"forskrift/2009-08-20-1530"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2009-06-12-637","dstKey":"forskrift/2022-11-14-1973"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2009-06-12-637","dstKey":"forskrift/2026-09-16-1831"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2009-06-15-669","dstKey":"lov/2008-06-27-71"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2009-06-18-666","dstKey":"lov/2007-02-16-9"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2009-06-18-666","dstKey":"forskrift/2007-02-16-171"}
@@ -3616,7 +3622,6 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-08-1482","dstKey":"forskrift/2020-03-12-399"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-08-1482","dstKey":"forskrift/2023-11-23-1895"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-08-1482","dstKey":"forskrift/2026-06-19-1319"}
-{"type":"SEE_ALSO","srcKey":"forskrift/2016-12-08-1482","dstKey":"forskrift/2026-09-10-1769"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-09-1502","dstKey":"lov/2005-06-10-44"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-09-1502","dstKey":"forskrift/2015-11-13-1309"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-09-1502","dstKey":"lov/2007-06-29-75"}
@@ -3633,6 +3638,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-14-1578","dstKey":"forskrift/1999-12-10-1265"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-14-1578","dstKey":"forskrift/2001-04-06-321"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-14-1578","dstKey":"forskrift/2021-12-14-3530"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2016-12-14-1578","dstKey":"forskrift/2026-09-28-1931"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-15-1600","dstKey":"lov/2015-12-11-101"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-16-1659","dstKey":"lov/2000-05-12-36"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2016-12-16-1659","dstKey":"forskrift/2026-06-26-1397"}
@@ -3729,7 +3735,6 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2017-06-16-768","dstKey":"lov/1930-02-27-3"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2017-06-16-780","dstKey":"lov/2016-08-12-77"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2017-06-19-840","dstKey":"lov/2009-06-19-100"}
-{"type":"SEE_ALSO","srcKey":"forskrift/2017-06-19-840","dstKey":"forskrift/2026-09-11-1792"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2017-06-19-941","dstKey":"lov/2005-06-17-79"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2017-06-19-941","dstKey":"lov/2004-12-17-101"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2017-06-21-838","dstKey":"lov/2017-06-16-67"}
@@ -3940,11 +3945,11 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-09-26-1467","dstKey":"forskrift/1993-04-01-286"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-09-26-1467","dstKey":"forskrift/2009-08-20-1530"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-09-26-1467","dstKey":"forskrift/1990-08-24-695"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2018-09-26-1467","dstKey":"forskrift/2026-09-16-1888"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-09-28-1471","dstKey":"lov/1981-05-22-25"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-09-28-1471","dstKey":"lov/2005-06-17-90"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-09-28-1479","dstKey":"lov/2005-06-17-64"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-10-18-1671","dstKey":"forskrift/2017-01-06-13"}
-{"type":"SEE_ALSO","srcKey":"forskrift/2018-10-18-1671","dstKey":"forskrift/2026-05-19-1415"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-10-19-1584","dstKey":"lov/2011-06-24-30"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-10-19-1584","dstKey":"lov/1994-08-05-55"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-10-22-1599","dstKey":"lov/2003-12-19-124"}
@@ -4358,6 +4363,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-01-3359","dstKey":"forskrift/2022-10-21-1778"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-14-3530","dstKey":"forskrift/2001-04-06-321"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-14-3530","dstKey":"forskrift/2022-06-16-1029"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2021-12-14-3530","dstKey":"forskrift/2026-09-28-1930"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-16-3622","dstKey":"forskrift/2021-03-26-1180"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-16-3622","dstKey":"forskrift/2023-06-21-1009"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-17-3666","dstKey":"forskrift/2007-02-16-171"}
@@ -4365,6 +4371,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-23-3891","dstKey":"lov/2003-12-19-124"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-23-3891","dstKey":"forskrift/2003-12-19-1790"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2021-12-23-3910","dstKey":"forskrift/1977-06-03-6"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2021-12-23-3910","dstKey":"forskrift/2026-10-02-1999"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2022-01-04-10","dstKey":"forskrift/2021-12-22-3807"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2022-01-19-100","dstKey":"forskrift/2015-06-30-827"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2022-01-21-128","dstKey":"forskrift/2001-04-30-1670"}
@@ -4597,6 +4604,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-11-21-2316","dstKey":"forskrift/2003-12-19-1790"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-11-25-2340","dstKey":"forskrift/2001-10-16-4686"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-12-01-2404","dstKey":"forskrift/2023-12-20-2226"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2025-12-02-2405","dstKey":"forskrift/2026-09-23-1891"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-12-08-2457","dstKey":"forskrift/2017-05-22-633"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-12-08-2458","dstKey":"forskrift/2001-10-16-4686"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-12-08-2459","dstKey":"forskrift/2001-10-16-4686"}
@@ -4700,6 +4708,7 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-05-21-960","dstKey":"forskrift/2003-12-19-1790"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-05-21-960","dstKey":"forskrift/2004-05-05-884"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-06-02-977","dstKey":"forskrift/2001-10-16-4686"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-06-05-1024","dstKey":"forskrift/2026-09-29-1974"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-06-15-1087","dstKey":"forskrift/2009-10-09-1260"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-06-15-1087","dstKey":"forskrift/2009-12-18-1582"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-06-22-1158","dstKey":"forskrift/2026-06-19-1153"}
@@ -4724,7 +4733,23 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-07-13-1702","dstKey":"forskrift/2009-12-18-1582"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-08-03-1604","dstKey":"forskrift/2017-08-14-1639"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-08-27-1685","dstKey":"forskrift/1999-12-10-1273"}
-{"type":"SEE_ALSO","srcKey":"forskrift/2026-08-31-1708","dstKey":"forskrift/2022-10-19-1761"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-16-1830","dstKey":"forskrift/2003-09-29-1196"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-16-1830","dstKey":"forskrift/2008-02-07-111"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-16-1831","dstKey":"forskrift/2003-09-29-1196"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-16-1832","dstKey":"forskrift/2003-09-29-1196"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-16-1833","dstKey":"forskrift/1967-03-17-3462"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-16-1833","dstKey":"forskrift/2003-09-29-1196"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-16-1888","dstKey":"forskrift/2018-05-04-704"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-18-1836","dstKey":"forskrift/2003-12-19-1790"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-28-1930","dstKey":"forskrift/1999-12-10-1273"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-28-1931","dstKey":"forskrift/1999-12-10-1273"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-29-1933","dstKey":"forskrift/2024-04-05-570"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-29-1933","dstKey":"forskrift/2009-12-15-1523"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-10-01-1998","dstKey":"forskrift/2003-12-19-1790"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-10-01-1998","dstKey":"forskrift/2004-05-05-884"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-10-02-1995","dstKey":"forskrift/2003-12-19-1790"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-10-02-1995","dstKey":"forskrift/2004-05-05-884"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-10-07-2009","dstKey":"forskrift/1983-07-08-1245"}
 {"type":"SEE_ALSO","srcKey":"forskrift/1957-06-07-3391","dstKey":"lov/1925-07-17-11"}
 {"type":"SEE_ALSO","srcKey":"forskrift/1960-12-16-2","dstKey":"forskrift/1989-12-22-1273"}
 {"type":"SEE_ALSO","srcKey":"forskrift/1963-11-15-1","dstKey":"lov/1963-11-15"}
@@ -5553,7 +5578,6 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2024-09-27-2375","dstKey":"forskrift/2010-06-11-814"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2024-11-05-2699","dstKey":"forskrift/2004-12-10-1607"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2024-11-26-2874","dstKey":"forskrift/1987-12-18-967"}
-{"type":"SEE_ALSO","srcKey":"forskrift/2024-12-20-3413","dstKey":"forskrift/2025-12-23-2896"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-02-28-320","dstKey":"lov/2009-06-19-100"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-02-28-321","dstKey":"lov/2009-06-19-100"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2025-02-28-321","dstKey":"forskrift/2025-02-28-320"}
@@ -5591,6 +5615,9 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-06-24-1496","dstKey":"forskrift/2001-04-06-321"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-06-25-1378","dstKey":"forskrift/2026-06-19-1153"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2026-07-13-1550","dstKey":"forskrift/2026-06-19-1153"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-25-1912","dstKey":"lov/2026-06-19-39"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-29-1934","dstKey":"lov/2026-06-19-39"}
+{"type":"SEE_ALSO","srcKey":"forskrift/2026-09-29-1934","dstKey":"forskrift/2026-09-25-1912"}
 {"type":"SEE_ALSO","srcKey":"forskrift/1972-03-17-3352","dstKey":"forskrift/1988-10-07-835"}
 {"type":"SEE_ALSO","srcKey":"forskrift/1972-03-17-3352","dstKey":"forskrift/2008-10-17-1119"}
 {"type":"SEE_ALSO","srcKey":"forskrift/1981-09-11-4877","dstKey":"lov/1981-03-06-5"}
@@ -5624,7 +5651,6 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2010-08-27-1219","dstKey":"lov/2009-06-19-58"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2010-12-01-1516","dstKey":"lov/2009-06-19-58"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2010-12-21-1790","dstKey":"lov/2005-12-21-123"}
-{"type":"SEE_ALSO","srcKey":"forskrift/2010-12-21-1790","dstKey":"forskrift/2026-08-06-1768"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2011-02-04-128","dstKey":"lov/2010-03-26-9"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2011-03-02-215","dstKey":"lov/2009-06-19-58"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2011-03-17-314","dstKey":"lov/2009-06-19-58"}
@@ -5677,7 +5703,6 @@
 {"type":"SEE_ALSO","srcKey":"forskrift/2018-10-12-1575","dstKey":"lov/1995-08-04-53"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2019-11-25-1561","dstKey":"lov/2019-06-21-31"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2019-12-06-1740","dstKey":"lov/1995-08-04-53"}
-{"type":"SEE_ALSO","srcKey":"forskrift/2019-12-13-1775","dstKey":"lov/2019-06-21-31"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2019-12-13-1777","dstKey":"lov/2019-06-21-31"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2019-12-19-2032","dstKey":"lov/2019-06-21-31"}
 {"type":"SEE_ALSO","srcKey":"forskrift/2019-12-20-2095","dstKey":"lov/2019-06-21-31"}

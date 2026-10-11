@@ -8,7 +8,18 @@
   "attribution": "Data from Lovdata (https://lovdata.no/), licensed under the Norwegian Licence for Open Government Data (NLOD) 2.0. The data has been parsed, restructured and rendered into a knowledge-graph seed; changes were made.",
   "changes_made": true,
   "notice_file": "NOTICE",
-  "source_archives": null,
+  "source_archives": [
+    {
+      "name": "gjeldende-lover.tar.bz2",
+      "sha256": "317734dba20d73fccf1ee9301d6d4af6224a0963bb20b0104e687cfd4480655d",
+      "size": 5804427
+    },
+    {
+      "name": "gjeldende-sentrale-forskrifter.tar.bz2",
+      "sha256": "f5ef87c7f4424f99d234c2ff0abc425d58edc0411e797f55651f62b5b39ca436",
+      "size": 21347405
+    }
+  ],
   "documents": {
     "forskrift/1896-06-26-9805": {
       "type": "Regulation",
@@ -2252,7 +2263,7 @@
     },
     "forskrift/1990-01-25-92": {
       "type": "Regulation",
-      "source_sha256": "7e01fbc1b3136a8f8c204865a6b635468d9b375a725f7963b4e5f688a018dd0b"
+      "source_sha256": "4f8553079431bee368de227c95b921b17abe4b593acd962ed7a599d24717e2a9"
     },
     "forskrift/1990-01-26-68": {
       "type": "Regulation",
@@ -3036,7 +3047,7 @@
     },
     "forskrift/1993-12-21-1219": {
       "type": "Regulation",
-      "source_sha256": "60a1167f48392bb479a0e358548fd668e732567d16edf6c823e9da6470a3fd47"
+      "source_sha256": "5ffc8560ab0e50691e1cfbe559fc23adbe1ceb0f8edce94d11f266ead0d2ad62"
     },
     "forskrift/1993-12-21-1380": {
       "type": "Regulation",
@@ -3152,7 +3163,7 @@
     },
     "forskrift/1994-10-04-918": {
       "type": "Regulation",
-      "source_sha256": "9798b11cf985e440b53c3ee14b154e99e4587c0ee5ec2f38632032bdc6111c53"
+      "source_sha256": "cef26d422c046ae6a35c8ace081f7824ffb854bf118581283d2d8e7cffa5efec"
     },
     "forskrift/1994-10-14-930": {
       "type": "Regulation",
@@ -4248,7 +4259,7 @@
     },
     "forskrift/1998-09-16-890": {
       "type": "Regulation",
-      "source_sha256": "4a2d32077df380048d7e02d1be34b45f30206adc59d76919a53155c0c5d32eb9"
+      "source_sha256": "724d89e9a317f2783230ef894053908864071f85d8867991cf415f8e3d040f26"
     },
     "forskrift/1998-09-16-936": {
       "type": "Regulation",
@@ -6540,7 +6551,7 @@
     },
     "forskrift/2004-01-19-298": {
       "type": "Regulation",
-      "source_sha256": "41815fdde0cefa22629539fa7badae77b170f18acec27f6597af9ec20d2d7432"
+      "source_sha256": "4377ba007120c72ac0dd44b4d3a63d0bfa875b3676f807e828aee196ebd1dbcf"
     },
     "forskrift/2004-01-21-283": {
       "type": "Regulation",
@@ -6680,7 +6691,7 @@
     },
     "forskrift/2004-05-20-755": {
       "type": "Regulation",
-      "source_sha256": "7822c85957df373d78bf6b74db0c36ed01dd9dfe82c24cfcbc3cdc1fc99f4575"
+      "source_sha256": "e46b0d4946da824c8eee27776193118185d9af11c68e46da17a6eda6e1597118"
     },
     "forskrift/2004-05-20-756": {
       "type": "Regulation",
@@ -6700,7 +6711,7 @@
     },
     "forskrift/2004-06-01-922": {
       "type": "Regulation",
-      "source_sha256": "6bb3a929ae88e724a5c711a32d3976fad21a68121ff5539e64d2e107151ec186"
+      "source_sha256": "4cac3dcf278970cd75b2963d42ef3c476fc9e20dd011f58d6722e1e1e385dc4b"
     },
     "forskrift/2004-06-01-930": {
       "type": "Regulation",
@@ -6804,7 +6815,7 @@
     },
     "forskrift/2004-10-01-1339": {
       "type": "Regulation",
-      "source_sha256": "3e26bdae41c907ee52009d313f7f7ad8d882e90336a25e379513ead454b30252"
+      "source_sha256": "5f548dfbdccffdfef056fb0134d2baf7cf91cccf23f22161669602db6ea1478b"
     },
     "forskrift/2004-10-01-1340": {
       "type": "Regulation",
@@ -6856,7 +6867,7 @@
     },
     "forskrift/2004-12-01-1558": {
       "type": "Regulation",
-      "source_sha256": "3e1dba668749d953b2ef2f73c58a4500a80d2bc6093fbb4860423ac79b4f87c2"
+      "source_sha256": "b72f20cae18558073f13062742dfc9af34f65e75510d745867df1f306df3877d"
     },
     "forskrift/2004-12-06-1573": {
       "type": "Regulation",
@@ -7000,7 +7011,7 @@
     },
     "forskrift/2005-03-18-242": {
       "type": "Regulation",
-      "source_sha256": "552de4bddb93dc05a920ee696bc57bca0fd767934a7ce56f247788d9f72b658d"
+      "source_sha256": "70e4de52e11bb175fe6d7c5e58dab016eeacccdd1614931f42e8d732a7469d04"
     },
     "forskrift/2005-03-21-247": {
       "type": "Regulation",
@@ -7016,7 +7027,7 @@
     },
     "forskrift/2005-04-12-319": {
       "type": "Regulation",
-      "source_sha256": "05bd16c64c34b364d51479f090d4f2df710972a4ea39185c688f34287add7b99"
+      "source_sha256": "72ef107eeaaa7888fe62e51033d6062453e541dc1581580ab5a1939b9a207827"
     },
     "forskrift/2005-04-29-418": {
       "type": "Regulation",
@@ -7720,7 +7731,7 @@
     },
     "forskrift/2006-09-08-1041": {
       "type": "Regulation",
-      "source_sha256": "796cc16728721dea70dc15834c8a86ff6a5a9c7d7e9e3fae1367390c78b739aa"
+      "source_sha256": "3c5d92baba7edf4692f76f88444e8abbe489e7b5000ac38665ebf660a6b0b3fc"
     },
     "forskrift/2006-09-15-1066": {
       "type": "Regulation",
@@ -8132,7 +8143,7 @@
     },
     "forskrift/2007-07-02-877": {
       "type": "Regulation",
-      "source_sha256": "fab6a4418be58ebb2fd480656d832cf719b2e184574cbfc0a954de106be9584f"
+      "source_sha256": "788b2ef169350e2ff55abacf8f18a96bd973d56fb0f056e560027869db02501b"
     },
     "forskrift/2007-08-10-957": {
       "type": "Regulation",
@@ -8260,7 +8271,7 @@
     },
     "forskrift/2007-12-20-1723": {
       "type": "Regulation",
-      "source_sha256": "7981da986ab58301ad9e48d660dda61b5b48c6ce7bbe1375b155a57cc74ef26b"
+      "source_sha256": "9c3e84f38088f3eb045df0511ea59d44c34f9632fa88396cd763ee187a2fbf59"
     },
     "forskrift/2007-12-20-1763": {
       "type": "Regulation",
@@ -8472,7 +8483,7 @@
     },
     "forskrift/2008-04-16-362": {
       "type": "Regulation",
-      "source_sha256": "309f38e53d78865bc49c6157a54fa0c1d8a84e872a011b9da999a89cd60bd549"
+      "source_sha256": "2dcea031b4606dc1ec0ca069b99c660d61d44dcf4384372ce7b3ff81a7ac3f05"
     },
     "forskrift/2008-04-18-372": {
       "type": "Regulation",
@@ -8500,7 +8511,7 @@
     },
     "forskrift/2008-05-30-516": {
       "type": "Regulation",
-      "source_sha256": "d5957f69675e745c99e16b77ad13e4bebd12af511e0d61d1fa65ce074c3146db"
+      "source_sha256": "c2dbec7c89f9a93cea70dccea0f3aafa250404fb39c601107e4f472e8b4a7131"
     },
     "forskrift/2008-06-02-526": {
       "type": "Regulation",
@@ -8600,7 +8611,7 @@
     },
     "forskrift/2008-10-08-1130": {
       "type": "Regulation",
-      "source_sha256": "32b1aa9465f0077bd46f23c6a0f229b408ec92f04f1dec8d8f02db00376b0ac5"
+      "source_sha256": "27484f032e1c843ffb9c766283fc93e1074bee4d2d6e968d2526d32c98c0059a"
     },
     "forskrift/2008-10-10-1100": {
       "type": "Regulation",
@@ -8736,7 +8747,7 @@
     },
     "forskrift/2008-12-22-1624": {
       "type": "Regulation",
-      "source_sha256": "64fb85c10323fc05624152c501e299c420c04ce0420632abd9819dedb327e4f8"
+      "source_sha256": "56a3fa325d10d9f8c2298cc541cdbdb24ee2dc43da8bbbc7340d3076803d3661"
     },
     "forskrift/2008-12-31-1587": {
       "type": "Regulation",
@@ -8884,7 +8895,7 @@
     },
     "forskrift/2009-06-12-637": {
       "type": "Regulation",
-      "source_sha256": "47a30682d4c39c998c031d7070e9864f350ea59b8929c448e7d2a1c3bab1534c"
+      "source_sha256": "4dcbfa80c4057b598ddad2c2947b158658ef289a47e010194a26d2b60d3dcfbf"
     },
     "forskrift/2009-06-12-639": {
       "type": "Regulation",
@@ -9012,7 +9023,7 @@
     },
     "forskrift/2009-08-18-1117": {
       "type": "Regulation",
-      "source_sha256": "87a048492bfe42dad21fb620378b249b36fde7fdbedc700472de403a0d1e7b6a"
+      "source_sha256": "078e1b60b067952a8c1066c19822da2233a52e2df1703477d0ca0f409cb1e53a"
     },
     "forskrift/2009-08-20-1530": {
       "type": "Regulation",
@@ -9060,7 +9071,7 @@
     },
     "forskrift/2009-10-15-1286": {
       "type": "Regulation",
-      "source_sha256": "819ec40c70db17b24de6beffd868df85f8e30ea344584e273ed4251e40624c31"
+      "source_sha256": "66223d79be19b3b3f9321f4c03d8d36c452ffe58d3f4f83fc066d0eb37f33001"
     },
     "forskrift/2009-10-16-1280": {
       "type": "Regulation",
@@ -9268,7 +9279,7 @@
     },
     "forskrift/2010-02-12-156": {
       "type": "Regulation",
-      "source_sha256": "2728638d31bec392b20124392742b524611eaa335ec374c7887f0d30f24ea792"
+      "source_sha256": "a1e2815acdf99088428c4c43da69861b0d70374c6fcd9db2229dac78093f3a99"
     },
     "forskrift/2010-02-12-158": {
       "type": "Regulation",
@@ -9276,7 +9287,7 @@
     },
     "forskrift/2010-02-17-187": {
       "type": "Regulation",
-      "source_sha256": "b99ae1b0fbe991787c7b85d148d9644e36034c43832ab275ad4d1f7c231dac12"
+      "source_sha256": "0866865b5e6bae16e97a5e05f3e3a1c9f5446acf04468269270027acde802169"
     },
     "forskrift/2010-02-19-190": {
       "type": "Regulation",
@@ -9284,7 +9295,7 @@
     },
     "forskrift/2010-02-26-247": {
       "type": "Regulation",
-      "source_sha256": "56ebf4e50c05c519fbd64aca5bf86d9085b1b2389636b87d401ac9eb14b5ba3e"
+      "source_sha256": "96e530cd58e7970c1cefc7d5dcfbdf3d0bec2ed99d0f0e0240d29e18667556c0"
     },
     "forskrift/2010-02-26-252": {
       "type": "Regulation",
@@ -9560,7 +9571,7 @@
     },
     "forskrift/2010-11-08-1414": {
       "type": "Regulation",
-      "source_sha256": "14307ae9d4a3ca08103627dab0fd9fc5d20a0dc11a411539f1f7aff43010fc91"
+      "source_sha256": "2e6574e2973f17fc0c188625d91bf6e71d29908d7d3c94bea1c671dbaa11aefd"
     },
     "forskrift/2010-11-12-1426": {
       "type": "Regulation",
@@ -9664,7 +9675,7 @@
     },
     "forskrift/2010-12-21-1790": {
       "type": "Regulation",
-      "source_sha256": "fc0ddae1ca28a3b644b6783ca1cb9ace903356f55e1511ba094b3086f3c76d4f"
+      "source_sha256": "50c6d1db918134729768ab9809e34e26168cf88f6bfb66caac98a9c039d62690"
     },
     "forskrift/2011-01-05-841": {
       "type": "Regulation",
@@ -10092,7 +10103,7 @@
     },
     "forskrift/2011-12-06-1357": {
       "type": "Regulation",
-      "source_sha256": "349f26a6a0c037e9c45ba83a715eb7a468a7920ee6d8f0538b0719d46396a051"
+      "source_sha256": "aef16e3152d0171606115523f485595a864dcd53494742fccf0a7c990ec1f79b"
     },
     "forskrift/2011-12-06-1358": {
       "type": "Regulation",
@@ -10352,7 +10363,7 @@
     },
     "forskrift/2012-05-30-512": {
       "type": "Regulation",
-      "source_sha256": "d83c802110d8c3295c38ff8d83aa1d93261d4690e3ca7d30aabf5f03e5a24f13"
+      "source_sha256": "3f82abbbe8b744966a8ad947f00e1b128802241176b948934590258712b753ac"
     },
     "forskrift/2012-06-05-645": {
       "type": "Regulation",
@@ -11164,7 +11175,7 @@
     },
     "forskrift/2014-01-10-21": {
       "type": "Regulation",
-      "source_sha256": "97cb94ae4038134cb17ae4f81b918fc4a0e68228a1e3774ae79858478744af97"
+      "source_sha256": "ad4c7cab23f45a2b0ddd2d61fa9ade38f386b8c81f41f179face4a980bdb2e9a"
     },
     "forskrift/2014-01-24-54": {
       "type": "Regulation",
@@ -11784,7 +11795,7 @@
     },
     "forskrift/2015-05-06-455": {
       "type": "Regulation",
-      "source_sha256": "743de0baee5614154513da8455b5851fb1592c19e4df268251e7e8f68e57e62b"
+      "source_sha256": "0f20aa0e753d9417bc3b4004e126cf9f0f94bf9b003083167fc509fbdee28cbc"
     },
     "forskrift/2015-05-07-488": {
       "type": "Regulation",
@@ -12016,7 +12027,7 @@
     },
     "forskrift/2015-07-03-871": {
       "type": "Regulation",
-      "source_sha256": "de020b2ee8c01d00e33c6a9567ab46b49e5db83e9d318a2379be9766bf528121"
+      "source_sha256": "08949d8bc3d19424bf0d82bec91c6b104ae90365aeb80943c72fccd6ab3887bc"
     },
     "forskrift/2015-07-06-874": {
       "type": "Regulation",
@@ -12036,7 +12047,7 @@
     },
     "forskrift/2015-08-25-999": {
       "type": "Regulation",
-      "source_sha256": "c17ad389485abb2384fb9383252e56485a77f6b0d268fdbe207a7772aa1e7f4c"
+      "source_sha256": "666a0a8386d042b29bebc8ebe59aa77b86f0771e044a3a5494b0fd152c39afd1"
     },
     "forskrift/2015-09-04-1031": {
       "type": "Regulation",
@@ -12740,7 +12751,7 @@
     },
     "forskrift/2016-10-31-1264": {
       "type": "Regulation",
-      "source_sha256": "d7213a0674e3771c28ace0fd70c87cdb5241489b6cfda9ca98f7cae8efe7b09f"
+      "source_sha256": "cf08053cbee883e756195ac792b4267d02ee37381aba3bd6d9c1f7d961b8581a"
     },
     "forskrift/2016-11-09-1306": {
       "type": "Regulation",
@@ -12788,7 +12799,7 @@
     },
     "forskrift/2016-12-08-1482": {
       "type": "Regulation",
-      "source_sha256": "49b1062a860d747102f82832632a3fbb4a6431b326a46e9f414485753b925fbe"
+      "source_sha256": "ef822f4735cddf9b87285d4c16eb029588f5ad646b15f35d71e7ac71fde32027"
     },
     "forskrift/2016-12-09-1477": {
       "type": "Regulation",
@@ -12812,7 +12823,7 @@
     },
     "forskrift/2016-12-14-1578": {
       "type": "Regulation",
-      "source_sha256": "dd66836018de4fe8c508633bc2a6e29d5d6d411425481a943d309f2ffa7f8a16"
+      "source_sha256": "69b40ed8b038a5ea899713a7af72b9942f20afe756a70b2eedfa50d8216e77ed"
     },
     "forskrift/2016-12-15-1600": {
       "type": "Regulation",
@@ -13160,7 +13171,7 @@
     },
     "forskrift/2017-06-19-840": {
       "type": "Regulation",
-      "source_sha256": "5f683dabe4b11f08d8cb6f54b7df2a3d7589d06a68dadeb9a999efefc339baea"
+      "source_sha256": "f778d53ccccc7b96dcb502bd7a60e9c5aa51e56fb1b00b5f2b607b39b3b36afa"
     },
     "forskrift/2017-06-19-941": {
       "type": "Regulation",
@@ -13240,7 +13251,7 @@
     },
     "forskrift/2017-07-25-1215": {
       "type": "Regulation",
-      "source_sha256": "9744a681f0a6162e7b5829288b83e0b8f666730c60d2bdb4947cf94a59908701"
+      "source_sha256": "80bbf979a8b0b5e2c5eca419228b748320051c90dfeecf4c349da3b892d60ce4"
     },
     "forskrift/2017-08-09-1240": {
       "type": "Regulation",
@@ -13872,7 +13883,7 @@
     },
     "forskrift/2018-09-26-1467": {
       "type": "Regulation",
-      "source_sha256": "60cefe665fb0e6551011ff853b0041131d06fbf9008c7e1dc831ca20b96bd0b2"
+      "source_sha256": "c0bd8ac88778d690b8bf5598553382322ad3854a1e74c2383e6f636a3e06dfb5"
     },
     "forskrift/2018-09-28-1471": {
       "type": "Regulation",
@@ -13888,7 +13899,7 @@
     },
     "forskrift/2018-10-18-1671": {
       "type": "Regulation",
-      "source_sha256": "75723ead636ebedf85e20097bdeda377fe05160ec538031585e7d62173adc0c2"
+      "source_sha256": "c90338d878eddec19882dc52a73106b29326571c949b9843d31efbfb4c79decb"
     },
     "forskrift/2018-10-19-1584": {
       "type": "Regulation",
@@ -14064,7 +14075,7 @@
     },
     "forskrift/2018-12-28-2247": {
       "type": "Regulation",
-      "source_sha256": "9d08221cf620579d0817e2511a2f582413db814503847458d0fa6a20aa1f759e"
+      "source_sha256": "f5be7c8a8702a525ba09989134e9b22bcffabc3068130b294717800005844611"
     },
     "forskrift/2019-01-11-18": {
       "type": "Regulation",
@@ -14450,10 +14461,6 @@
       "type": "Regulation",
       "source_sha256": "62bec654aca3b3856cf1531511145a617eae2162d711d7c0a8381fa387038714"
     },
-    "forskrift/2019-11-22-1547": {
-      "type": "Regulation",
-      "source_sha256": "9e0f22b633a9489faf1f658b6fb635c7168a85db01f704b8c5cf98e6a57b8e7e"
-    },
     "forskrift/2019-11-22-1570": {
       "type": "Regulation",
       "source_sha256": "56e0b2a6c32a07b485cc570a466ea0a6b412a2ccfc45855023d5b9a3387f35c8"
@@ -14537,10 +14544,6 @@
     "forskrift/2019-12-13-1745": {
       "type": "Regulation",
       "source_sha256": "3bd2098e343cb815555af908eded5b467b5f3d46d02d3f1ba7cd7a0a8191e31c"
-    },
-    "forskrift/2019-12-13-1775": {
-      "type": "Regulation",
-      "source_sha256": "ef22e805d77c60872a000f9febbb5cfb1734cb46f8079658f8e99183fda03581"
     },
     "forskrift/2019-12-13-1777": {
       "type": "Regulation",
@@ -14760,7 +14763,7 @@
     },
     "forskrift/2020-02-28-702": {
       "type": "Regulation",
-      "source_sha256": "e393073e27ef5c43b43215ca4076030e38fa1bcaaabab81c0e2ddc3b6cea821b"
+      "source_sha256": "ce35c3732324a005dffdb7f9f0df3a5fc3715317c6e403874ad7df3912709f26"
     },
     "forskrift/2020-03-02-203": {
       "type": "Regulation",
@@ -14860,7 +14863,7 @@
     },
     "forskrift/2020-04-01-565": {
       "type": "Regulation",
-      "source_sha256": "c043c67f6ddf422c076989bf4b40ccb3e96f6b1c1f6c8121f1f91c54d36fc9ee"
+      "source_sha256": "e19e602d101774b997e1dd0faa42a17ea898404a8abb10bd64067d7ac8b9472d"
     },
     "forskrift/2020-04-03-569": {
       "type": "Regulation",
@@ -15644,7 +15647,7 @@
     },
     "forskrift/2021-03-26-963": {
       "type": "Regulation",
-      "source_sha256": "71ec65a6eaf3363a95350a878896ac41a43bba07e8f63e7ce24c1d9af8265073"
+      "source_sha256": "5f3ed40f7f1b073b52393a2c3edd4efe16b409b68816faee02b380cfe294f0f6"
     },
     "forskrift/2021-03-26-969": {
       "type": "Regulation",
@@ -16228,7 +16231,7 @@
     },
     "forskrift/2021-12-14-3530": {
       "type": "Regulation",
-      "source_sha256": "2cb1f48832e2c5c48383bb010bed701fbca92c1c31640530854620a0beffe916"
+      "source_sha256": "7f8d8548a3b85da3db8935cb91815f5d51056b07c474123fde76fa00f0055b64"
     },
     "forskrift/2021-12-14-3571": {
       "type": "Regulation",
@@ -16336,7 +16339,7 @@
     },
     "forskrift/2021-12-23-3910": {
       "type": "Regulation",
-      "source_sha256": "d6053fa1537854abd85fb8bd769f3dc2cebcc0650403c361f3eb32856fcee8d5"
+      "source_sha256": "7c51eb53791add0fff121ddaa4af1c63ae5a282290335910cf2b504b8170524a"
     },
     "forskrift/2022-01-04-10": {
       "type": "Regulation",
@@ -16504,11 +16507,11 @@
     },
     "forskrift/2022-04-06-632": {
       "type": "Regulation",
-      "source_sha256": "8f787bf01653059cceef995b0aec97c3a511231ab0c83e55f9e3ce756258e568"
+      "source_sha256": "5bf9b84f0b50f53d56616464ac68101ac9c3c2c77e4d814e65ac7d0fa2bc0607"
     },
     "forskrift/2022-04-06-633": {
       "type": "Regulation",
-      "source_sha256": "63622c943f86257cacd505fcef96fced510b9e8a38a07584120c8f1c3161339e"
+      "source_sha256": "3ac04924358bd6839af781d5834854a0b85da067d431f90308289d2bc78f4105"
     },
     "forskrift/2022-04-06-634": {
       "type": "Regulation",
@@ -16556,7 +16559,7 @@
     },
     "forskrift/2022-05-02-814": {
       "type": "Regulation",
-      "source_sha256": "a23e9b2eff2cec3a98b734fdb245bbbb48f5c764a077bbac249d0021dc785b2c"
+      "source_sha256": "ce436469687d53f6d9b54faf3691e815f5a2daf183b2f84877b6ae8a07d1a123"
     },
     "forskrift/2022-05-03-836": {
       "type": "Regulation",
@@ -16568,7 +16571,7 @@
     },
     "forskrift/2022-05-19-902": {
       "type": "Regulation",
-      "source_sha256": "88c06f7ccc42e303e67b6fc2196459df3bc504696f2373abd63b9efd8dd1768b"
+      "source_sha256": "7db887af8f8eb0e62ce17c5a5f4ee771f55c47c13ae034a190cd34cd211454c1"
     },
     "forskrift/2022-05-20-875": {
       "type": "Regulation",
@@ -16612,7 +16615,7 @@
     },
     "forskrift/2022-06-02-1010": {
       "type": "Regulation",
-      "source_sha256": "beb729beacad658f11d325ca34dfd4d6df9576d53580caecce28ee464c6edc16"
+      "source_sha256": "6dc58a98b3e96ec5b8079a71b96f4ddf7e34c977b07162f9e7d227977c635752"
     },
     "forskrift/2022-06-02-977": {
       "type": "Regulation",
@@ -16708,7 +16711,7 @@
     },
     "forskrift/2022-06-28-1233": {
       "type": "Regulation",
-      "source_sha256": "6e10c9572e8b3850e92efab258330f3d9c72706bc03c15941398df38310f3b70"
+      "source_sha256": "a53c9c7c0415efc284a11fb17b152932cc2bd5154e5af13a25430ef7d19a06a9"
     },
     "forskrift/2022-06-29-1237": {
       "type": "Regulation",
@@ -16812,7 +16815,7 @@
     },
     "forskrift/2022-09-08-1573": {
       "type": "Regulation",
-      "source_sha256": "599bc5162685751302dce0fedd14c3ac81a8a99931621acb3078c46e8681725b"
+      "source_sha256": "103f49bfbdb9330c4389e0ff3d570114183384af28d0445b3be96e3fdd88d813"
     },
     "forskrift/2022-09-09-1552": {
       "type": "Regulation",
@@ -17020,7 +17023,7 @@
     },
     "forskrift/2022-12-15-2259": {
       "type": "Regulation",
-      "source_sha256": "6c8ee9627ce5c40f9ccd9c614769b001ad2d6071f563c340db573126671ca7eb"
+      "source_sha256": "a1bece6c6cbcd12ac801f0864f7bba6316653a4d0374455856415b6ddb51f299"
     },
     "forskrift/2022-12-15-2264": {
       "type": "Regulation",
@@ -17084,7 +17087,7 @@
     },
     "forskrift/2022-12-20-2384": {
       "type": "Regulation",
-      "source_sha256": "6add11685ed1649d0b5ed50605e55a06619ffa4f715046521eb7361436c54de5"
+      "source_sha256": "613a63813b518460deb80205e739a087111f7c3716e0e0e5a27817c31c9140a8"
     },
     "forskrift/2022-12-20-2541": {
       "type": "Regulation",
@@ -17093,10 +17096,6 @@
     "forskrift/2022-12-21-2431": {
       "type": "Regulation",
       "source_sha256": "488aec58bb388f6ef60a13f751c42f8db95216ad21a72a455ed0f798c7c303aa"
-    },
-    "forskrift/2022-12-21-2456": {
-      "type": "Regulation",
-      "source_sha256": "b8b28eb0f552e1800e2603d3ba70ad7772e4818e4b1fea717a213e943be87331"
     },
     "forskrift/2022-12-21-2468": {
       "type": "Regulation",
@@ -17436,27 +17435,27 @@
     },
     "forskrift/2023-10-24-1694": {
       "type": "Regulation",
-      "source_sha256": "9eb067e583d98855c4c640be8d9588a6989bbc0f6cf9734ef4ffb87c351ad749"
+      "source_sha256": "18f33ce909a36458147e4e0cfa9968ae65e797ff4ec46250a705112a4430a9c2"
     },
     "forskrift/2023-10-24-1695": {
       "type": "Regulation",
-      "source_sha256": "1076900178023e13d6306607672223ee512ba4f6d001f66b6e45962df76ce8da"
+      "source_sha256": "33b15ec91bb44656497ef932ad774b2cf77b50b06a970f1293f3d06c2293934c"
     },
     "forskrift/2023-10-24-1696": {
       "type": "Regulation",
-      "source_sha256": "da26d281dab38b3cfb86c59a5b7f0315ed5b457b104479fb2fd7d3b46425ba96"
+      "source_sha256": "125867d3e035f109d7c284c056c7cc0645b114eb456fe3a95af743a6460fca10"
     },
     "forskrift/2023-10-24-1697": {
       "type": "Regulation",
-      "source_sha256": "bfa346e71b41ad2e33b23b0df2dfb514946fb6699c574dcaf9aabf54dbe56a05"
+      "source_sha256": "2a1c880d70d415c427cda7ee4b7c4af4cef9bbc0351a2676f9764fb0ae85f5de"
     },
     "forskrift/2023-10-24-1698": {
       "type": "Regulation",
-      "source_sha256": "3bb803914fa0eb55697fce87f727af73fdf12969f4f8b87a85ee313289e0226d"
+      "source_sha256": "7576e41e27829c33df32e57ac1bde32aa5b0877837e2d475cccc4e6f55a4b080"
     },
     "forskrift/2023-10-24-1699": {
       "type": "Regulation",
-      "source_sha256": "8fa5c458a0afd76da5d776062d374921f53ebd3c9831cf34cd948d11a9cc1427"
+      "source_sha256": "7d86f70f34a60afda88840db297aad3c7d1360c38cfc16abf63cc0294e248b0d"
     },
     "forskrift/2023-10-26-1703": {
       "type": "Regulation",
@@ -17760,7 +17759,7 @@
     },
     "forskrift/2024-03-06-538": {
       "type": "Regulation",
-      "source_sha256": "b0088bc534f9a6556d39738b167352bbff20af7a38411a50a37668183d96c658"
+      "source_sha256": "28883e8cc6b28832e2c8b6b572988d7b410f15dbfade36f3a1d4e52dbc7ff3bb"
     },
     "forskrift/2024-03-13-448": {
       "type": "Regulation",
@@ -18424,7 +18423,7 @@
     },
     "forskrift/2024-12-19-3395": {
       "type": "Regulation",
-      "source_sha256": "43b23e27084ad9896549ecffedecb7b11e602bc9cdc9be0e88736beb29e3792a"
+      "source_sha256": "621e3ad7ac599977b77a9c45a5f2a8f6948312c95148cfc0bac35119afb913b5"
     },
     "forskrift/2024-12-20-3300": {
       "type": "Regulation",
@@ -18460,7 +18459,7 @@
     },
     "forskrift/2024-12-20-3413": {
       "type": "Regulation",
-      "source_sha256": "4ce6e5262a41ef3407d99d361a7b33813f20ee6717a368ba775f47d0beadfecb"
+      "source_sha256": "5d0e82a178f741c580e314c1b409eee1e38113dbbbb78d5f047d2ff5dc22e3f9"
     },
     "forskrift/2024-12-20-3492": {
       "type": "Regulation",
@@ -18508,7 +18507,7 @@
     },
     "forskrift/2025-01-29-115": {
       "type": "Regulation",
-      "source_sha256": "de8bf9a1e1e0c512291f4f89ed71404b77dbc6aeef1ab8d13b7b961bb58a2743"
+      "source_sha256": "ec4316a6e426abfa40e04024751c7450fdd5e8a207b06f60afff477c52f7b75d"
     },
     "forskrift/2025-01-29-116": {
       "type": "Regulation",
@@ -18593,10 +18592,6 @@
     "forskrift/2025-03-10-399": {
       "type": "Regulation",
       "source_sha256": "362e8ca3afa5fecb807e7ae14632536765e84b1a9b5e3b40726183fb4bd0761d"
-    },
-    "forskrift/2025-03-11-440": {
-      "type": "Regulation",
-      "source_sha256": "f207be44a8bb31e5349c303d72ac334802d367f1654e47992007f9117d1cfc44"
     },
     "forskrift/2025-03-14-445": {
       "type": "Regulation",
@@ -18748,7 +18743,7 @@
     },
     "forskrift/2025-06-10-968": {
       "type": "Regulation",
-      "source_sha256": "736f89b9923e956be73e14c5088ebc56d6beb1cbd4cc583949c46926f4e6cb8f"
+      "source_sha256": "c9b4a69e05a39fb1c2e6a1ca5c276478584943006cdab76f370d1a4e7080fae4"
     },
     "forskrift/2025-06-10-985": {
       "type": "Regulation",
@@ -19228,7 +19223,7 @@
     },
     "forskrift/2025-09-26-1961": {
       "type": "Regulation",
-      "source_sha256": "c85581fa25050024a84052349ffae9a251dcff32512a323389efff0a485bfe8a"
+      "source_sha256": "43d020861db52d1a50b5f6b48ee85bc91a3daf7c9195ff99d498e815de4904a3"
     },
     "forskrift/2025-10-01-1974": {
       "type": "Regulation",
@@ -19308,7 +19303,7 @@
     },
     "forskrift/2025-11-07-2231": {
       "type": "Regulation",
-      "source_sha256": "15d71ea8a41e04eb03e9364c306bec84d94baa5aed3ae608858b2431f7406832"
+      "source_sha256": "d3cf2c0ef6b7a39d9e2751ef7b698453035350534341758992ae86ca71d80207"
     },
     "forskrift/2025-11-11-2242": {
       "type": "Regulation",
@@ -19380,7 +19375,7 @@
     },
     "forskrift/2025-12-02-2405": {
       "type": "Regulation",
-      "source_sha256": "42b6bab0323563ca52db0eff032301e7a0db5c567ba4ebc133ba3eca20de5bea"
+      "source_sha256": "09a45786183843fb1386226f92ca9da8c6e10a8fe96fc2805a3c9cce5e1e04b0"
     },
     "forskrift/2025-12-05-2419": {
       "type": "Regulation",
@@ -19464,7 +19459,7 @@
     },
     "forskrift/2025-12-16-2652": {
       "type": "Regulation",
-      "source_sha256": "e2eb7c70137f3609788a5c6250f998cec5f51005152bde472f5abf5c4a5eb522"
+      "source_sha256": "bb1adbcca4f2515f4d512b1b8421482ee2f538f7637d9a717ecb392a03efbd8f"
     },
     "forskrift/2025-12-16-2962": {
       "type": "Regulation",
@@ -19664,7 +19659,7 @@
     },
     "forskrift/2025-12-19-2737": {
       "type": "Regulation",
-      "source_sha256": "2fcd9c850169763594cc24e6af08ba3f987a953607ba66123809c6fea50b950a"
+      "source_sha256": "3d4bf5c014167cb15cd351e0063fc61b69650f04c7231e2f4c0c384002a0ac03"
     },
     "forskrift/2025-12-19-2742": {
       "type": "Regulation",
@@ -19696,7 +19691,7 @@
     },
     "forskrift/2025-12-19-2805": {
       "type": "Regulation",
-      "source_sha256": "7fa6cb294144cd8260ea91dd4552274145f2d9a8bd4325ead9174375c07f24de"
+      "source_sha256": "c383a244774c305cee26c31bb83f8ace6884b3f3a04d483a06442a800e07f5d1"
     },
     "forskrift/2025-12-19-2806": {
       "type": "Regulation",
@@ -19716,7 +19711,7 @@
     },
     "forskrift/2025-12-19-2821": {
       "type": "Regulation",
-      "source_sha256": "2ce6b94bb6bcd696391fc6877b7d4469a627e8326577a758bfa206a2a9539b09"
+      "source_sha256": "9a0f5fd453d7d11e4d00694f5dc16b85f107eae5535e6c57f8027936e32379c4"
     },
     "forskrift/2025-12-19-2822": {
       "type": "Regulation",
@@ -19724,7 +19719,7 @@
     },
     "forskrift/2025-12-19-2826": {
       "type": "Regulation",
-      "source_sha256": "d478af170c5079d384788de5c94272322f64f24c62d51ac43ccd0e26de0a56cd"
+      "source_sha256": "9d58a7f347cb01a3a137868c8537ca9d92a17c8211eebdeed9a0ce4ed3bf515f"
     },
     "forskrift/2025-12-19-2828": {
       "type": "Regulation",
@@ -19748,7 +19743,7 @@
     },
     "forskrift/2025-12-19-2889": {
       "type": "Regulation",
-      "source_sha256": "fa6c2f2505f730171bbb47dfbfcf929ff1f1f34558c3284d58e713a9afe5d16d"
+      "source_sha256": "af564ac094fb23137022991bbe4e610eefb74e21a88d46210e7b30dacde532ed"
     },
     "forskrift/2025-12-19-2890": {
       "type": "Regulation",
@@ -19784,11 +19779,7 @@
     },
     "forskrift/2025-12-23-2895": {
       "type": "Regulation",
-      "source_sha256": "901fb51946807608e21945106312d90f9ebcd7d99c607c40129c52873d58f16c"
-    },
-    "forskrift/2025-12-23-2896": {
-      "type": "Regulation",
-      "source_sha256": "6ef9f981349f08284dfc853a745618c34af4c0139374f45f4e198c7c35572571"
+      "source_sha256": "55c8092ebaa7be9d2da2b932ead941df2147313c0267a5a9234f7fda9929e3af"
     },
     "forskrift/2025-12-29-2899": {
       "type": "Regulation",
@@ -19996,7 +19987,7 @@
     },
     "forskrift/2026-03-23-454": {
       "type": "Regulation",
-      "source_sha256": "010f9a4e218e49cd1e05e05e50d2d8129a41001df6b1e6025a1cf7dc7bfe4a7a"
+      "source_sha256": "d1ca31d98b48a69ba7a0914bff830d94843bf7c4823705865805525172b004db"
     },
     "forskrift/2026-03-23-465": {
       "type": "Regulation",
@@ -20024,7 +20015,7 @@
     },
     "forskrift/2026-04-09-579": {
       "type": "Regulation",
-      "source_sha256": "ec6048e5beed8de7506ee378ffec829d7a9c26c9479403811b821ac988cfe536"
+      "source_sha256": "fb439792e051f16337993a813dedc8c231a910d04e30fde2ac16d695297bf824"
     },
     "forskrift/2026-04-13-592": {
       "type": "Regulation",
@@ -20106,10 +20097,6 @@
       "type": "Regulation",
       "source_sha256": "1ed150bca92f723f0f2cd67194d90ce037ca3f23349434b25e12bddd62c88fc2"
     },
-    "forskrift/2026-05-19-1415": {
-      "type": "Regulation",
-      "source_sha256": "a1f5a0788fec44faa50ceb332aff4d3c70d59f38a6e33b50aa0053236ce8ac44"
-    },
     "forskrift/2026-05-21-960": {
       "type": "Regulation",
       "source_sha256": "515d9da33c93fd56a7c411a199f54050f806d3c1ef3746363d17435da1f5c1b8"
@@ -20152,7 +20139,7 @@
     },
     "forskrift/2026-06-05-1024": {
       "type": "Regulation",
-      "source_sha256": "4231f5d4661a5c746a1b1d00cebf28ebc9f26c7b57feb8907a4c079dbfea8ad6"
+      "source_sha256": "5745273de93c1e23beb8531843dc2a32ab770eb356b83973d01c453d17d753de"
     },
     "forskrift/2026-06-09-1029": {
       "type": "Regulation",
@@ -20192,7 +20179,7 @@
     },
     "forskrift/2026-06-12-1092": {
       "type": "Regulation",
-      "source_sha256": "8b83235915f2e63e8c6ff18c4620b828dd42c745d54aef0934d71182113d84a9"
+      "source_sha256": "f979ce2e02b4a4648de97a1c5513ebd73da5b09d68933e6a51f7f32381abb6bd"
     },
     "forskrift/2026-06-15-1087": {
       "type": "Regulation",
@@ -20260,7 +20247,7 @@
     },
     "forskrift/2026-06-22-1211": {
       "type": "Regulation",
-      "source_sha256": "fdb5e5add6202f9f4917bd5c8db25db918406a711d834395cb9d7b41f8f1c343"
+      "source_sha256": "f57ea6050c13c9e46cb3f8f09ca4a2e2b2494e5b91a52226c0c2417ccc15b97f"
     },
     "forskrift/2026-06-22-1391": {
       "type": "Regulation",
@@ -20394,10 +20381,6 @@
       "type": "Regulation",
       "source_sha256": "945cc601b2d461ca044fb252f55da0e2441dfd0b4a0d105693e10991d027582b"
     },
-    "forskrift/2026-08-06-1768": {
-      "type": "Regulation",
-      "source_sha256": "3f522e8bfa488ad2e4e453e1753c3364dd0ee4501004a6cd1a265cd1315c0da5"
-    },
     "forskrift/2026-08-19-1644": {
       "type": "Regulation",
       "source_sha256": "2a8c389040690e297e6edabbe7daaff16f41e538ab5b742209ba5e372d075288"
@@ -20422,17 +20405,13 @@
       "type": "Regulation",
       "source_sha256": "dbace94990c8c11a89a64ad9073eee51498f312af77de7f1719f96b4a0ad630f"
     },
-    "forskrift/2026-08-31-1708": {
-      "type": "Regulation",
-      "source_sha256": "f00ce18b22d4e46ba1bf361bfc02a4b8759adaad3fe1872dac904a0c8525e64f"
-    },
     "forskrift/2026-09-08-1753": {
       "type": "Regulation",
       "source_sha256": "3b67cd87f7f84c1a54ed0a1dcc91332cca418d7a0f7aba9dc9eca0ca3a45e8f3"
     },
-    "forskrift/2026-09-10-1769": {
+    "forskrift/2026-09-09-1996": {
       "type": "Regulation",
-      "source_sha256": "06a2a211a0c89810d7eeaf09d3f64917cff9233106efa3e66b952e4eed609984"
+      "source_sha256": "bd9c34c93c91c4933ae99594babdba1a86145af526fdf77491ed1931fd651164"
     },
     "forskrift/2026-09-10-1780": {
       "type": "Regulation",
@@ -20446,13 +20425,105 @@
       "type": "Regulation",
       "source_sha256": "2f807957419a4b62fbe2fc4c14878cc98a215d6f5a9471c8600eb3de9d5204bd"
     },
-    "forskrift/2026-09-11-1792": {
+    "forskrift/2026-09-16-1830": {
       "type": "Regulation",
-      "source_sha256": "8740bf880cad7aa54a29ca863f3b7aab5aa328ebf49490ba339bf10d7c6152ae"
+      "source_sha256": "e7c501ccb3605eaceae3e2e5642acdf65ee32dc980b5fb0b525e3a1342890768"
     },
-    "forskrift/2026-09-14-1810": {
+    "forskrift/2026-09-16-1831": {
       "type": "Regulation",
-      "source_sha256": "1a849e8ea4ff2d9faddb819552ef76028680b7893ce7cedfaba969e83cc47bd8"
+      "source_sha256": "f9ac147d371e458ba04bf7f9ded5ae457f73d007b2862b9c8ad1effb6a0c3ef6"
+    },
+    "forskrift/2026-09-16-1832": {
+      "type": "Regulation",
+      "source_sha256": "d2e8500d8c4ea62fd232991097409dc6ee2bff55a3bbbbb9061c93356451082d"
+    },
+    "forskrift/2026-09-16-1833": {
+      "type": "Regulation",
+      "source_sha256": "be48ca56a3620b12e80edbca8020dd62b9c12a945b8388b48405d34076534f50"
+    },
+    "forskrift/2026-09-16-1888": {
+      "type": "Regulation",
+      "source_sha256": "cdf29b632ebe00d3b2fd3ae07d04286ad94fa2e86f23d8e93375a4c8c92c7812"
+    },
+    "forskrift/2026-09-18-1815": {
+      "type": "Regulation",
+      "source_sha256": "83b81f432b9a6ee963697ea36233814f4cd8785f9a1a7d4a9c5d5fae5e017a4d"
+    },
+    "forskrift/2026-09-18-1836": {
+      "type": "Regulation",
+      "source_sha256": "be890e85ed66550ba9c70fa679e804f8f478e10afa2c586141b372db5b5cf14b"
+    },
+    "forskrift/2026-09-18-1837": {
+      "type": "Regulation",
+      "source_sha256": "9b63fa63abb530cb8d90b24fdaf55132749376341afc214cd5a6c78bc4737e34"
+    },
+    "forskrift/2026-09-18-1871": {
+      "type": "Regulation",
+      "source_sha256": "c5a275765c61e7766c304d140a917fe8dba9aaa50e6dc41c3c36607d9e6ca570"
+    },
+    "forskrift/2026-09-23-1891": {
+      "type": "Regulation",
+      "source_sha256": "6628a9ef1e6b237854c4d31cb2ed16255d01b8a025000b68569ec29fc39b1c1f"
+    },
+    "forskrift/2026-09-25-1912": {
+      "type": "Regulation",
+      "source_sha256": "2913a0dbe749f5e81d22e42b37604a255aadb5ae0b89bfd4f3c26b574fdeea34"
+    },
+    "forskrift/2026-09-25-1913": {
+      "type": "Regulation",
+      "source_sha256": "916bf01fd2a21b640a0447afb49f6af735af92b9fd518e9953ff62c87377e4a3"
+    },
+    "forskrift/2026-09-28-1930": {
+      "type": "Regulation",
+      "source_sha256": "f08c8f1c2a652d84d62aa3c704dd6718aa262b13b132ab717e3f79d93c68add7"
+    },
+    "forskrift/2026-09-28-1931": {
+      "type": "Regulation",
+      "source_sha256": "d713ef73a9e5f364af34f1885b60ebf1e1a8e355cfab0656fa961854f47f6746"
+    },
+    "forskrift/2026-09-29-1933": {
+      "type": "Regulation",
+      "source_sha256": "d83a5fc9ef209445ed42a95a99d938df6e439d112f052cf8203bcfd94c148021"
+    },
+    "forskrift/2026-09-29-1934": {
+      "type": "Regulation",
+      "source_sha256": "8457367e36da0907a94d3f9f73775b03e9cb955188dd3530c403b03f67c06411"
+    },
+    "forskrift/2026-09-29-1974": {
+      "type": "Regulation",
+      "source_sha256": "ab9b6dc3a14f663156199caa29e933834edef57333d322fccfd6267981f67749"
+    },
+    "forskrift/2026-10-01-1963": {
+      "type": "Regulation",
+      "source_sha256": "de8fc0598f063d678e0440c19430f4699314fc81ba5c3092337d0534d88c378f"
+    },
+    "forskrift/2026-10-01-1998": {
+      "type": "Regulation",
+      "source_sha256": "59c35c99d86c14c626552a991a9e4869ec587dae8ff581cbbc6b72896c9a687a"
+    },
+    "forskrift/2026-10-02-1991": {
+      "type": "Regulation",
+      "source_sha256": "180325fd3f5b507362a651d190094559d63b4c5b23ef2159d0f9156da39e1627"
+    },
+    "forskrift/2026-10-02-1995": {
+      "type": "Regulation",
+      "source_sha256": "010f9a3be73b21ff15ba09a19b8e545847f48653aa541f025499bf4eacb5e794"
+    },
+    "forskrift/2026-10-02-1999": {
+      "type": "Regulation",
+      "source_sha256": "6fc910ae8b37534942e68009480ca1ff474812b6407e127eb2a38da149a5b26e"
+    },
+    "forskrift/2026-10-05-2001": {
+      "type": "Regulation",
+      "source_sha256": "895835834c7699722e9828cc4cb0f235a8bb48444db11ffccaa7492d5f86be98"
+    },
+    "forskrift/2026-10-07-2009": {
+      "type": "Regulation",
+      "source_sha256": "eda929f55a59bfa886c53538fcda1f2c677223759f5f22c74551f359284df356"
+    },
+    "forskrift/2026-10-08-2011": {
+      "type": "Regulation",
+      "source_sha256": "2ada91727f42f174f9152a246abd69a8f549f64fd7b36b5ecaf831ba0219e35e"
     },
     "lov/1687-04-15": {
       "type": "Law",
@@ -20532,11 +20603,11 @@
     },
     "lov/1916-07-21-2": {
       "type": "Law",
-      "source_sha256": "30aeae890ae1addd914bd9767d29caafca487b0fdded7e7bb4e2809d98f5d9c2"
+      "source_sha256": "9aa58490035671e5ef9d307ecb49823b5c0a8e9991c5903d847b29a75369a670"
     },
     "lov/1917-06-01-1": {
       "type": "Law",
-      "source_sha256": "93d9d4802462c8116976bfcfaf647ac103f5a3a09ca2f5a6c6fd63cce5b5a8c8"
+      "source_sha256": "599fc758537ad17b112c15ce501282c14eef7cfddc389cd0ef89f3bd521a4038"
     },
     "lov/1917-12-14-16": {
       "type": "Law",
@@ -20904,7 +20975,7 @@
     },
     "lov/1962-06-22-12": {
       "type": "Law",
-      "source_sha256": "a613ce0e165ed232c49671b1b3bf5d8d66d0a5919708fee7a0aba700da5d8069"
+      "source_sha256": "299c2647a900b01b15d97636d9be121008cc5a3269485eb9241000fef263ca09"
     },
     "lov/1963-06-21-12": {
       "type": "Law",
@@ -21088,7 +21159,7 @@
     },
     "lov/1975-06-13-39": {
       "type": "Law",
-      "source_sha256": "1a9bb20cedddfbcf42b863865f1ecf6b98bb2552af2915ab1eb6f8fe7acbbcf1"
+      "source_sha256": "40f7bbc4b27013297b136b1eb1af28f9653f213cc9f2ac621c4384df9816ce8b"
     },
     "lov/1975-12-12-59": {
       "type": "Law",
@@ -21156,7 +21227,7 @@
     },
     "lov/1980-06-13-35": {
       "type": "Law",
-      "source_sha256": "d4243f39da4677d6057bc4a70c367c2e73852098bc46878bc4a42157ef3acd70"
+      "source_sha256": "811eab8e296f33377bfd8599d26d1703908907c5ec06796c0351c38a82aad4f6"
     },
     "lov/1981-03-06-5": {
       "type": "Law",
@@ -21172,7 +21243,7 @@
     },
     "lov/1981-05-22-25": {
       "type": "Law",
-      "source_sha256": "df3e5ceea445fc981f577a310ecb2586eeac355c6d6ac86ea58b14068426711a"
+      "source_sha256": "9bc2e200ae350a6116f003e417aa670d1739dbbe7e56d89783d77fa448b2070d"
     },
     "lov/1981-12-18-90": {
       "type": "Law",
@@ -21192,7 +21263,7 @@
     },
     "lov/1982-12-17-86": {
       "type": "Law",
-      "source_sha256": "d9ff93f580bcd00590af3562551a24a9f64f61fcdebc624214275c5c94f570f8"
+      "source_sha256": "ecd87bfaed5788a50a4866782081d7d0899c39007ca4c1f4814c76d25019727d"
     },
     "lov/1983-06-03-54": {
       "type": "Law",
@@ -21508,7 +21579,7 @@
     },
     "lov/1995-08-04-53": {
       "type": "Law",
-      "source_sha256": "47deb7f5f5065f8bea111c04fd1a1f5806d22205fcf9b74c8c1299d324adff6f"
+      "source_sha256": "b52afef2066262667da02be28c70c41c09b54ca3641ca3f303fa1340d5d45076"
     },
     "lov/1995-12-22-85": {
       "type": "Law",
@@ -21552,7 +21623,7 @@
     },
     "lov/1997-02-28-19": {
       "type": "Law",
-      "source_sha256": "ce9995a9b51b0c9b7a4ac3686f0884c8406c43a9c7617abda89f4d3814e09bb1"
+      "source_sha256": "3d7b919002d793407ec9d8aa000bf012b18a7a83bc6e4fd1a579609f17dc266b"
     },
     "lov/1997-05-09-26": {
       "type": "Law",
@@ -21576,11 +21647,11 @@
     },
     "lov/1997-06-13-44": {
       "type": "Law",
-      "source_sha256": "343fdc3f916d160aae3756812d825b8c0b0cd5e63b285b0b99771f37c245dd03"
+      "source_sha256": "d2d28722eead2e673ad9286e90e5025af56d64c52e35a00f976d7c25af526224"
     },
     "lov/1997-06-13-45": {
       "type": "Law",
-      "source_sha256": "e4d9070d3dc91b23c700428630ce745a775b93def3cbf921904531e383bec18e"
+      "source_sha256": "4a01e6b00dcc331dba7945c8f162c33d588d3f892d200dc3412a4910edadd730"
     },
     "lov/1997-06-13-47": {
       "type": "Law",
@@ -21692,7 +21763,7 @@
     },
     "lov/2000-03-24-16": {
       "type": "Law",
-      "source_sha256": "aee4f3a0ea92cc091410dd5d0212016e4968006f49da53b04047d2554d4bfb4d"
+      "source_sha256": "db7cc48853798669790f3ccb6185ce1b5bb7312c74a7af22c89b4bc4a39d51c5"
     },
     "lov/2000-05-12-36": {
       "type": "Law",
@@ -21804,7 +21875,7 @@
     },
     "lov/2002-06-28-61": {
       "type": "Law",
-      "source_sha256": "df3e1a483f4fa980821d93a8ea1e702af39a3c0742c64c1313f283c77fc9c96c"
+      "source_sha256": "079e1e5f91d9a454cac2621edd968c88ad34315bfcaa25edd40cc41c871480f4"
     },
     "lov/2002-12-13-84": {
       "type": "Law",
@@ -21868,7 +21939,7 @@
     },
     "lov/2003-12-05-100": {
       "type": "Law",
-      "source_sha256": "e38e9fcebc3cb9d909a75cf18b1347383d88d8abc8a9502b49ca8fb22fdc31b0"
+      "source_sha256": "ff667178aa4387ce739a81c67d3a7b539398ff92175eb31b52bf50b3be15bcc1"
     },
     "lov/2003-12-12-108": {
       "type": "Law",
@@ -21876,7 +21947,7 @@
     },
     "lov/2003-12-12-109": {
       "type": "Law",
-      "source_sha256": "bb3617b48c7788ab118dc18950983ea5b25207316cfea22d0bd0c4686a62543a"
+      "source_sha256": "b21a12ae2d12629ddcd98e4d16a1ba8de6f2203efc6d3b67fd931e6152f8d5a5"
     },
     "lov/2003-12-12-115": {
       "type": "Law",
@@ -22120,7 +22191,7 @@
     },
     "lov/2008-05-15-35": {
       "type": "Law",
-      "source_sha256": "abec99c227f1b0cbe4ce6f81cc7002fa36f8e58d232c3c75c80ca0e43ca578a5"
+      "source_sha256": "ed8528336df1e6c84f4cd90548c851d33f11bc7a5400407569f38b331c26baaf"
     },
     "lov/2008-06-06-37": {
       "type": "Law",
@@ -22128,7 +22199,7 @@
     },
     "lov/2008-06-20-44": {
       "type": "Law",
-      "source_sha256": "e62dbf231f3159af373f21f86264ebffdd63e1b511ef57d4811fcf2ed8cb8b53"
+      "source_sha256": "9c65a1897ea2f476b8137b20775fe1cdf9dbf3f47ec5a50ea020b101f6061a11"
     },
     "lov/2008-06-27-62": {
       "type": "Law",
@@ -22220,11 +22291,11 @@
     },
     "lov/2010-03-26-9": {
       "type": "Law",
-      "source_sha256": "d1c67811686b96e19176d13813a2030ac9b7332f184bddbfb0b70d65d2e17209"
+      "source_sha256": "237b9ba5731abb488402aadc93be5003844587f66674251dd5199bb5a3fca45c"
     },
     "lov/2010-05-28-16": {
       "type": "Law",
-      "source_sha256": "e05aed703e8f100b2da9588559babd9c0d599456dfa41202624f6edc67d436c1"
+      "source_sha256": "4acb5ad243e7b2970dffb65fb259cdcf531a356b2e5cff8628346bcc567294c7"
     },
     "lov/2010-06-04-21": {
       "type": "Law",
@@ -22316,7 +22387,7 @@
     },
     "lov/2012-06-22-43": {
       "type": "Law",
-      "source_sha256": "75f38284f7a3951646acb5cf5ec640e21e1cf50c1306a9cf8ade91ad7445e0f1"
+      "source_sha256": "a444346351ca22bbb1dfa528275616e826d423278bd40ad58fe6b506e2cbbd34"
     },
     "lov/2012-06-22-52": {
       "type": "Law",
@@ -22404,11 +22475,11 @@
     },
     "lov/2014-06-20-43": {
       "type": "Law",
-      "source_sha256": "6eca182c9dbcb79bcdaf6ab9b37c9ddcd4569fd379e3202f85e6328911f7c2a6"
+      "source_sha256": "f8c43eaa3bb698481f9d101a65f086b00a9c02e79ceacc52b37427ec7db3f92c"
     },
     "lov/2014-06-20-49": {
       "type": "Law",
-      "source_sha256": "ca955f1a27cc7b8a05a95528babf110444a7bfdebc27f459f6d42338c5d83c40"
+      "source_sha256": "df298b336cbf121110a8f8b9b53ebcbb356f9061ebfbcb88e75acb62111dedbf"
     },
     "lov/2014-06-20-51": {
       "type": "Law",
@@ -22420,7 +22491,7 @@
     },
     "lov/2014-12-19-73": {
       "type": "Law",
-      "source_sha256": "577da0e2b3b0e70d509d320b2ae749724734c601a396eb36e7c58fcb0ac5f10f"
+      "source_sha256": "b215ebd9f104c5b3a399f33829f9bc3753ffce7fbd410bc1c79762f7baa01689"
     },
     "lov/2015-02-06-7": {
       "type": "Law",
@@ -22604,7 +22675,7 @@
     },
     "lov/2017-06-16-51": {
       "type": "Law",
-      "source_sha256": "bdd5f4de853f34a6a2537131104ccb0f30f005aaff9dbf27844760a31395a58e"
+      "source_sha256": "c6d27c64cf8e11054da1557f880a35e4b5ac646c6d7cd3b800809fc2205dd752"
     },
     "lov/2017-06-16-53": {
       "type": "Law",
@@ -22820,7 +22891,7 @@
     },
     "lov/2020-05-07-38": {
       "type": "Law",
-      "source_sha256": "c60e5ac72465df426dc04a669fd1bf202638a50b6865996282a9a479c1f5fcd6"
+      "source_sha256": "0d8b344d14f0f65b7e653d48d9d6302b684a48135b10ee7b9eb0adeb4c909aae"
     },
     "lov/2020-05-07-40": {
       "type": "Law",
@@ -22988,7 +23059,7 @@
     },
     "lov/2022-05-12-28": {
       "type": "Law",
-      "source_sha256": "152aecb4d82deaeccefcb0de322a8a69d63b78bb6ece4a625cc438b8e63fb722"
+      "source_sha256": "58a311903503adcfad550d7d8a8fdeebbf341d83c4898d22f742e8a85941a047"
     },
     "lov/2022-06-10-36": {
       "type": "Law",
@@ -23212,7 +23283,7 @@
     },
     "lov/2025-06-20-102": {
       "type": "Law",
-      "source_sha256": "f15668eeb91cec427cdfcc65704124be933ef6da95443a8e58fa284fdadb0093"
+      "source_sha256": "203834fdef159368edacd9a280c308253499aa2bac98c48c3c77dbcb1e040655"
     },
     "lov/2025-06-20-103": {
       "type": "Law",
@@ -23268,7 +23339,7 @@
     },
     "lov/2025-06-20-71": {
       "type": "Law",
-      "source_sha256": "c43789f07accbcec613453d922efccff44c1b035dfeadedcef09e7d7523b5d13"
+      "source_sha256": "fb8b4d6ed63513e52788f1453fd68d0325b9a3365fefcfc81d9d711aae5f48ba"
     },
     "lov/2025-06-20-75": {
       "type": "Law",
@@ -23284,7 +23355,7 @@
     },
     "lov/2025-06-20-82": {
       "type": "Law",
-      "source_sha256": "ea519cfeef38423d3036a858677c3d837d0ed86232181e3ccc501e9ce1871fc5"
+      "source_sha256": "6699a875adc08c432eb497dcf0ffa610a81b8d2cc44eb47e62eb7c725cdbbd1d"
     },
     "lov/2025-06-20-83": {
       "type": "Law",
@@ -23364,7 +23435,7 @@
     },
     "lov/2026-06-12-24": {
       "type": "Law",
-      "source_sha256": "00cb5288f8ae31b573e184f5ae25a5aa95a07acd350619002daa4b03b89eb4ea"
+      "source_sha256": "ab31bf98c294cab98fc76f8aee5c4277a2c89522082b42fbe65d32c09b9db170"
     },
     "lov/2026-06-12-25": {
       "type": "Law",
@@ -23422,10 +23493,6 @@
       "type": "Law",
       "source_sha256": "2062096fac46e806e7a08e967709c55b555be5e767ab44818a01613be305a847"
     },
-    "lov/2026-06-19-49": {
-      "type": "Law",
-      "source_sha256": "c71f91fe817230370fbb1b65a19d390162bd84805f3435edb2d0b64a13b60504"
-    },
     "lov/2026-06-19-50": {
       "type": "Law",
       "source_sha256": "debb8e447267a0472f2676b26cd8818381d396231f43076ebabd121d471e532b"
@@ -23460,11 +23527,7 @@
     },
     "lov/2026-06-23-64": {
       "type": "Law",
-      "source_sha256": "7d9e45aaac94deefab3b9fd7c50ccbf36fd5cedc6a41435d5793083532316e3f"
-    },
-    "lov/2026-06-23-65": {
-      "type": "Law",
-      "source_sha256": "7323c29ee4ab058a27f66f765f4221fe5cdbad8e453898625ee041200f1b5272"
+      "source_sha256": "1f31de8b20a0b2f6e77b268d03b98b9e92b86ed681e9fb00528dea7ea8400955"
     },
     "lov/2026-06-23-73": {
       "type": "Law",
@@ -23480,25 +23543,27 @@
     }
   },
   "counts": {
-    "objects": 146976,
-    "relationships": 173362,
+    "objects": 150800,
+    "relationships": 177182,
     "by_type": {
-      "EUDirective": 1516,
+      "Amendment": 3811,
+      "EUDirective": 1509,
       "EuroVocConcept": 738,
-      "Law": 756,
+      "Law": 754,
       "LegalArea": 283,
-      "LegalParagraph": 137984,
+      "LegalParagraph": 137986,
       "Ministry": 18,
-      "PreparatoryWork": 570,
-      "Regulation": 5111
+      "PreparatoryWork": 564,
+      "ProvisionVersion": 11,
+      "Regulation": 5126
     }
   },
   "coverage": {
-    "docs": 5868,
-    "mean": 0.9873894961508877,
+    "docs": 5881,
+    "mean": 0.9874401244732445,
     "min": 0,
-    "docs_below_0_99": 1898,
-    "docs_below_0_95": 322
+    "docs_below_0_99": 1906,
+    "docs_below_0_95": 321
   },
   "quality": {
     "content_unavailable": 1,
@@ -23507,26 +23572,26 @@
     ]
   },
   "preparatory_works": {
-    "total": 570,
-    "with_full_text": 338,
+    "total": 564,
+    "with_full_text": 334,
     "by_type": {
       "dok": 4,
-      "innstilling": 194,
+      "innstilling": 192,
       "lovanm": 4,
-      "lovvedtak": 148,
+      "lovvedtak": 146,
       "melding": 1,
       "nou": 13,
-      "proposisjon": 202,
+      "proposisjon": 200,
       "representantforslag": 4
     },
     "by_era": {
-      "1999_plus": 550,
+      "1999_plus": 544,
       "pre_1999": 20,
       "unknown": 0
     },
     "matched_by_type": {
-      "innstilling": 190,
-      "lovvedtak": 148
+      "innstilling": 188,
+      "lovvedtak": 146
     },
     "unmatched_by_type": {
       "dok": 4,
@@ -23534,7 +23599,7 @@
       "lovanm": 4,
       "melding": 1,
       "nou": 13,
-      "proposisjon": 202,
+      "proposisjon": 200,
       "representantforslag": 4
     },
     "fetch_failures": null

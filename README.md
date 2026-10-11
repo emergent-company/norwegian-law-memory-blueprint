@@ -16,7 +16,7 @@ legal corpus in one step.
 |---|---|
 | `norwegian-law-assistant` | Answers questions about Norwegian statutes, regulations, provisions, ministries, legal areas and EU/EEA directives. Always searches the graph and cites the act (`short_title` + `ref_id`) and section. Answers in Norwegian or English. |
 
-### Object types (7)
+### Object types (10)
 
 | Type | Description |
 |---|---|
@@ -25,10 +25,13 @@ legal corpus in one step.
 | `Ministry` | Government ministries that administer laws |
 | `LegalArea` | Top-level and sub-level legal classification areas |
 | `LegalParagraph` | Individual sections/articles within a law or regulation |
+| `PreparatoryWork` | Forarbeid (NOU, proposisjon, innstilling, lovvedtak) referenced by laws/regulations |
 | `EUDirective` | EU/EEA directives referenced by Norwegian law |
 | `EuroVocConcept` | EuroVoc thesaurus concepts attached to EU directives |
+| `Amendment` | Statutory change record (law-level or provision-level) |
+| `ProvisionVersion` | Temporal version anchor for a provision with an amendment record |
 
-### Relationship types (13)
+### Relationship types (17)
 
 | Relationship | Meaning |
 |---|---|
@@ -39,12 +42,57 @@ legal corpus in one step.
 | `SEE_ALSO` | Non-hierarchical cross-reference |
 | `HAS_LANGUAGE_VARIANT` | Bokmål ↔ Nynorsk variants of the same document |
 | `REFERENCES` | Body hyperlink cross-reference |
+| `PREPARES` | PreparatoryWork → the Law/Regulation it underpins |
+| `DERIVES_FROM` | PreparatoryWork → the PreparatoryWork it builds on |
 | `IMPLEMENTS_EEA` | Law/Regulation → EU directive it implements |
 | `HAS_PARAGRAPH` | Law/Regulation → LegalParagraph |
 | `CITES_EU_LAW` | Law body inline citation → EU directive |
 | `EU_CITES` | EUDirective → other EU instruments it cites |
 | `EU_MODIFIED_BY` | EUDirective → amending instruments |
 | `HAS_EUROVOC_DESCRIPTOR` | EUDirective → EuroVoc concept |
+| `HAS_AMENDMENT` | Law/Regulation → Amendment |
+| `HAS_VERSION` | Law/Regulation → ProvisionVersion |
+
+### EU cross-references
+
+`EUDirective` objects carry four derived fields beyond their base metadata:
+
+| Property | Meaning |
+|---|---|
+| `community` | `EU` \| `EG` \| `EEG`, derived from the CELEX year (`<1993` EEG, `1993–2009` EG, `>=2009` EU) |
+| `url_eur_lex` | Canonical ELI URL, derived as `https://eur-lex.europa.eu/eli/{dir\|reg\|dec}/YYYY/N` |
+| `in_force` | Always `true` in this corpus — no repeal signal is extracted |
+| `title_no` | Norwegian title — always absent in this corpus |
+
+`IMPLEMENTS_EEA` and `CITES_EU_LAW` edges carry free-form attributes that are
+**not** expressible in the YAML schema — Memory relationship types have no
+declarative `properties`, so these attributes live only in the seed JSONL edge
+`properties` map:
+
+- `IMPLEMENTS_EEA` — `source:"eea_references"`, `reference_type`, `is_primary`,
+  `implementation_status:"unknown"`, `eu_articles`, `reference_context` (≤240
+  chars), `trigger_keyword`. A header-derived edge defaults to
+  `reference_type:"implements"` + `is_primary:true`; an explicit keyword maps to
+  `implements|supplements|applies|references|complies_with|derogates_from|amended_by|repealed_by|cites_article`.
+- `CITES_EU_LAW` — `reference_type` (default `cites_article`), `eu_articles`,
+  `reference_context`, `trigger_keyword`.
+
+### Amendment & version metadata
+
+- **`Amendment`** — a statutory change record. Law-level records (3771 of 3811,
+  `source:"metadata"`) are derived from Lovdata `last_change_in_force`/`AMENDS`
+  metadata; the rest (`source:"body_note"`, 40) come from per-provision
+  "… ved lov D. MMM YYYY nr. N" notes. Properties: `name`, `amended_by_ref_id`,
+  `amendment_date`, `amendment_type`, `target_provision_ref`, `target_law_ref_id`,
+  `change_summary`, `source`.
+- **`ProvisionVersion`** — a temporal anchor for a provision, emitted only for
+  provisions with a body note (11 objects). `valid_to` is never set and `status`
+  is always `current`. Properties: `name`, `paragraph_ref`,
+  `paragraph_section_id`, `valid_from`, `valid_to`, `status`,
+  `parent_law_ref_id`.
+- **`HAS_AMENDMENT`** (Law → Amendment, 3811) and **`HAS_VERSION`**
+  (Law → ProvisionVersion, 11) link the above. Amendment nodes are filtered to
+  targets present in the corpus (no dangling edges).
 
 ## Repository layout
 
@@ -96,8 +144,9 @@ to produce or apply it:
 - object line: `{"type":"Law","key":"lov/1687-04-15","properties":{…}}`
 - relationship line: `{"type":"HAS_PARAGRAPH","srcKey":"lov/…","dstKey":"lov/…#…","properties":{…}}`
 
-The bundle is roughly **144k objects / 165k relationships** (laws, regulations,
-provisions, ministries, legal areas and their relationships). `LegalParagraph`
+The bundle is **150,800 objects / 177,182 relationships** (laws, regulations,
+provisions, ministries, legal areas, EU directives, amendments and their
+relationships). `LegalParagraph`
 and the relationship files dominate the size. Large types are split at 50 MB
 into `<Type>.001.jsonl`, `<Type>.002.jsonl`, … (the Memory CLI's blueprint
 loader reassembles them transparently).

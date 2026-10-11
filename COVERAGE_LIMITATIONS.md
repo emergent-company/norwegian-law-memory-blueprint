@@ -22,13 +22,13 @@ bounds below.
   are present. County/municipal bylaws and local regulations are out of scope.
 - **EU directive text is partial.** EU/EEA directive nodes carry metadata
   (title, form, author, dates, subject matter, OJ reference, EuroVoc
-  descriptors) and, for **63 of 85** directives, a `content` body sourced from
-  CELLAR. The other 22 have no retrievable full text, and even the stored body is
-  not guaranteed complete — do not treat an EU directive node as authoritative
-  quoted EU law.
+  descriptors) and, for **226 of 274** non-stub directives, a `content` body
+  sourced from CELLAR. The other 48 non-stub directives have no retrievable
+  full text, and even the stored body is not guaranteed complete — do not treat
+  an EU directive node as authoritative quoted EU law.
 - **Many EU directive nodes are stubs.** Cited or amending acts that are not
   themselves among the referenced directives are stored as stub nodes
-  (`celex_id` + `name` only — **534 of 619** `EUDirective` objects) so that
+  (`celex_id` + `name` only — **1235 of 1509** `EUDirective` objects) so that
   `EU_CITES` / `EU_MODIFIED_BY` edges resolve instead of dangling. A stub carries
   no metadata.
 
@@ -87,6 +87,24 @@ bounds below.
   because CELLAR does not carry them.
 - `HAS_LANGUAGE_VARIANT` edges are **0**: language variants are deduplicated
   ("first occurrence wins"), so no variant pairs exist to link.
+
+## Amendment & version metadata
+
+- **`Amendment` objects (3811)** record statutory changes. **3771 are
+  `source:"metadata"`** (law-level, derived from Lovdata `last_change_in_force`
+  and `AMENDS` metadata); **40 are `source:"body_note"`** (per-provision
+  "… ved lov D. MMM YYYY nr. N" notes). `amendment_type` is **usually
+  `unknown`** because Lovdata metadata states neither the change kind nor the
+  provision; the `amending_section` source and `ikrafttredelse` type are
+  **never produced** in this corpus.
+- **`ProvisionVersion` objects (11)** anchor provisions that have a body note.
+  **`valid_to` is never set** and **`status` is always `current`** — the corpus
+  holds only current consolidated text, so there are **no historical text
+  snapshots** and no version chaining.
+- **EU fields with no data.** `title_no` (Norwegian title) is **always empty**;
+  `in_force` is **always `true`** (no repeal signal is extracted). On
+  `CITES_EU_LAW` edges, `reference_context` is the **enclosing clause** (coarse,
+  not ref-anchored).
 
 ## Source & licensing
 

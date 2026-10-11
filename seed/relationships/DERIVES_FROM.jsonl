@@ -77,7 +77,6 @@
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-364-l-202324","dstKey":"forarbeid/prop-75-l-202324"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-364-l-202526","dstKey":"forarbeid/prop-55-l-202526"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-365-l-202324","dstKey":"forarbeid/prop-74-ls-202324"}
-{"type":"DERIVES_FROM","srcKey":"forarbeid/inns-368-l-202526","dstKey":"forarbeid/prop-59-l-202526"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-373-l-202425","dstKey":"forarbeid/prop-130-l-202425"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-373-l-202526","dstKey":"forarbeid/prop-52-l-202526"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-375-l-202425","dstKey":"forarbeid/prop-49-l-202425"}
@@ -107,7 +106,6 @@
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-443-l-202526","dstKey":"forarbeid/prop-93-l-202526"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-450-l-202425","dstKey":"forarbeid/prop-115-l-202425"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-452-l-202425","dstKey":"forarbeid/prop-96-l-202425"}
-{"type":"DERIVES_FROM","srcKey":"forarbeid/inns-459-l-202526","dstKey":"forarbeid/prop-95-ls-202526"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-461-l-202223","dstKey":"forarbeid/prop-82-l-202223"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-468-l-202425","dstKey":"forarbeid/prop-103-l-202425"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/inns-475-l-202425","dstKey":"forarbeid/prop-74-ls-202425"}
@@ -329,8 +327,6 @@
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-6-202425","dstKey":"forarbeid/inns-41-l-202425"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-61-202122","dstKey":"forarbeid/inns-234-l-202122"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-61-202122","dstKey":"forarbeid/prop-214-l-202021"}
-{"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-61-202526","dstKey":"forarbeid/inns-368-l-202526"}
-{"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-61-202526","dstKey":"forarbeid/prop-59-l-202526"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-62-202425","dstKey":"forarbeid/inns-315-l-202425"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-62-202425","dstKey":"forarbeid/prop-64-l-202425"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-62-202526","dstKey":"forarbeid/inns-373-l-202526"}
@@ -423,8 +419,6 @@
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-90-202122","dstKey":"forarbeid/prop-89-l-202122"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-90-202526","dstKey":"forarbeid/inns-443-l-202526"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-90-202526","dstKey":"forarbeid/prop-93-l-202526"}
-{"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-91-202526","dstKey":"forarbeid/inns-459-l-202526"}
-{"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-91-202526","dstKey":"forarbeid/prop-95-ls-202526"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-92-202324","dstKey":"forarbeid/inns-365-l-202324"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-92-202324","dstKey":"forarbeid/prop-74-ls-202324"}
 {"type":"DERIVES_FROM","srcKey":"forarbeid/lovvedtak-93-202324","dstKey":"forarbeid/inns-357-l-202324"}

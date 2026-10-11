@@ -7,8 +7,8 @@
 {"type":"AMENDED_BY","srcKey":"lov/1915-08-13-5","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1916-03-17","dstKey":"lov/2015-06-19-65","properties":{"effective_date":"2015-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1916-06-30-1","dstKey":"lov/2002-06-21-34","properties":{"effective_date":"2002-07-01"}}
-{"type":"AMENDED_BY","srcKey":"lov/1916-07-21-2","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
-{"type":"AMENDED_BY","srcKey":"lov/1917-06-01-1","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
+{"type":"AMENDED_BY","srcKey":"lov/1916-07-21-2","dstKey":"lov/2025-06-20-82","properties":{"effective_date":"2026-10-01"}}
+{"type":"AMENDED_BY","srcKey":"lov/1917-06-01-1","dstKey":"lov/2025-06-20-82","properties":{"effective_date":"2026-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1917-12-14-16","dstKey":"lov/2025-04-10-9","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1918-05-31-4","dstKey":"lov/2025-06-20-106","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1918-08-14-2","dstKey":"lov/2005-06-17-90","properties":{"effective_date":"2008-01-01"}}
@@ -50,6 +50,7 @@
 {"type":"AMENDED_BY","srcKey":"lov/1959-06-19-2","dstKey":"lov/2016-05-27-14","properties":{"effective_date":"2017-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1959-10-23-3","dstKey":"lov/2025-06-20-102","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1961-05-05","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
+{"type":"AMENDED_BY","srcKey":"lov/1962-06-22-12","dstKey":"lov/2026-06-12-24","properties":{"effective_date":"2026-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1963-06-21-12","dstKey":"lov/2021-06-18-89","properties":{"effective_date":"2021-06-18"}}
 {"type":"AMENDED_BY","srcKey":"lov/1963-11-15","dstKey":"lov/2025-04-25-12","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1965-06-18-4","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
@@ -77,10 +78,10 @@
 {"type":"AMENDED_BY","srcKey":"lov/1977-06-10-71","dstKey":"lov/2010-03-26-9","properties":{"effective_date":"2013-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1979-05-18-18","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1980-02-08-2","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
-{"type":"AMENDED_BY","srcKey":"lov/1980-06-13-35","dstKey":"lov/2025-04-25-12","properties":{"effective_date":"2026-01-01"}}
+{"type":"AMENDED_BY","srcKey":"lov/1980-06-13-35","dstKey":"lov/2025-06-20-82","properties":{"effective_date":"2026-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1981-04-08-7","dstKey":"lov/2025-04-25-12","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1982-12-17-84","dstKey":"lov/2015-06-19-65","properties":{"effective_date":"2015-10-01"}}
-{"type":"AMENDED_BY","srcKey":"lov/1982-12-17-86","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
+{"type":"AMENDED_BY","srcKey":"lov/1982-12-17-86","dstKey":"lov/2025-06-20-82","properties":{"effective_date":"2026-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1984-06-08-55","dstKey":"lov/2015-06-19-65","properties":{"effective_date":"2015-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1984-06-08-58","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1984-06-08-59","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
@@ -108,12 +109,10 @@
 {"type":"AMENDED_BY","srcKey":"lov/1994-06-24-39","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1995-01-12-6","dstKey":"lov/2015-06-19-65","properties":{"effective_date":"2015-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1995-05-26-25","dstKey":"lov/2025-06-20-111","properties":{"effective_date":"2025-06-20"}}
-{"type":"AMENDED_BY","srcKey":"lov/1995-08-04-53","dstKey":"lov/2026-06-19-46","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1995-12-22-85","dstKey":"lov/2015-06-19-65","properties":{"effective_date":"2015-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1996-03-22-16","dstKey":"lov/2015-06-19-65","properties":{"effective_date":"2015-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1996-06-21-38","dstKey":"lov/2025-06-20-102","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1996-12-13-87","dstKey":"lov/2016-05-27-14","properties":{"effective_date":"2017-01-01"}}
-{"type":"AMENDED_BY","srcKey":"lov/1997-02-28-19","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1997-06-06-32","dstKey":"lov/2022-03-11-8","properties":{"effective_date":"2023-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1997-06-06-35","dstKey":"lov/2019-06-21-32","properties":{"effective_date":"2021-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/1997-06-13-42","dstKey":"lov/2025-06-20-102","properties":{"effective_date":"2026-07-01"}}
@@ -172,6 +171,7 @@
 {"type":"AMENDED_BY","srcKey":"lov/2007-06-29-81","dstKey":"lov/2024-06-21-42","properties":{"effective_date":"2024-11-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2007-06-29-88","dstKey":"lov/2025-06-20-105","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2007-12-14-116","dstKey":"lov/2025-06-20-96","properties":{"effective_date":"2026-01-01"}}
+{"type":"AMENDED_BY","srcKey":"lov/2008-05-15-35","dstKey":"lov/2025-06-20-82","properties":{"effective_date":"2026-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2008-06-20-44","dstKey":"lov/2025-06-20-96","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2008-06-27-71","dstKey":"lov/2026-06-12-22","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2008-10-17-79","dstKey":"lov/2018-06-15-38","properties":{"effective_date":"2018-07-20"}}
@@ -181,7 +181,6 @@
 {"type":"AMENDED_BY","srcKey":"lov/2009-06-19-100","dstKey":"lov/2025-06-20-102","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2009-12-18-131","dstKey":"lov/2025-06-20-39","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2010-03-26-8","dstKey":"lov/2026-06-19-45","properties":{"effective_date":"2026-07-01"}}
-{"type":"AMENDED_BY","srcKey":"lov/2010-05-28-16","dstKey":"lov/2026-06-19-46","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2010-06-25-45","dstKey":"lov/2025-04-25-12","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2010-12-17-84","dstKey":"lov/2015-04-10-17","properties":{"effective_date":"2016-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2011-04-15-11","dstKey":"lov/2015-06-19-65","properties":{"effective_date":"2015-10-01"}}
@@ -196,7 +195,7 @@
 {"type":"AMENDED_BY","srcKey":"lov/2014-03-07-5","dstKey":"lov/2014-12-19-73","properties":{"effective_date":"2014-12-19"}}
 {"type":"AMENDED_BY","srcKey":"lov/2014-06-06-19","dstKey":"lov/2025-04-25-12","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2014-06-20-30","dstKey":"lov/2025-05-27-18","properties":{"effective_date":"2025-07-01"}}
-{"type":"AMENDED_BY","srcKey":"lov/2014-06-20-49","dstKey":"lov/2024-11-29-73","properties":{"effective_date":"2024-12-01"}}
+{"type":"AMENDED_BY","srcKey":"lov/2014-06-20-49","dstKey":"lov/2025-06-20-82","properties":{"effective_date":"2026-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2015-02-06-7","dstKey":"lov/2025-02-28-2","properties":{"effective_date":"2025-05-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2015-04-10-17","dstKey":"lov/2026-02-06-2","properties":{"effective_date":"2026-08-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2015-09-04-85","dstKey":"lov/2021-06-18-97","properties":{"effective_date":"2023-01-01"}}
@@ -237,6 +236,7 @@
 {"type":"AMENDED_BY","srcKey":"lov/2021-12-22-163","dstKey":"lov/2025-06-20-106","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2022-01-28-2","dstKey":"lov/2025-04-25-12","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2022-03-11-8","dstKey":"lov/2025-04-25-12","properties":{"effective_date":"2026-01-01"}}
+{"type":"AMENDED_BY","srcKey":"lov/2022-05-12-28","dstKey":"lov/2025-06-20-82","properties":{"effective_date":"2026-10-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2022-06-17-57","dstKey":"lov/2025-04-25-12","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2022-12-16-90","dstKey":"lov/2026-06-19-39","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"lov/2022-12-16-91","dstKey":"lov/2026-02-06-2","properties":{"effective_date":"2026-08-01"}}
@@ -292,6 +292,7 @@
 {"type":"AMENDED_BY","srcKey":"forskrift/2003-08-01-990","dstKey":"forskrift/2019-05-03-560","properties":{"effective_date":"2019-05-03"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2003-12-10-1745","dstKey":"forskrift/2026-08-27-1685","properties":{"effective_date":"2026-09-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2004-02-05-393","dstKey":"forskrift/2024-03-21-498","properties":{"effective_date":"2024-03-21"}}
+{"type":"AMENDED_BY","srcKey":"forskrift/2004-12-01-1558","dstKey":"forskrift/2026-09-29-1933","properties":{"effective_date":"2026-09-29"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2005-01-28-60","dstKey":"forskrift/2009-06-10-636","properties":{"effective_date":"2010-01-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2005-12-19-1653","dstKey":"forskrift/2022-06-02-977","properties":{"effective_date":"2022-09-16"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2006-03-31-378","dstKey":"forskrift/2021-09-03-2675","properties":{"effective_date":"2022-06-01"}}
@@ -320,7 +321,6 @@
 {"type":"AMENDED_BY","srcKey":"forskrift/2016-06-03-573","dstKey":"forskrift/2018-06-15-876","properties":{"effective_date":"2018-07-20"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2016-06-20-733","dstKey":"forskrift/2020-12-21-3084","properties":{"effective_date":"2021-01-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2016-07-01-868","dstKey":"forskrift/2024-06-27-1381","properties":{"effective_date":"2024-07-01"}}
-{"type":"AMENDED_BY","srcKey":"forskrift/2016-12-08-1482","dstKey":"forskrift/2026-06-19-1319","properties":{"effective_date":"2026-09-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2016-12-16-1659","dstKey":"forskrift/2026-06-26-1397","properties":{"effective_date":"2026-07-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2016-12-19-1732","dstKey":"forskrift/2023-11-23-1895","properties":{"effective_date":"2023-12-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2017-04-21-492","dstKey":"forskrift/2019-05-03-560","properties":{"effective_date":"2019-05-03"}}
@@ -335,7 +335,7 @@
 {"type":"AMENDED_BY","srcKey":"forskrift/2020-08-24-1675","dstKey":"forskrift/2026-04-27-745","properties":{"effective_date":"2026-05-15"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2021-06-20-2086","dstKey":"forskrift/2021-12-22-3828","properties":{"effective_date":"2022-01-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2021-12-14-3530","dstKey":"forskrift/2022-06-16-1029","properties":{"effective_date":"2022-09-01"}}
-{"type":"AMENDED_BY","srcKey":"forskrift/2022-05-19-902","dstKey":"forskrift/2026-07-13-1558","properties":{"effective_date":"2026-07-13"}}
+{"type":"AMENDED_BY","srcKey":"forskrift/2021-12-23-3910","dstKey":"forskrift/2026-10-02-1999","properties":{"effective_date":"2026-10-02"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2022-06-16-1029","dstKey":"forskrift/2026-08-27-1685","properties":{"effective_date":"2026-09-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2022-12-20-2383","dstKey":"forskrift/2025-12-08-2457","properties":{"effective_date":"2026-01-01"}}
 {"type":"AMENDED_BY","srcKey":"forskrift/2024-10-15-2556","dstKey":"forskrift/2026-06-22-1210","properties":{"effective_date":"2026-07-01"}}

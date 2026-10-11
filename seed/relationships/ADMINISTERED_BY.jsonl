@@ -740,7 +740,6 @@
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-46","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-47","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-48","dstKey":"ministry_Justis- og beredskapsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-49","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-50","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-51","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-52","dstKey":"ministry_Klima- og miljødepartementet"}
@@ -750,7 +749,6 @@
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-62","dstKey":"ministry_Nærings- og fiskeridepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-19-63","dstKey":"ministry_Samferdselsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-23-64","dstKey":"ministry_Arbeids- og inkluderingsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-23-65","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-23-73","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-23-74","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"lov/2026-06-23-75","dstKey":"ministry_Justis- og beredskapsdepartementet"}
@@ -3529,7 +3527,6 @@
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2022-12-20-2384","dstKey":"ministry_Samferdselsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2022-12-20-2541","dstKey":"ministry_Barne- og familiedepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2022-12-21-2431","dstKey":"ministry_Samferdselsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2022-12-21-2456","dstKey":"ministry_Arbeids- og inkluderingsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2022-12-21-2468","dstKey":"ministry_Landbruks- og matdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2022-12-22-2474","dstKey":"ministry_Barne- og familiedepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2022-12-22-2501","dstKey":"ministry_Kommunal- og distriktsdepartementet"}
@@ -3808,7 +3805,6 @@
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-03-06-384","dstKey":"ministry_Kunnskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-03-06-396","dstKey":"ministry_Kunnskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-03-07-529","dstKey":"ministry_Kunnskapsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-03-11-440","dstKey":"ministry_Kunnskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-03-14-450","dstKey":"ministry_Samferdselsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-03-14-466","dstKey":"ministry_Utenriksdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-03-14-472","dstKey":"ministry_Utenriksdepartementet"}
@@ -4097,7 +4093,6 @@
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-05-12-793","dstKey":"ministry_Klima- og miljødepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-05-13-827","dstKey":"ministry_Nærings- og fiskeridepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-05-18-859","dstKey":"ministry_Klima- og miljødepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-05-19-1415","dstKey":"ministry_Kunnskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-05-21-960","dstKey":"ministry_Helse- og omsorgsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-05-22-869","dstKey":"ministry_Arbeids- og inkluderingsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-05-22-870","dstKey":"ministry_Justis- og beredskapsdepartementet"}
@@ -4162,13 +4157,31 @@
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-08-21-1651","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-08-21-1658","dstKey":"ministry_Kunnskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-08-27-1685","dstKey":"ministry_Samferdselsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-08-31-1708","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-08-1753","dstKey":"ministry_Nærings- og fiskeridepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-10-1769","dstKey":"ministry_Helse- og omsorgsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-09-1996","dstKey":"ministry_Kunnskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-10-1780","dstKey":"ministry_Helse- og omsorgsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-11-1770","dstKey":"ministry_Kunnskapsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-11-1792","dstKey":"ministry_Kommunal- og distriktsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-14-1810","dstKey":"ministry_Utenriksdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-16-1830","dstKey":"ministry_Samferdselsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-16-1831","dstKey":"ministry_Samferdselsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-16-1832","dstKey":"ministry_Samferdselsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-16-1833","dstKey":"ministry_Samferdselsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-16-1888","dstKey":"ministry_Samferdselsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-18-1836","dstKey":"ministry_Landbruks- og matdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-18-1837","dstKey":"ministry_Justis- og beredskapsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-23-1891","dstKey":"ministry_Helse- og omsorgsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-25-1913","dstKey":"ministry_Finansdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-28-1930","dstKey":"ministry_Samferdselsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-28-1931","dstKey":"ministry_Samferdselsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-29-1933","dstKey":"ministry_Finansdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-29-1974","dstKey":"ministry_Kultur- og likestillingsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-10-01-1963","dstKey":"ministry_Finansdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-10-01-1998","dstKey":"ministry_Helse- og omsorgsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-10-02-1991","dstKey":"ministry_Samferdselsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-10-02-1995","dstKey":"ministry_Helse- og omsorgsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-10-02-1999","dstKey":"ministry_Nærings- og fiskeridepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-10-05-2001","dstKey":"ministry_Nærings- og fiskeridepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-10-07-2009","dstKey":"ministry_Klima- og miljødepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-10-08-2011","dstKey":"ministry_Nærings- og fiskeridepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1957-06-07-3391","dstKey":"ministry_Helse- og omsorgsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1958-03-13-1","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1960-12-16-2","dstKey":"ministry_Utenriksdepartementet"}
@@ -5567,7 +5580,6 @@
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-12-08-2437","dstKey":"ministry_Samferdselsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-12-18-2674","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-12-18-2840","dstKey":"ministry_Finansdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-12-23-2896","dstKey":"ministry_Digitaliserings- og forvaltningsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-01-14-33","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-01-21-64","dstKey":"ministry_Klima- og miljødepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-01-23-77","dstKey":"ministry_Justis- og beredskapsdepartementet"}
@@ -5594,6 +5606,9 @@
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-07-13-1550","dstKey":"ministry_Klima- og miljødepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-08-21-1652","dstKey":"ministry_Kunnskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-11-1772","dstKey":"ministry_Kunnskapsdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-18-1871","dstKey":"ministry_Statsministerens kontor"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-25-1912","dstKey":"ministry_Finansdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-29-1934","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1905-11-15-1","dstKey":"ministry_Digitaliserings- og forvaltningsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1927-10-21-3216","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1941-05-23-1","dstKey":"ministry_Forsvarsdepartementet"}
@@ -5752,10 +5767,8 @@
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2018-08-24-1267","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2018-10-12-1575","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2019-06-21-870","dstKey":"ministry_Forsvarsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2019-11-22-1547","dstKey":"ministry_Barne- og familiedepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2019-11-25-1561","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2019-12-06-1740","dstKey":"ministry_Justis- og beredskapsdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2019-12-13-1775","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2019-12-13-1777","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2019-12-13-1795","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2019-12-19-2032","dstKey":"ministry_Finansdepartementet"}
@@ -5780,7 +5793,7 @@
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-06-20-1187","dstKey":"ministry_Justis- og beredskapsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-06-20-1257","dstKey":"ministry_Energidepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/2025-11-07-2231","dstKey":"ministry_Finansdepartementet"}
-{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-08-06-1768","dstKey":"ministry_Finansdepartementet"}
+{"type":"ADMINISTERED_BY","srcKey":"forskrift/2026-09-18-1815","dstKey":"ministry_Finansdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1965-06-19-3582","dstKey":"ministry_Kultur- og likestillingsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1965-06-19-3583","dstKey":"ministry_Kultur- og likestillingsdepartementet"}
 {"type":"ADMINISTERED_BY","srcKey":"forskrift/1988-02-10-4875","dstKey":"ministry_Stortinget"}
