@@ -137,8 +137,9 @@ func TestAgentEval(t *testing.T) {
 			return sendAgentTrigger(ctx, base, token, projectID, agentID, question)
 		}
 	} else {
+		projectID := envFirst("TEST_PROJECT_ID", "EVAL_PROJECT_ID", "MEMORY_PROJECT_ID")
 		ask = func(ctx context.Context, question string) (string, error) {
-			return sendAgentMessage(ctx, base, token, question)
+			return sendAgentMessage(ctx, base, token, projectID, question)
 		}
 	}
 
