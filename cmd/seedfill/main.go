@@ -764,7 +764,9 @@ func enumerateRelationships(ctx context.Context, client *graph.Client, types []s
 // During a dev restart the auth endpoint also flaps, briefly returning 401
 // `invalid_token` / `unauthorized` even for a valid token; treat those as
 // transient too so a long run rides through the restart window instead of
-// aborting.
+// aborting. The server also sheds load under pressure with 429
+// (`shed: system under load, request shed`, `too many requests`) — retry those
+// with backoff rather than treating them as permanent.
 func retryable(err error) bool {
 	if err == nil {
 		return false
@@ -773,6 +775,7 @@ func retryable(err error) bool {
 	for _, m := range []string{
 		"502", "503", "504",
 		"401", "invalid_token", "unauthorized",
+		"429", "too many requests", "shed", "system under load", "overloaded",
 		"bad gateway", "service unavailable", "gateway timeout",
 		"connection reset", "broken pipe", "eof", "timeout",
 		"deadline exceeded", "temporarily unavailable",
@@ -784,13 +787,13 @@ func retryable(err error) bool {
 	return false
 }
 
-// retryBackoff returns an exponential-ish backoff capped at 30s. The dev server
-// is redeployed frequently; a restart typically takes tens of seconds, so the
-// retry budget must outlast it.
+// retryBackoff returns an exponential-ish backoff capped at 60s. The dev server
+// is redeployed frequently and sheds load under pressure; a restart or a shed
+// window typically lasts tens of seconds, so the retry budget must outlast it.
 func retryBackoff(attempt int) time.Duration {
 	d := time.Duration(attempt) * 2 * time.Second
-	if d > 30*time.Second {
-		d = 30 * time.Second
+	if d > 60*time.Second {
+		d = 60 * time.Second
 	}
 	return d
 }

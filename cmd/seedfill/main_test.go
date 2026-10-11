@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestIsDateValue(t *testing.T) {
 	cases := []struct {
@@ -93,6 +96,33 @@ func TestBuildSyncPropsDelta(t *testing.T) {
 			got := buildSyncPropsDelta(tc.seed, tc.live)
 			if !jsonEqual(got, tc.want) {
 				t.Fatalf("buildSyncPropsDelta(%v) = %v, want %v", tc.seed, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestRetryable(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"nil", nil, false},
+		{"429 status", errors.New("[429] Too Many Requests"), true},
+		{"shed load", errors.New("[429] shed: system under load, request shed"), true},
+		{"system under load", errors.New("system under load"), true},
+		{"overloaded", errors.New("server overloaded"), true},
+		{"503", errors.New("[503] service_unavailable"), true},
+		{"502", errors.New("[502] Bad Gateway"), true},
+		{"transient 401", errors.New("[401] invalid_token"), true},
+		{"context deadline", errors.New("context deadline exceeded"), true},
+		{"permanent bad request", errors.New("[400] Bad Request: property validation failed"), false},
+		{"permanent not found", errors.New("[404] object not found"), false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := retryable(tc.err); got != tc.want {
+				t.Fatalf("retryable(%v) = %v, want %v", tc.err, got, tc.want)
 			}
 		})
 	}
