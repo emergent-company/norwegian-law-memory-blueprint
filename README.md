@@ -396,6 +396,65 @@ PATH="/root/go/bin:$PATH" task e2e:compile    # compile-only check
 
 See `tests/e2e/README.md` for the full env-var reference.
 
+## Evaluation suite
+
+`tests/eval/` measures whether `norwegian-law-assistant` answers correctly and
+cites the right provisions. See `tests/eval/README.md` for the full reference.
+
+The committed dataset lives in `evals/`:
+
+| Path | Contents |
+|---|---|
+| `evals/golden/core.jsonl` | 18 evergreen, unambiguous items (offline CI acceptance set) |
+| `evals/curated/agencies.jsonl` | 28 items from public agency guidance (Forbrukerrådet, Skatteetaten, NAV, Arbeidstilsynet, Datatilsynet, Husleietvistutvalget) |
+| `evals/curated/legal-aid.jsonl` | 26 items from Jussbuss/JURK legal-aid material |
+| `evals/sources.yaml` | UiO exam-archive source registry |
+| `evals/cache/`, `evals/dataset/`, `evals/generated/`, `evals/results/` | generated output (gitignored) |
+
+Every `gold_ref` in the committed dataset is validated offline against `seed/`
+by `TestDatasetIntegrity`. Item schema:
+
+```json
+{"id":"…","question":"…","gold_points":["…"],"gold_refs":["lov/2005-06-17-62#§15-3"],
+ "legal_area":"arbeidsrett","language":"nb","source":"arbeidstilsynet",
+ "source_url":"…","difficulty":"easy","answerable":true,"license":"public-web"}
+```
+
+### Build the UiO exam dataset
+
+The Faculty of Law publishes previous exam papers **with `sensorveiledning`**
+(grading guidance) — the authoritative Q + expected-answer source. Scanned papers
+are OCR'd (`tesseract -l nor`).
+
+```bash
+PATH="/root/go/bin:$PATH" task eval:dataset   # fetch + build evals/dataset/uio.jsonl
+PATH="/root/go/bin:$PATH" task eval:gen       # synthetic + corpus-retrieval items
+```
+
+### Run
+
+```bash
+# Offline: dataset integrity, no creds required (CI)
+PATH="/root/go/bin:$PATH" task eval:offline
+
+# Live: drives the agent via A2A
+export TEST_SERVER_URL="https://api.dev.emergent-company.ai"
+export TEST_API_TOKEN="emt_…"
+PATH="/root/go/bin:$PATH" task eval
+```
+
+Scoring is deterministic first: cited refs are extracted from the answer, resolved
+against `seed/`, and compared with `gold_refs` (precision/recall/F1, resolution
+rate, hallucinated-ref count), plus refusal-correctness on unanswerable items. An
+optional OpenAI-compatible LLM judge (`JUDGE_BASE_URL` / `JUDGE_MODEL` /
+`JUDGE_API_KEY`) adds key-point recall and faithfulness. Threshold gates:
+`EVAL_MIN_CITATION_F1`, `EVAL_MIN_POINT_RECALL`. Reports are written to
+`evals/results/`.
+
+> Note: Nor-CaseHOLD is a **case-law** retrieval benchmark and is not in this
+> agent's statute/regulation graph, so it is mapped for reference only and
+> excluded from the main score (`out_of_graph:true`).
+
 ## License
 
 Source code: MIT. Data is re-distributed under its original licenses (see

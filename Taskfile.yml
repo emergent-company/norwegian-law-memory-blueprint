@@ -1,4 +1,8 @@
 version: '3'
+vars:
+  # Default text-conversion backend for eval:build / eval:dataset.
+  # Override per-invocation: task eval:build CONVERTER=xberg
+  CONVERTER: pdftotext
 tasks:
   build:       { cmds: [go build ./cmd/seeder/] }
   test:        { cmds: [go test ./...] }
@@ -13,3 +17,24 @@ tasks:
   e2e:         { desc: "Run e2e (requires TEST_SERVER_URL + TEST_API_TOKEN)", cmds: [go test ./tests/e2e/ -v -count=1 -timeout 30m] }
   e2e:install: { desc: "Install blueprint then run all e2e", cmds: ["LAW_E2E_INSTALL=1 go test ./tests/e2e/ -v -count=1 -timeout 60m"] }
   e2e:compile: { desc: "Compile e2e tests only", cmds: [go test ./tests/e2e/ -run XXX_NONE -count=1] }
+
+  # --- Evaluation suite (see evals/README.md) ---
+  # Local xberg document-extraction service (PDF/DOCX/images -> text; ~1.1 GB
+  # Full-OCR image). Serves on :8000; point the build at it with CONVERTER=xberg.
+  # Pinned to match the memory app installer (XbergImage).
+  eval:xberg:      { desc: "Start local xberg text-conversion service on :8000", cmds: ["sh -c 'docker rm -f xberg >/dev/null 2>&1 || true'", "docker run -d --name xberg --restart unless-stopped -p 8000:8000 ghcr.io/xberg-io/xberg:1.3.0"] }
+  eval:xberg:stop: { desc: "Stop the local xberg service", cmds: ["docker rm -f xberg"] }
+  # Scrape + cache UiO exam PDFs only (no build); cache lands in evals/cache/ (gitignored).
+  eval:fetch:   { desc: "Scrape UiO exam archive into evals/cache/ (network)", cmds: ["go run ./cmd/loveval fetch --source uio --cache-dir evals/cache"] }
+  # Extract + pair + validate from the cache into evals/dataset/uio.jsonl.
+  # CONVERTER=pdftotext (default) or xberg (needs eval:xberg running).
+  eval:build:   { desc: "Build evals/dataset/uio.jsonl from cache (CONVERTER=pdftotext|xberg)", cmds: ["go run ./cmd/loveval build --converter {{.CONVERTER}}"] }
+  # Fetch + build the UiO exam dataset (network + seed/; cache in evals/cache/).
+  eval:dataset: { desc: "Fetch UiO exams + build evals/dataset/uio.jsonl", cmds: ["go run ./cmd/loveval fetch --source uio", "go run ./cmd/loveval build --converter {{.CONVERTER}}"] }
+  eval:gen:     { desc: "Generate synthetic + corpus-retrieval eval items", cmds: ["go run ./cmd/lovevalgen synthetic --limit 200", "go run ./cmd/lovevalgen retrieval --limit 100"] }
+  eval:gen:nordercase: { desc: "Download + map Nor-CaseHOLD (out-of-graph, reference only)", cmds: ["go run ./cmd/lovevalgen nordercase"] }
+  # Offline: validates the committed dataset + resolves every gold_ref. No creds.
+  eval:offline: { desc: "Validate eval dataset offline (no creds)", cmds: ["go test ./tests/eval/ -run TestDatasetIntegrity -v -count=1"] }
+  # Live: drives the agent; requires TEST_SERVER_URL + TEST_API_TOKEN.
+  eval:        { desc: "Run live agent evaluation (requires TEST_SERVER_URL + TEST_API_TOKEN)", cmds: ["go test ./tests/eval/ -run TestAgentEval -v -count=1 -timeout 60m"] }
+  eval:compile: { desc: "Compile eval tests only", cmds: ["go test ./tests/eval/ -run XXX_NONE -count=1"] }

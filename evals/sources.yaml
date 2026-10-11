@@ -1,0 +1,58 @@
+# Evaluation source registry — Norwegian-law evaluation dataset
+#
+# The build harness crawls these public previous-exam archives, downloads exam
+# papers ("Eksamensoppgave") and their sensorveiledninger, and pairs them into
+# evaluation items.
+#
+# NOTE: UiO material is public but copyrighted. It is for INTERNAL evaluation
+# use only. Do not redistribute the PDFs. The downloaded PDFs live under
+# evals/cache/ (gitignored) and are never committed.
+#
+# This file is the human-readable registry. The crawler's entry point is the
+# single top index below; it follows the tidligere-eksamen/Jus tree recursively
+# (bounded), so the per-study-year pages below are documented for reference but
+# need not be listed as separate seeds.
+
+sources:
+  - key: uio
+    name: Universitetet i Oslo — Det juridiske fakultet
+    description: Previous exam papers and sensorveiledninger (Lovdata-linked corpus)
+    base_url: https://www.uio.no
+    license: uio-public  # public but copyrighted; internal evaluation use only
+    seed_urls:
+      - https://www.jus.uio.no/studier/ressurser/tidligere-eksamen/Jus/index.html
+
+    # The top index links these study-year pages (followed by the crawler):
+    #   1.-studiear   2.-studiear   3.-studiear   4.-studiear
+    #   valgemner     eldre-studieordninger
+
+    # Verified course "oppgaver" pages (exam + sensorveiledning PDFs):
+    courses:
+      - JUS1111  # Privatrett I
+      - JUS1211  # Privatrett II
+      - JUS2111  # Statsforfatningsrett
+      - JUS2211  # Rettskilder og metode
+      - JUS3111  # Formuerett I
+      - JUS3112  # Formuerett II
+      - JUS3211  # Strafferett
+      - JUS3212  # Straffeprosess
+      - JUS3213  # Forvaltningsrett
+      - JUS3220  # Rettshistorie
+      - JUS4111  # Metode og etikk
+      - JUS4121  # Alminnelig forvaltningsrett
+      - JUS4122  # Statsforfatningsrett
+      - JUS4123  # Folkerett
+      - JUS4211  # Prosess
+      # valgemner (crawled one level deeper from the valgemner index)
+      #   JUS5xxx / JURxxxx elective courses under emner/jus/jus/
+      # eldre-studieordninger
+      - JUR1000  # 1. avdeling
+      - JUR2000  # 2. avdeling
+      - JUR3000  # 3. avdeling
+      - JUR4000  # 4. avdeling
+
+    # Crawl policy:
+    #   follow:     URLs under uio.no containing /oppgaver/, tidligere-eksamensoppgaver,
+    #               previous-exam-papers, or the tidligere-eksamen/Jus tree
+    #   collect:    .pdf / .docx links on pages under emner/jus/jus/ (law courses)
+    #   normalise:  http -> https, jus.uio.no -> www.uio.no
