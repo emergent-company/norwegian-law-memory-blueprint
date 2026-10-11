@@ -2125,11 +2125,20 @@ func paragraphSectionLabel(paragraphNum, sectionID, title string) string {
 	return strings.TrimSpace(title)
 }
 
+// retrievedAtFunc returns the UTC run date used for the `retrieved_at` provenance
+// timestamp on Law/Regulation/EUDirective objects. It is a var (not a const) so
+// tests can pin it to a fixed date for stable assertions.
+var retrievedAtFunc = func() string {
+	return time.Now().UTC().Format("2006-01-02")
+}
+
 // buildSeedObjectRecords builds the full ordered list of objects as key/property
 // records, independent of any server. Both the upload path (ingestObjects) and
 // the dump path consume these records, so the two can never diverge.
 func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, preps []prepWork) []seedObjectRecord {
 	var records []seedObjectRecord
+
+	retrievedAt := retrievedAtFunc()
 
 	normCounts := make(map[string]int)
 	rawMoved := 0
@@ -2216,6 +2225,10 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 			props["content_unavailable"] = true
 			log.Printf("  [seeder] WARN: content unavailable for %s (Lovdata error placeholder)", d.RefID)
 		}
+		props["publisher"] = "Lovdata"
+		props["license"] = "NLOD-2.0"
+		props["source_url"] = "https://lovdata.no/dokument/NL/" + d.RefID
+		props["retrieved_at"] = retrievedAt
 		normalizeDateProps(d.DocType, props, normCounts, &rawMoved)
 		records = append(records, seedObjectRecord{
 			Type: d.DocType, Key: k, Properties: props,
@@ -2363,6 +2376,12 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		if dir.TitleNO != "" {
 			props["title_no"] = dir.TitleNO
 		}
+		props["publisher"] = "Publications Office of the European Union"
+		props["license"] = "EUR-Lex reuse"
+		props["retrieved_at"] = retrievedAt
+		if url := dir.URL; url != "" {
+			props["source_url"] = url
+		}
 		if dir.Content != "" {
 			props["content"] = dir.Content
 		}
@@ -2386,6 +2405,12 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		}
 		if s.URL != "" {
 			props["url_eur_lex"] = s.URL
+		}
+		props["publisher"] = "Publications Office of the European Union"
+		props["license"] = "EUR-Lex reuse"
+		props["retrieved_at"] = retrievedAt
+		if url := s.URL; url != "" {
+			props["source_url"] = url
 		}
 		records = append(records, seedObjectRecord{
 			Type: "EUDirective", Key: "eu_" + s.CelexID,

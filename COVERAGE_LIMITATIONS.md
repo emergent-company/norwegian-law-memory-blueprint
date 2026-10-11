@@ -113,6 +113,12 @@ bounds below.
   into this seed — not the raw Lovdata XML. See `NOTICE`.
 - EUR-Lex directive metadata and EuroVoc thesaurus data are from the EU
   Publications Office (public).
+- **Per-object provenance** is now recorded on `Law`, `Regulation` and
+  `EUDirective` objects (`source_url`, `publisher`, `license`, `retrieved_at`).
+  The full machine-readable source manifest lives in `docs/sources.yaml`.
+- **Golden-hash contract.** A small set of anchors is pinned by `sha256` in
+  `tests/golden/manifest.json`; a passing `go test ./tests/golden/` attests only
+  those anchors, not whole-corpus correctness.
 
 ## Related issues
 

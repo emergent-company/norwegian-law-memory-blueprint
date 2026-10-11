@@ -1,0 +1,82 @@
+# Provenance manifest — Norwegian Law Memory Blueprint seed corpus
+#
+# Machine-readable source-of-truth for where each object type's data came from,
+# under what terms, and how it was retrieved. The facts below mirror
+# COVERAGE_LIMITATIONS.md and the README "Data sources" table.
+#
+# last_ingested is the date the current seed was regenerated from these sources.
+
+sources:
+  - authority: Lovdata
+    name: Lovdata statutes (lover)
+    official_portal: https://lovdata.no
+    canonical_identifier: gjeldende-lover
+    dataset: gjeldende-lover.tar.bz2
+    retrieval_method: HTTP download and parse of the Lovdata public dataset archive
+    update_frequency: on-demand (manual seeder regeneration)
+    last_ingested: "2026-10-11"
+    license_or_terms: NLOD-2.0
+    coverage:
+      scope: Current consolidated text of Norwegian acts of parliament (Law objects)
+      limitations: Current consolidated text only — no historical or pre-amendment snapshots
+    languages: [nb, nn]
+
+  - authority: Lovdata
+    name: Lovdata central regulations (forskrifter)
+    official_portal: https://lovdata.no
+    canonical_identifier: gjeldende-sentrale-forskrifter
+    dataset: gjeldende-sentrale-forskrifter.tar.bz2
+    retrieval_method: HTTP download and parse of the Lovdata public dataset archive
+    update_frequency: on-demand (manual seeder regeneration)
+    last_ingested: "2026-10-11"
+    license_or_terms: NLOD-2.0
+    coverage:
+      scope: Current consolidated text of central government regulations (Regulation objects)
+      limitations: Central regulations only — no municipal or regional regulations
+    languages: [nb, nn]
+
+  - authority: Publications Office of the European Union
+    name: EUR-Lex / CELLAR
+    official_portal: https://eur-lex.europa.eu
+    canonical_identifier: CELEX id (e.g. 32014L0026)
+    retrieval_method: CELLAR SPARQL endpoint (metadata) and EUR-Lex (partial full text)
+    update_frequency: on-demand (manual seeder regeneration)
+    last_ingested: "2026-10-11"
+    license_or_terms: EUR-Lex reuse
+    coverage:
+      scope: EU/EEA act metadata and partial full text (EUDirective objects)
+      limitations: >
+        Full text present for 226 of 1509 EUDirective objects; 1235 are stub nodes
+        (celex_id + name only). No Norwegian titles (title_no always empty);
+        in_force always true (no repeal signal extracted).
+    languages: [en]
+
+  - authority: Publications Office of the European Union
+    name: EuroVoc thesaurus
+    official_portal: https://publications.europa.eu
+    canonical_identifier: EuroVoc numeric concept id
+    retrieval_method: Publications Office SPARQL endpoint
+    update_frequency: on-demand (manual seeder regeneration)
+    last_ingested: "2026-10-11"
+    license_or_terms: Public (EU Publications Office)
+    coverage:
+      scope: EuroVoc thesaurus concepts attached to EU directives (EuroVocConcept objects)
+      limitations: English labels only (label_en) — no Norwegian labels
+    languages: [en]
+
+  - authority: Stortinget
+    name: Stortinget data (forarbeider)
+    official_portal: https://data.stortinget.no
+    canonical_identifier: Stortinget document id
+    retrieval_method: Stortinget data API (preparatory-work full text)
+    update_frequency: on-demand (manual seeder regeneration)
+    last_ingested: "2026-10-11"
+    license_or_terms: NLOD-2.0
+    coverage:
+      scope: >
+        Preparatory works (forarbeider) — proposisjoner and innstillinger full
+        text where available; metadata-only otherwise
+      limitations: >
+        proposisjoner and NOU remain metadata-only (regjeringen.no has no API and
+        Lovdata text is subscription-gated)
+    languages: [nb, nn]

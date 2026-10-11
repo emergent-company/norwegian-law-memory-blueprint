@@ -64,6 +64,18 @@ objectTypes:
       content_unavailable:
         type: boolean
         description: True when Lovdata served an error placeholder and the body is unavailable
+      source_url:
+        type: string
+        description: Canonical source URL for the object
+      publisher:
+        type: string
+        description: Data publisher
+      license:
+        type: string
+        description: Licence/terms identifier
+      retrieved_at:
+        type: date
+        description: Date the source snapshot was retrieved
 
   - name: Regulation
     label: Regulation
@@ -123,6 +135,18 @@ objectTypes:
       content_unavailable:
         type: boolean
         description: True when Lovdata served an error placeholder and the body is unavailable
+      source_url:
+        type: string
+        description: Canonical source URL for the object
+      publisher:
+        type: string
+        description: Data publisher
+      license:
+        type: string
+        description: Licence/terms identifier
+      retrieved_at:
+        type: date
+        description: Date the source snapshot was retrieved
 
   - name: Ministry
     label: Ministry
@@ -274,6 +298,18 @@ objectTypes:
       content:
         type: string
         description: Full legislative text rendered as Markdown
+      source_url:
+        type: string
+        description: Canonical source URL for the object
+      publisher:
+        type: string
+        description: Data publisher
+      license:
+        type: string
+        description: Licence/terms identifier
+      retrieved_at:
+        type: date
+        description: Date the source snapshot was retrieved
 
   - name: EuroVocConcept
     label: EuroVoc Concept

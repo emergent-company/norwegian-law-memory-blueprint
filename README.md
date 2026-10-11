@@ -94,6 +94,28 @@ declarative `properties`, so these attributes live only in the seed JSONL edge
   (Law → ProvisionVersion, 11) link the above. Amendment nodes are filtered to
   targets present in the corpus (no dangling edges).
 
+### Provenance
+
+`Law`, `Regulation` and `EUDirective` objects each carry four provenance
+properties:
+
+| Property | Law / Regulation | EUDirective |
+|---|---|---|
+| `publisher` | `Lovdata` | `Publications Office of the European Union` |
+| `license` | `NLOD-2.0` | `EUR-Lex reuse` |
+| `source_url` | `https://lovdata.no/dokument/NL/<ref_id>` | the same ELI URL as `url_eur_lex` |
+| `retrieved_at` | run date (UTC `YYYY-MM-DD`) | run date (UTC `YYYY-MM-DD`) |
+
+The full per-source provenance (authority, portal, canonical identifier,
+retrieval method, coverage, languages, licence) is recorded in
+[`docs/sources.yaml`](docs/sources.yaml).
+
+The `norwegian-law-assistant` agent enforces a **cite-or-refuse contract**: every
+factual claim must cite the act (`short_title` + `ref_id` + section); when the
+graph has no supporting object it says so plainly instead of answering from
+model memory, and it never presents an EU directive's `content` as authoritative
+law (pointing to `url_eur_lex`/CELEX instead).
+
 ## Repository layout
 
 ```
@@ -414,6 +436,24 @@ parser defect. The dominant causes of unresolved refs, in order:
 3. **Cross-act references by name** (see the conservative rule above).
 
 Explicit act refs are rare in the corpus (four occurrences, all resolving).
+
+## Drift detection
+
+The committed corpus is guarded by a **golden-hash contract**: a small set of
+well-known, long-stable anchors (provisions from both laws and regulations, plus
+EU directive bodies and act `short_title`s) are pinned by `sha256` in
+[`tests/golden/manifest.json`](tests/golden/manifest.json). A CI workflow
+(`.github/workflows/drift.yml`) re-verifies these anchors on pushes that touch
+`seed/`/`cmd/seeder/` and daily, opening a GitHub issue when the corpus drifts
+from the pinned values.
+
+```bash
+go test ./tests/golden/ -v          # assert anchors match
+go test ./tests/golden/ -update     # re-pin after an intentional regeneration
+```
+
+A passing run attests only those anchors, not whole-corpus correctness (see
+COVERAGE_LIMITATIONS.md).
 
 ## Prerequisites
 

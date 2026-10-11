@@ -1,0 +1,79 @@
+[
+  {
+    "key": "eu_31985L0374",
+    "type": "EUDirective",
+    "field": "content",
+    "sha256": "dcfcba106a65e21cf495ca4e32cd0f931bca5610a995a9452e6d51abd8feefea",
+    "ref": "Direktiv 85/374/EØF"
+  },
+  {
+    "key": "eu_32003L0004",
+    "type": "EUDirective",
+    "field": "content",
+    "sha256": "229ed9e86afe48d08e94b9afee2975cb02061c5f9ee2b8da5b9d457008a67301",
+    "ref": "Direktiv 2003/4/EF"
+  },
+  {
+    "key": "eu_32014L0026",
+    "type": "EUDirective",
+    "field": "content",
+    "sha256": "801537b25a8d2615fc715a7374aeb48736e9f3c7a7c0311272d293a9ceb1f2f5",
+    "ref": "Direktiv 2014/26/EU"
+  },
+  {
+    "key": "forskrift/2010-03-26-488",
+    "type": "Regulation",
+    "field": "short_title",
+    "sha256": "fbf69e1efab9e1d4fe3eabe2e07adf8118f073f5ee714ea94bf33b36fa446b81",
+    "ref": "Byggesaksforskriften (SAK 10)"
+  },
+  {
+    "key": "forskrift/2010-03-26-488#kapittel-1-kapittel-1-paragraf-1",
+    "type": "LegalParagraph",
+    "field": "content",
+    "sha256": "ad243b1527c00ffa0670970f8a92b46d6ce1f3222a991bd3c64d0f8707885eaa",
+    "ref": "byggesaksforskriften § 1-1"
+  },
+  {
+    "key": "forskrift/2011-12-06-1355#kapittel-1-paragraf-1",
+    "type": "LegalParagraph",
+    "field": "content",
+    "sha256": "b7378621c1aa5472a35d6c40c22b417c7d15923db4896c844ad4fb18c115c5a8",
+    "ref": "forskrift om organisering, ledelse og medvirkning § 1-1"
+  },
+  {
+    "key": "lov/1918-05-31-4#kapittel-3-paragraf-9",
+    "type": "LegalParagraph",
+    "field": "content",
+    "sha256": "d3ea3d35b6b06f6ed55df82b3f03ef442117470c7388fdd06a1cdf8496a89625",
+    "ref": "avtaleloven § 36"
+  },
+  {
+    "key": "lov/2002-06-21-34#kapittel-4-paragraf-2",
+    "type": "LegalParagraph",
+    "field": "content",
+    "sha256": "5766601c63231f977a63d9784b1075905c3c788fa65c3b18032029fee8ef326b",
+    "ref": "forbrukerkjøpsloven § 16"
+  },
+  {
+    "key": "lov/2005-06-17-62",
+    "type": "Law",
+    "field": "short_title",
+    "sha256": "20be5dd373ba62c9bd67f08e8f51ff4b07d31fd0c9e7173a75cd440f02148c54",
+    "ref": "arbeidsmiljøloven"
+  },
+  {
+    "key": "lov/2005-06-17-62#kapittel-1-paragraf-1",
+    "type": "LegalParagraph",
+    "field": "content",
+    "sha256": "9f4279872ce37db2ed17a42ab06ae9cebe76ac04f5abe5ff12d0dc3a94ba5283",
+    "ref": "arbeidsmiljøloven § 1-1"
+  },
+  {
+    "key": "lov/2005-06-17-62#kapittel-17-paragraf-7",
+    "type": "LegalParagraph",
+    "field": "content",
+    "sha256": "52ccd5fe4586172bfb28b5847f09ba275553ee2441223a34ffa64b6fbc2939ff",
+    "ref": "arbeidsmiljøloven § 15-7"
+  }
+]
