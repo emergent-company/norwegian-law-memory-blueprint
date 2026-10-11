@@ -290,10 +290,12 @@ type LovDoc struct {
 	References         []string
 	Content            string // Full Markdown of law body
 	Paragraphs         []LovParagraph
-	EUBodyRefs         []string // eu/XXXXXXXX hrefs from body → CITES_EU_LAW edges
-	SourceSHA256       string   // SHA-256 of the raw source XML bytes (change-detection key)
-	Coverage           float64  // token-bag coverage of rendered Content vs source body (not emitted to JSONL)
-	ContentUnavailable bool     // true when Lovdata served an error placeholder instead of the body
+	EUBodyRefs         []string             // eu/XXXXXXXX hrefs from body → CITES_EU_LAW edges
+	EEAMeta            map[string]euRefMeta // celex → header-derived reference meta (IMPLEMENTS_EEA)
+	EUBodyMeta         map[string]euRefMeta // celex → body-derived reference meta (CITES_EU_LAW)
+	SourceSHA256       string               // SHA-256 of the raw source XML bytes (change-detection key)
+	Coverage           float64              // token-bag coverage of rendered Content vs source body (not emitted to JSONL)
+	ContentUnavailable bool                 // true when Lovdata served an error placeholder instead of the body
 }
 
 type LovParagraph struct {
@@ -324,6 +326,10 @@ type EUDirective struct {
 	EuroVocIDs      []string
 	CitedCELEX      []string
 	ModifiedByCELEX []string
+	Community       string // EU | EG | EEG | Euratom
+	TitleNO         string // official Norwegian title (empty when unavailable)
+	URL             string // canonical EUR-Lex ELI URL
+	InForce         bool   // whether the act is currently in force
 }
 
 type EuroVocConcept struct {
@@ -466,10 +472,38 @@ func isParagraphClass(cls string) bool {
 // "legalPfortsettelse"/"leddfortsettelse" continuation variants). Short
 // delegation regulations skip the legalArticle wrapper entirely and place
 // <article class="legalP"> directly under <section>; those are captured by the
+// plainTextPositions returns the concatenated plain text of n — mirroring
+// extractPlainText's traversal order and skip-classes exactly — together with the
+// byte offset at which each element node's text begins. It lets callers locate a
+// eu/ anchor within the surrounding clause instead of guessing offset 0.
+func plainTextPositions(n *html.Node) (string, map[*html.Node]int) {
+	pos := make(map[*html.Node]int)
+	var sb strings.Builder
+	var walk func(*html.Node)
+	walk = func(x *html.Node) {
+		if x.Type == html.TextNode {
+			sb.WriteString(x.Data)
+			return
+		}
+		if x.Type == html.ElementNode {
+			if skipClasses[attr(x, "class")] {
+				return
+			}
+			pos[x] = sb.Len()
+		}
+		for c := x.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(n)
+	return sb.String(), pos
+}
+
 // top-level legalP fallback below.
-func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagraph, euBodyRefs []string) {
+func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagraph, euBodyRefs []string, euBodyMeta map[string]euRefMeta) {
 	var sb strings.Builder
 	euRefSet := make(map[string]bool)
+	euBodyMeta = make(map[string]euRefMeta)
 	position := 0
 	currentChapterID := ""
 
@@ -490,17 +524,32 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 
 	var collectEURefs func(*html.Node)
 	collectEURefs = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "a" {
-			href := strings.TrimPrefix(attr(n, "href"), "/")
-			href = stripAnchor(href)
-			if strings.HasPrefix(href, "eu/") && len(href) > 3 {
-				code := strings.ToUpper(href[3:])
-				euRefSet[code] = true
+		text, pos := plainTextPositions(n)
+		var walk func(*html.Node)
+		walk = func(x *html.Node) {
+			if x.Type == html.ElementNode && x.Data == "a" {
+				href := strings.TrimPrefix(attr(x, "href"), "/")
+				href = stripAnchor(href)
+				if strings.HasPrefix(href, "eu/") && len(href) > 3 {
+					code := strings.ToUpper(href[3:])
+					if !euRefSet[code] {
+						euRefSet[code] = true
+						if start, ok := pos[x]; ok {
+							end := start + len(extractPlainText(x))
+							ctx, kw, arts := euReferenceContext(text, start, end, maxEUContextChars)
+							euBodyMeta[code] = euRefMeta{Context: ctx, Keyword: kw, Articles: arts}
+						}
+						// else: anchor sits inside a skip-classes subtree (e.g. a
+						// footnote) whose text is not part of `text`; keep the ref
+						// code but leave its meta empty rather than mis-anchoring.
+					}
+				}
+			}
+			for c := x.FirstChild; c != nil; c = c.NextSibling {
+				walk(c)
 			}
 		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			collectEURefs(c)
-		}
+		walk(n)
 	}
 
 	renderOL := func(ol *html.Node) string {
@@ -744,7 +793,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 		euBodyRefs = append(euBodyRefs, code)
 	}
 	sort.Strings(euBodyRefs)
-	return fullMarkdown, paragraphs, euBodyRefs
+	return fullMarkdown, paragraphs, euBodyRefs, euBodyMeta
 }
 
 // ─── Document parser ──────────────────────────────────────────────────────────
@@ -835,7 +884,26 @@ func parseDocument(content []byte, docType string) *LovDoc {
 					doc.AppliesTo = strings.TrimSpace(strings.TrimPrefix(text, "Gjelder for"))
 				case "eeaReferences":
 					doc.EEAReferences = text
+					matches := extractEUCelexWithPositions(text)
 					doc.EUCelexIDs = extractEUCelex(text)
+					if len(matches) > 0 {
+						spanByCELEX := make(map[string][2]int, len(matches))
+						for _, m := range matches {
+							spanByCELEX[m.CELEX] = [2]int{m.Start, m.End}
+						}
+						if doc.EEAMeta == nil {
+							doc.EEAMeta = make(map[string]euRefMeta, len(matches))
+						}
+						for _, celex := range doc.EUCelexIDs {
+							celex = strings.ToUpper(celex)
+							start, end := 0, len(text)
+							if sp, ok := spanByCELEX[celex]; ok {
+								start, end = sp[0], sp[1]
+							}
+							ctx, kw, arts := euReferenceContext(text, start, end, maxEUContextChars)
+							doc.EEAMeta[celex] = euRefMeta{Context: ctx, Keyword: kw, Articles: arts}
+						}
+					}
 				case "ministry":
 					for _, li := range findAll(n, "li") {
 						mn := strings.TrimSpace(nodeText(li))
@@ -922,7 +990,7 @@ func parseDocument(content []byte, docType string) *LovDoc {
 	}
 	if main := findMain(root); main != nil {
 		walkRefs(main)
-		doc.Content, doc.Paragraphs, doc.EUBodyRefs = extractBody(main)
+		doc.Content, doc.Paragraphs, doc.EUBodyRefs, doc.EUBodyMeta = extractBody(main)
 		doc.Coverage = tokenCoverage(main, docModelText(doc))
 	}
 	for ref := range refSet {
@@ -1062,7 +1130,7 @@ func fetchEURLex(ctx context.Context, ref string) (*EUDirective, error) {
 	celex := euRefToCELEX(ref)
 	celexR := strings.Replace(celex, "L", "R", 1)
 
-	dir := &EUDirective{CelexID: celex}
+	dir := &EUDirective{CelexID: celex, Community: euCommunityFromCELEX(celex), URL: euURLEurLexFromCELEX(celex), InForce: true}
 
 	// SPARQL metadata is authoritative. Fall back to the legacy HTML scrape only
 	// when CELLAR yields nothing usable.
@@ -1149,6 +1217,8 @@ func mergeDirectiveMeta(dst, src *EUDirective) {
 	dst.EuroVocIDs = src.EuroVocIDs
 	dst.CitedCELEX = src.CitedCELEX
 	dst.ModifiedByCELEX = src.ModifiedByCELEX
+	dst.TitleNO = src.TitleNO
+	dst.InForce = src.InForce
 }
 
 // deriveShortTitle shortens a full directive title into a display name.
@@ -1164,7 +1234,7 @@ func deriveShortTitle(full string) string {
 }
 
 func parseEURLex(directiveID, celex string, content []byte) *EUDirective {
-	dir := &EUDirective{DirectiveID: directiveID, CelexID: celex}
+	dir := &EUDirective{DirectiveID: directiveID, CelexID: celex, Community: euCommunityFromCELEX(celex), URL: euURLEurLexFromCELEX(celex), InForce: true}
 	text := string(content)
 
 	if m := regexp.MustCompile(`name="WT\.z_docTitle"\s+content="([^"]+)"`).FindStringSubmatch(text); m != nil {
@@ -1699,7 +1769,7 @@ func fetchAllEUData(ctx context.Context, docs []LovDoc, euLimit int) ([]*EUDirec
 			}
 			dir, err := fetchEURLex(ctx, celex)
 			if err != nil {
-				dir = &EUDirective{CelexID: strings.ToUpper(celex)}
+				dir = &EUDirective{CelexID: strings.ToUpper(celex), Community: euCommunityFromCELEX(celex), URL: euURLEurLexFromCELEX(celex), InForce: true}
 			}
 			mu.Lock()
 			directives = append(directives, dir)
@@ -1804,7 +1874,7 @@ func collectEUStubs(directives []*EUDirective) []*EUDirective {
 	sort.Strings(keys)
 	stubs := make([]*EUDirective, 0, len(keys))
 	for _, c := range keys {
-		stubs = append(stubs, &EUDirective{CelexID: c})
+		stubs = append(stubs, &EUDirective{CelexID: c, Community: euCommunityFromCELEX(c), URL: euURLEurLexFromCELEX(c)})
 	}
 	return stubs
 }
@@ -1841,20 +1911,40 @@ func dedupeSeedObjects(in []seedObjectRecord) []seedObjectRecord {
 	return out
 }
 
-// dedupeSeedRelationships drops duplicate (type, srcKey, dstKey) edges, which
-// arise from the same language-variant duplication fixed in dedupeSeedObjects.
+// dedupeSeedRelationships merges duplicate (type, srcKey, dstKey) edges — which
+// arise from the same language-variant duplication fixed in dedupeSeedObjects —
+// into a single edge whose properties are the superset of all duplicates. On a
+// key collision the first value wins; later duplicates add any keys the first
+// record lacks, so no distinct property is silently dropped.
 func dedupeSeedRelationships(in []seedRelationshipRecord) []seedRelationshipRecord {
-	seen := make(map[string]bool, len(in))
+	idx := make(map[string]int, len(in))
 	out := make([]seedRelationshipRecord, 0, len(in))
 	for _, r := range in {
 		k := r.Type + "\x00" + r.SrcKey + "\x00" + r.DstKey
-		if seen[k] {
+		if i, ok := idx[k]; ok {
+			out[i].Properties = mergeRelProps(out[i].Properties, r.Properties)
 			continue
 		}
-		seen[k] = true
+		idx[k] = len(out)
 		out = append(out, r)
 	}
 	return out
+}
+
+// mergeRelProps copies any keys from src into dst that dst does not already
+// carry, so a superset of edge properties survives deduplication. It returns the
+// merged map, initialising a nil dst so callers never panic on a nil properties
+// map.
+func mergeRelProps(dst, src map[string]any) map[string]any {
+	if dst == nil {
+		dst = make(map[string]any, len(src))
+	}
+	for k, v := range src {
+		if _, exists := dst[k]; !exists {
+			dst[k] = v
+		}
+	}
+	return dst
 }
 
 func sortedMapKeys[V any](m map[string]V) []string {
@@ -1873,9 +1963,11 @@ func sortedMapKeys[V any](m map[string]V) []string {
 // though Lovdata carries a clock time (e.g. "2024-07-09 14:55") — the schema
 // types it as a bare date, so the clock time is dropped.
 var seedDateProps = map[string][]string{
-	"Law":         {"date_in_force", "last_change_in_force", "date_of_publication"},
-	"Regulation":  {"date_in_force", "last_change_in_force", "date_of_publication"},
-	"EUDirective": {"date_of_document", "date_of_effect"},
+	"Law":              {"date_in_force", "last_change_in_force", "date_of_publication"},
+	"Regulation":       {"date_in_force", "last_change_in_force", "date_of_publication"},
+	"EUDirective":      {"date_of_document", "date_of_effect"},
+	"Amendment":        {"amendment_date"},
+	"ProvisionVersion": {"valid_from", "valid_to"},
 }
 
 // seedDateRawProps maps a date/datetime property to the companion raw-text field
@@ -2081,11 +2173,20 @@ func paragraphSectionLabel(paragraphNum, sectionID, title string) string {
 	return strings.TrimSpace(title)
 }
 
+// retrievedAtFunc returns the UTC run date used for the `retrieved_at` provenance
+// timestamp on Law/Regulation/EUDirective objects. It is a var (not a const) so
+// tests can pin it to a fixed date for stable assertions.
+var retrievedAtFunc = func() string {
+	return time.Now().UTC().Format("2006-01-02")
+}
+
 // buildSeedObjectRecords builds the full ordered list of objects as key/property
 // records, independent of any server. Both the upload path (ingestObjects) and
 // the dump path consume these records, so the two can never diverge.
 func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts []*EuroVocConcept, preps []prepWork) []seedObjectRecord {
 	var records []seedObjectRecord
+
+	retrievedAt := retrievedAtFunc()
 
 	normCounts := make(map[string]int)
 	rawMoved := 0
@@ -2093,8 +2194,10 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 	ministries := make(map[string]bool)
 	legalAreas := make(map[string]bool)
 	legalSubAreas := make(map[string]string)
+	docRefIDs := make(map[string]bool, len(docs))
 
 	for _, d := range docs {
+		docRefIDs[d.RefID] = true
 		if d.Ministry != "" {
 			ministries[d.Ministry] = true
 		}
@@ -2170,6 +2273,10 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 			props["content_unavailable"] = true
 			log.Printf("  [seeder] WARN: content unavailable for %s (Lovdata error placeholder)", d.RefID)
 		}
+		props["publisher"] = "Lovdata"
+		props["license"] = "NLOD-2.0"
+		props["source_url"] = "https://lovdata.no/dokument/NL/" + d.RefID
+		props["retrieved_at"] = retrievedAt
 		normalizeDateProps(d.DocType, props, normCounts, &rawMoved)
 		records = append(records, seedObjectRecord{
 			Type: d.DocType, Key: k, Properties: props,
@@ -2209,6 +2316,55 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 			records = append(records, seedObjectRecord{
 				Type: "LegalParagraph", Key: pKey, Properties: pProps,
 			})
+		}
+
+		// Amendment + ProvisionVersion objects (derived, bounded).
+		amRecords := append(deriveLawAmendments(d), bodyNoteAmendments(d)...)
+		for _, a := range amRecords {
+			if !keepAmendment(a, docRefIDs) {
+				continue
+			}
+			aKey := amendmentKey(a.TargetLawRefID, a.AmendedByRefID, a.TargetProvisionRef, a.Source)
+			aProps := map[string]any{
+				"name":              amendmentName(a),
+				"amended_by_ref_id": a.AmendedByRefID,
+				"amendment_type":    a.AmendmentType,
+				"target_law_ref_id": a.TargetLawRefID,
+				"source":            a.Source,
+			}
+			if a.AmendmentDate != "" {
+				aProps["amendment_date"] = a.AmendmentDate
+			}
+			if a.TargetProvisionRef != "" {
+				aProps["target_provision_ref"] = a.TargetProvisionRef
+			}
+			if a.ChangeSummary != "" {
+				aProps["change_summary"] = a.ChangeSummary
+			}
+			normalizeDateProps("Amendment", aProps, normCounts, &rawMoved)
+			records = append(records, seedObjectRecord{Type: "Amendment", Key: aKey, Properties: aProps})
+
+			// ProvisionVersion only for provision-level (body_note) records.
+			if a.TargetSectionID != "" {
+				vName := a.TargetProvisionRef
+				if vName == "" {
+					vName = a.TargetSectionID
+				}
+				vProps := map[string]any{
+					"name":                 vName,
+					"paragraph_ref":        a.TargetProvisionRef,
+					"paragraph_section_id": a.TargetSectionID,
+					"status":               "current",
+					"parent_law_ref_id":    a.TargetLawRefID,
+				}
+				if a.AmendmentDate != "" {
+					vProps["valid_from"] = a.AmendmentDate
+				}
+				normalizeDateProps("ProvisionVersion", vProps, normCounts, &rawMoved)
+				records = append(records, seedObjectRecord{
+					Type: "ProvisionVersion", Key: versionKey(a.TargetLawRefID, a.TargetSectionID), Properties: vProps,
+				})
+			}
 		}
 	}
 
@@ -2258,6 +2414,22 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 		if dir.OJReference != "" {
 			props["oj_reference"] = dir.OJReference
 		}
+		if community := dir.Community; community != "" {
+			props["community"] = community
+		}
+		if url := dir.URL; url != "" {
+			props["url_eur_lex"] = url
+		}
+		props["in_force"] = dir.InForce
+		if dir.TitleNO != "" {
+			props["title_no"] = dir.TitleNO
+		}
+		props["publisher"] = "Publications Office of the European Union"
+		props["license"] = "EUR-Lex reuse"
+		props["retrieved_at"] = retrievedAt
+		if url := dir.URL; url != "" {
+			props["source_url"] = url
+		}
 		if dir.Content != "" {
 			props["content"] = dir.Content
 		}
@@ -2272,12 +2444,25 @@ func buildSeedObjectRecords(docs []LovDoc, directives []*EUDirective, concepts [
 	// dangle.
 	stubs := collectEUStubs(directives)
 	for _, s := range stubs {
+		props := map[string]any{
+			"name":     s.CelexID,
+			"celex_id": s.CelexID,
+		}
+		if s.Community != "" {
+			props["community"] = s.Community
+		}
+		if s.URL != "" {
+			props["url_eur_lex"] = s.URL
+		}
+		props["publisher"] = "Publications Office of the European Union"
+		props["license"] = "EUR-Lex reuse"
+		props["retrieved_at"] = retrievedAt
+		if url := s.URL; url != "" {
+			props["source_url"] = url
+		}
 		records = append(records, seedObjectRecord{
 			Type: "EUDirective", Key: "eu_" + s.CelexID,
-			Properties: map[string]any{
-				"name":     s.CelexID,
-				"celex_id": s.CelexID,
-			},
+			Properties: props,
 		})
 	}
 	if len(stubs) > 0 {
@@ -2366,6 +2551,11 @@ func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, obje
 		dirByCELEX[strings.ToUpper(dir.CelexID)] = dir
 	}
 
+	docRefIDs := make(map[string]bool, len(docs))
+	for _, d := range docs {
+		docRefIDs[d.RefID] = true
+	}
+
 	for _, d := range docs {
 		if d.Ministry != "" {
 			records = append(records, seedRelationshipRecord{
@@ -2410,9 +2600,19 @@ func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, obje
 		for _, celex := range d.EUCelexIDs {
 			celex = strings.ToUpper(celex)
 			if dir := dirByCELEX[celex]; dir != nil {
+				meta := d.EEAMeta[celex]
+				refType := implementsEEARefType(meta.Keyword)
 				records = append(records, seedRelationshipRecord{
 					Type: "IMPLEMENTS_EEA", SrcKey: d.RefID, DstKey: "eu_" + dir.CelexID,
-					Properties: map[string]any{"source": "eea_references"},
+					Properties: map[string]any{
+						"source":                "eea_references",
+						"reference_type":        refType,
+						"is_primary":            isPrimaryRef(refType),
+						"implementation_status": "unknown",
+						"eu_articles":           strings.Join(meta.Articles, ","),
+						"reference_context":     meta.Context,
+						"trigger_keyword":       meta.Keyword,
+					},
 				})
 			}
 		}
@@ -2439,9 +2639,19 @@ func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, obje
 				continue
 			}
 			seenEU[euKey] = true
+			meta := d.EUBodyMeta[euCode]
+			refType := "cites_article"
+			if meta.Keyword != "" {
+				refType = referenceTypeFromKeyword(meta.Keyword)
+			}
 			records = append(records, seedRelationshipRecord{
 				Type: "CITES_EU_LAW", SrcKey: d.RefID, DstKey: euKey,
-				Properties: map[string]any{},
+				Properties: map[string]any{
+					"reference_type":    refType,
+					"eu_articles":       strings.Join(meta.Articles, ","),
+					"reference_context": meta.Context,
+					"trigger_keyword":   meta.Keyword,
+				},
 			})
 		}
 	}
@@ -2453,6 +2663,29 @@ func buildSeedRelationshipRecords(docs []LovDoc, directives []*EUDirective, obje
 				Type: "AMENDED_BY", SrcKey: d.RefID, DstKey: d.LastChangedByRef,
 				Properties: map[string]any{"effective_date": d.LastChangeInForce},
 			})
+		}
+	}
+
+	// HAS_AMENDMENT / HAS_VERSION: derived amendment/version objects.
+	for _, d := range docs {
+		for _, a := range append(deriveLawAmendments(d), bodyNoteAmendments(d)...) {
+			if !keepAmendment(a, docRefIDs) {
+				continue
+			}
+			records = append(records, seedRelationshipRecord{
+				Type:       "HAS_AMENDMENT",
+				SrcKey:     a.TargetLawRefID,
+				DstKey:     amendmentKey(a.TargetLawRefID, a.AmendedByRefID, a.TargetProvisionRef, a.Source),
+				Properties: map[string]any{},
+			})
+			if a.TargetSectionID != "" {
+				records = append(records, seedRelationshipRecord{
+					Type:       "HAS_VERSION",
+					SrcKey:     a.TargetLawRefID,
+					DstKey:     versionKey(a.TargetLawRefID, a.TargetSectionID),
+					Properties: map[string]any{},
+				})
+			}
 		}
 	}
 

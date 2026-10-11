@@ -3014,14 +3014,6 @@
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-48","dstKey":"subarea_Gjeldsforhandling. Konkurs","properties":{"level":"sub"}}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-48","dstKey":"subarea_Gjeldsordning","properties":{"level":"sub"}}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-48","dstKey":"subarea_Pant","properties":{"level":"sub"}}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-49","dstKey":"area_Sivil- og straffeprosess"}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-49","dstKey":"area_Forvaltnings- og kommunalrett"}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-49","dstKey":"area_Familie-, person- og barnerett"}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-49","dstKey":"subarea_Straffeprosess/straffeprosessloven","properties":{"level":"sub"}}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-49","dstKey":"subarea_Utlevering","properties":{"level":"sub"}}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-49","dstKey":"subarea_Politi","properties":{"level":"sub"}}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-49","dstKey":"subarea_Personrett. Personvern","properties":{"level":"sub"}}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-49","dstKey":"subarea_Statistikk. Registrering","properties":{"level":"sub"}}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-50","dstKey":"area_Utlendingsrett"}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-51","dstKey":"area_Forvaltnings- og kommunalrett"}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-51","dstKey":"subarea_Politi","properties":{"level":"sub"}}
@@ -3056,7 +3048,6 @@
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-63","dstKey":"area_Transport og kommunikasjoner"}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-19-63","dstKey":"subarea_Transport","properties":{"level":"sub"}}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-23-64","dstKey":"area_Pensjons- og trygderett"}
-{"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-23-65","dstKey":"area_Pensjons- og trygderett"}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-23-73","dstKey":"area_Sivil- og straffeprosess"}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-23-73","dstKey":"subarea_Straffeprosess/straffeprosessloven","properties":{"level":"sub"}}
 {"type":"IN_LEGAL_AREA","srcKey":"lov/2026-06-23-74","dstKey":"area_HMS og beredskaps- og sikkerhetsrett"}

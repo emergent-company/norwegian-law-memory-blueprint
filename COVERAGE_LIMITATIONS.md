@@ -22,15 +22,16 @@ bounds below.
   are present. County/municipal bylaws and local regulations are out of scope.
 - **EU directive text is partial.** EU/EEA directive nodes carry metadata
   (title, form, author, dates, subject matter, OJ reference, EuroVoc
-  descriptors) and, for **63 of 85** directives, a `content` body sourced from
-  CELLAR. The other 22 have no retrievable full text, and even the stored body is
-  not guaranteed complete — do not treat an EU directive node as authoritative
-  quoted EU law.
+  descriptors) and, for **226 of 274** non-stub directives, a `content` body
+  sourced from CELLAR. The other 48 non-stub directives have no retrievable
+  full text, and even the stored body is not guaranteed complete — do not treat
+  an EU directive node as authoritative quoted EU law.
 - **Many EU directive nodes are stubs.** Cited or amending acts that are not
   themselves among the referenced directives are stored as stub nodes
-  (`celex_id` + `name` only — **534 of 619** `EUDirective` objects) so that
-  `EU_CITES` / `EU_MODIFIED_BY` edges resolve instead of dangling. A stub carries
-  no metadata.
+  (**1235 of 1509** `EUDirective` objects) so that `EU_CITES` / `EU_MODIFIED_BY`
+  edges resolve instead of dangling. A stub carries only `celex_id`, `name`,
+  `community`, `url_eur_lex`, `source_url`, `publisher`, `license` and
+  `retrieved_at` — no `content`/metadata and no `in_force`.
 
 ## Temporal scope: current consolidated text only
 
@@ -88,6 +89,31 @@ bounds below.
 - `HAS_LANGUAGE_VARIANT` edges are **0**: language variants are deduplicated
   ("first occurrence wins"), so no variant pairs exist to link.
 
+## Amendment & version metadata
+
+- **`Amendment` objects (3811)** record statutory changes. **3771 are
+  `source:"metadata"`** (law-level, derived from Lovdata `last_change_in_force`
+  and `AMENDS` metadata); **40 are `source:"body_note"`** (per-provision
+  "… ved lov D. MMM YYYY nr. N" notes). `amendment_type` is **usually
+  `unknown`** because Lovdata metadata states neither the change kind nor the
+  provision; the `amending_section` source and `ikrafttredelse` type are
+  **never produced** in this corpus.
+- **`ProvisionVersion` objects (11)** anchor provisions that have a body note.
+  **`valid_to` is never set** and **`status` is always `current`** — the corpus
+  holds only current consolidated text, so there are **no historical text
+  snapshots** and no version chaining.
+- **EU fields with no data.** `title_no` (Norwegian title) is **always empty**;
+  non-stub directives carry `in_force: true` (no repeal signal is extracted, and
+  stub nodes carry no `in_force` at all).
+- **Edge taxonomy coverage.** `reference_context` on `IMPLEMENTS_EEA` /
+  `CITES_EU_LAW` edges is the **clause containing the citation** (it can still
+  span a whole paragraph when the source has no sentence punctuation).
+  `trigger_keyword` is populated only when a Norwegian implementation keyword is
+  present near the citation, and `eu_articles` only when an article reference
+  ("artikkel 6.1.a", "13-15") is present — both are empty otherwise. On the
+  current seed, 549 `CITES_EU_LAW` edges carry a `trigger_keyword` and 173 carry
+  `eu_articles`.
+
 ## Source & licensing
 
 - Data source: **Lovdata public datasets**, licensed under **NLOD 2.0** (Norsk
@@ -95,6 +121,12 @@ bounds below.
   into this seed — not the raw Lovdata XML. See `NOTICE`.
 - EUR-Lex directive metadata and EuroVoc thesaurus data are from the EU
   Publications Office (public).
+- **Per-object provenance** is now recorded on `Law`, `Regulation` and
+  `EUDirective` objects (`source_url`, `publisher`, `license`, `retrieved_at`).
+  The full machine-readable source manifest lives in `docs/sources.yaml`.
+- **Golden-hash contract.** A small set of anchors is pinned by `sha256` in
+  `tests/golden/manifest.json`; a passing `go test ./tests/golden/` attests only
+  those anchors, not whole-corpus correctness.
 
 ## Related issues
 

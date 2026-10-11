@@ -145,7 +145,7 @@ func eurovocSuffix(uri string) string {
 // EUDirective. Multivalued fields are deduped + sorted; scalar fields take the
 // first sorted distinct value. CELEX ids are uppercase-normalised.
 func collapseDirectiveRows(rows []map[string]string) *EUDirective {
-	d := &EUDirective{}
+	d := &EUDirective{InForce: true}
 	if v := distinctValues(rows, "title"); len(v) > 0 {
 		d.FullTitle = v[0]
 	}
