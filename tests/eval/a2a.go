@@ -22,7 +22,7 @@ const agentSkillID = "norwegian-law-assistant"
 // returns the assistant's answer text. It tolerates both JSON and SSE response
 // bodies. Transport/protocol failures are returned as errors so one item's
 // failure never aborts the whole run.
-func sendAgentMessage(ctx context.Context, base, token, question string) (string, error) {
+func sendAgentMessage(ctx context.Context, base, token, projectID, question string) (string, error) {
 	reqBody := a2a.SendMessageRequest{
 		Message: a2a.Message{
 			MessageID: fmt.Sprintf("eval-%d", time.Now().UnixNano()),
@@ -41,6 +41,10 @@ func sendAgentMessage(ctx context.Context, base, token, question string) (string
 		return "", fmt.Errorf("build request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
+	if projectID != "" {
+		// Account/user-scoped tokens need an explicit project context.
+		req.Header.Set("X-Project-ID", projectID)
+	}
 	req.Header.Set("Content-Type", a2a.A2AContentType)
 	req.Header.Set("Accept", "application/json, text/event-stream")
 

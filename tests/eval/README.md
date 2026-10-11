@@ -45,16 +45,20 @@ go test ./tests/eval/ -run TestAgentEval -v -count=1 -timeout 60m
 | `JUDGE_EXTRA_HEADERS` | — | Optional JSON object of extra headers for the judge request. |
 | `LAW_BLUEPRINT_DIR` | auto | Override repo root (used to locate `seed/` and `evals/`). |
 | `EVAL_TRANSPORT` | `a2a` | Agent transport: `a2a` (default) or `trigger` (trusted project API). |
-| `TEST_PROJECT_ID` | — | Project id for the `trigger` transport (fallback `EVAL_PROJECT_ID`). |
+| `TEST_PROJECT_ID` | — | Project id. Required for the `trigger` transport; for `a2a` it is sent as the `X-Project-ID` header (fallback `EVAL_PROJECT_ID` / `MEMORY_PROJECT_ID`). |
 | `EVAL_AGENT_ID` | — | Agent id for the `trigger` transport. |
 
-## Trigger transport
+## Transport
 
-The default `a2a` transport posts to the A2A `message:send` surface, which
-refuses scoped retrieval tools by design (TrustedInternal=false), so live
-answers come back as refusals. Set `EVAL_TRANSPORT=trigger` to use the trusted
-project API instead, which sets TrustedInternal=true and produces sourced
-answers:
+The default `a2a` transport posts to the A2A `message:send` surface. That surface
+refuses **scoped retrieval** tools by design (TrustedInternal=false), so live
+answers come back as refusals; it also needs an explicit project context — either
+a project-scoped API token or an `X-Project-ID` header derived from
+`TEST_PROJECT_ID` / `EVAL_PROJECT_ID` / `MEMORY_PROJECT_ID`.
+
+Set `EVAL_TRANSPORT=trigger` to use the trusted project API instead, which sets
+TrustedInternal=true and produces sourced answers. **This is the transport to use
+for a real evaluation run:**
 
 ```sh
 EVAL_TRANSPORT=trigger \
@@ -62,6 +66,7 @@ TEST_SERVER_URL=https://… \
 TEST_API_TOKEN=… \
 TEST_PROJECT_ID=… \
 EVAL_AGENT_ID=… \
+EVAL_LIMIT=5 \
 go test ./tests/eval/ -run TestAgentEval -v -count=1 -timeout 60m
 ```
 
