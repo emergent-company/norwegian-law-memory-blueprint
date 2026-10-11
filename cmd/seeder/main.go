@@ -472,6 +472,33 @@ func isParagraphClass(cls string) bool {
 // "legalPfortsettelse"/"leddfortsettelse" continuation variants). Short
 // delegation regulations skip the legalArticle wrapper entirely and place
 // <article class="legalP"> directly under <section>; those are captured by the
+// plainTextPositions returns the concatenated plain text of n — mirroring
+// extractPlainText's traversal order and skip-classes exactly — together with the
+// byte offset at which each element node's text begins. It lets callers locate a
+// eu/ anchor within the surrounding clause instead of guessing offset 0.
+func plainTextPositions(n *html.Node) (string, map[*html.Node]int) {
+	pos := make(map[*html.Node]int)
+	var sb strings.Builder
+	var walk func(*html.Node)
+	walk = func(x *html.Node) {
+		if x.Type == html.TextNode {
+			sb.WriteString(x.Data)
+			return
+		}
+		if x.Type == html.ElementNode {
+			if skipClasses[attr(x, "class")] {
+				return
+			}
+			pos[x] = sb.Len()
+		}
+		for c := x.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(n)
+	return sb.String(), pos
+}
+
 // top-level legalP fallback below.
 func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagraph, euBodyRefs []string, euBodyMeta map[string]euRefMeta) {
 	var sb strings.Builder
@@ -497,7 +524,7 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 
 	var collectEURefs func(*html.Node)
 	collectEURefs = func(n *html.Node) {
-		text := strings.TrimSpace(extractPlainText(n))
+		text, pos := plainTextPositions(n)
 		var walk func(*html.Node)
 		walk = func(x *html.Node) {
 			if x.Type == html.ElementNode && x.Data == "a" {
@@ -507,8 +534,14 @@ func extractBody(main *html.Node) (fullMarkdown string, paragraphs []LovParagrap
 					code := strings.ToUpper(href[3:])
 					if !euRefSet[code] {
 						euRefSet[code] = true
-						ctx, kw, arts := euReferenceContext(text, 0, len(text), maxEUContextChars)
-						euBodyMeta[code] = euRefMeta{Context: ctx, Keyword: kw, Articles: arts}
+						if start, ok := pos[x]; ok {
+							end := start + len(extractPlainText(x))
+							ctx, kw, arts := euReferenceContext(text, start, end, maxEUContextChars)
+							euBodyMeta[code] = euRefMeta{Context: ctx, Keyword: kw, Articles: arts}
+						}
+						// else: anchor sits inside a skip-classes subtree (e.g. a
+						// footnote) whose text is not part of `text`; keep the ref
+						// code but leave its meta empty rather than mis-anchoring.
 					}
 				}
 			}
@@ -851,14 +884,23 @@ func parseDocument(content []byte, docType string) *LovDoc {
 					doc.AppliesTo = strings.TrimSpace(strings.TrimPrefix(text, "Gjelder for"))
 				case "eeaReferences":
 					doc.EEAReferences = text
+					matches := extractEUCelexWithPositions(text)
 					doc.EUCelexIDs = extractEUCelex(text)
-					if len(doc.EUCelexIDs) > 0 {
+					if len(matches) > 0 {
+						spanByCELEX := make(map[string][2]int, len(matches))
+						for _, m := range matches {
+							spanByCELEX[m.CELEX] = [2]int{m.Start, m.End}
+						}
 						if doc.EEAMeta == nil {
-							doc.EEAMeta = make(map[string]euRefMeta, len(doc.EUCelexIDs))
+							doc.EEAMeta = make(map[string]euRefMeta, len(matches))
 						}
 						for _, celex := range doc.EUCelexIDs {
 							celex = strings.ToUpper(celex)
-							ctx, kw, arts := euReferenceContext(text, 0, len(text), maxEUContextChars)
+							start, end := 0, len(text)
+							if sp, ok := spanByCELEX[celex]; ok {
+								start, end = sp[0], sp[1]
+							}
+							ctx, kw, arts := euReferenceContext(text, start, end, maxEUContextChars)
 							doc.EEAMeta[celex] = euRefMeta{Context: ctx, Keyword: kw, Articles: arts}
 						}
 					}
@@ -1880,7 +1922,7 @@ func dedupeSeedRelationships(in []seedRelationshipRecord) []seedRelationshipReco
 	for _, r := range in {
 		k := r.Type + "\x00" + r.SrcKey + "\x00" + r.DstKey
 		if i, ok := idx[k]; ok {
-			mergeRelProps(out[i].Properties, r.Properties)
+			out[i].Properties = mergeRelProps(out[i].Properties, r.Properties)
 			continue
 		}
 		idx[k] = len(out)
@@ -1890,13 +1932,19 @@ func dedupeSeedRelationships(in []seedRelationshipRecord) []seedRelationshipReco
 }
 
 // mergeRelProps copies any keys from src into dst that dst does not already
-// carry, so a superset of edge properties survives deduplication.
-func mergeRelProps(dst, src map[string]any) {
+// carry, so a superset of edge properties survives deduplication. It returns the
+// merged map, initialising a nil dst so callers never panic on a nil properties
+// map.
+func mergeRelProps(dst, src map[string]any) map[string]any {
+	if dst == nil {
+		dst = make(map[string]any, len(src))
+	}
 	for k, v := range src {
 		if _, exists := dst[k]; !exists {
 			dst[k] = v
 		}
 	}
+	return dst
 }
 
 func sortedMapKeys[V any](m map[string]V) []string {

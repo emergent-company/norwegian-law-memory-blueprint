@@ -28,9 +28,10 @@ bounds below.
   an EU directive node as authoritative quoted EU law.
 - **Many EU directive nodes are stubs.** Cited or amending acts that are not
   themselves among the referenced directives are stored as stub nodes
-  (`celex_id` + `name` only — **1235 of 1509** `EUDirective` objects) so that
-  `EU_CITES` / `EU_MODIFIED_BY` edges resolve instead of dangling. A stub carries
-  no metadata.
+  (**1235 of 1509** `EUDirective` objects) so that `EU_CITES` / `EU_MODIFIED_BY`
+  edges resolve instead of dangling. A stub carries only `celex_id`, `name`,
+  `community`, `url_eur_lex`, `source_url`, `publisher`, `license` and
+  `retrieved_at` — no `content`/metadata and no `in_force`.
 
 ## Temporal scope: current consolidated text only
 
@@ -102,9 +103,16 @@ bounds below.
   holds only current consolidated text, so there are **no historical text
   snapshots** and no version chaining.
 - **EU fields with no data.** `title_no` (Norwegian title) is **always empty**;
-  `in_force` is **always `true`** (no repeal signal is extracted). On
-  `CITES_EU_LAW` edges, `reference_context` is the **enclosing clause** (coarse,
-  not ref-anchored).
+  non-stub directives carry `in_force: true` (no repeal signal is extracted, and
+  stub nodes carry no `in_force` at all).
+- **Edge taxonomy coverage.** `reference_context` on `IMPLEMENTS_EEA` /
+  `CITES_EU_LAW` edges is the **clause containing the citation** (it can still
+  span a whole paragraph when the source has no sentence punctuation).
+  `trigger_keyword` is populated only when a Norwegian implementation keyword is
+  present near the citation, and `eu_articles` only when an article reference
+  ("artikkel 6.1.a", "13-15") is present — both are empty otherwise. On the
+  current seed, 549 `CITES_EU_LAW` edges carry a `trigger_keyword` and 173 carry
+  `eu_articles`.
 
 ## Source & licensing
 

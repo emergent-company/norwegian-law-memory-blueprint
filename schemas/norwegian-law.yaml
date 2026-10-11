@@ -285,7 +285,7 @@ objectTypes:
         description: Official Journal reference (e.g. OJ L 84, 20.3.2014)
       community:
         type: string
-        description: EU community/union marker (EU | EG | EEG | Euratom)
+        description: EU community/union marker (EU | EG | EEG)
       title_no:
         type: string
         description: Official Norwegian title of the act (empty when unavailable)
@@ -474,11 +474,11 @@ relationshipTypes:
   - name: HAS_AMENDMENT
     label: Has Amendment
     description: Law or Regulation has a statutory change record
-    sourceType: Law
-    targetType: Amendment
+    sourceTypes: [Law, Regulation]
+    targetTypes: [Amendment]
 
   - name: HAS_VERSION
     label: Has Version
     description: Law or Regulation has a temporal version anchor for a provision
-    sourceType: Law
-    targetType: ProvisionVersion
+    sourceTypes: [Law, Regulation]
+    targetTypes: [ProvisionVersion]

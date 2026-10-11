@@ -19,10 +19,15 @@ Derived fields (deterministic, computed from `celex_id`):
 
 | Field | Derivation |
 |---|---|
-| `community` | CELEX year: `< 1993` → `EEG`, `1993–2009` → `EG`, `>= 2009` → `EU` |
+| `community` | CELEX year: `< 1993` → `EEG`, `1993–2008` → `EG`, `>= 2009` → `EU` |
 | `url_eur_lex` | ELI URL (see below) |
 | `in_force` | always `true` — no repeal/expiry signal is extracted |
 | `title_no` | always absent — no Norwegian title source |
+
+`community` is derived from the CELEX **year only**, so an early-December-2009
+act is labelled `EU` although the EC designation technically applied until the
+Lisbon Treaty's entry into force on 2009-12-01 (Maastricht 1993-11-01). This is
+a documented simplification, not a per-act treaty-status lookup.
 
 ## CELEX identity and the ELI URL
 

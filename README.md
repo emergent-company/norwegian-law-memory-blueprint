@@ -59,7 +59,7 @@ legal corpus in one step.
 
 | Property | Meaning |
 |---|---|
-| `community` | `EU` \| `EG` \| `EEG`, derived from the CELEX year (`<1993` EEG, `1993–2009` EG, `>=2009` EU) |
+| `community` | `EU` \| `EG` \| `EEG`, derived from the CELEX year (`<1993` EEG, `1993–2008` EG, `>=2009` EU) |
 | `url_eur_lex` | Canonical ELI URL, derived as `https://eur-lex.europa.eu/eli/{dir\|reg\|dec}/YYYY/N` |
 | `in_force` | Always `true` in this corpus — no repeal signal is extracted |
 | `title_no` | Norwegian title — always absent in this corpus |

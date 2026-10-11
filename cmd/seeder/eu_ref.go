@@ -63,17 +63,32 @@ func euRefToCELEX(ref string) string {
 	return euDocToCELEX('L', normYear(year), num)
 }
 
-// extractEUCelex parses header eeaReferences prose into a deduped, sorted list
-// of CELEX ids (uppercase). References that don't resolve to a plausible
-// directive/regulation/decision (sanity-checked year/number ranges) are skipped,
-// so the seed never gains a CELEX from a false-positive prose-digit match.
-func extractEUCelex(text string) []string {
-	set := make(map[string]bool)
-	for _, m := range euRefPattern.FindAllStringSubmatch(text, -1) {
-		kw := strings.ToLower(m[1])
-		hasNr := m[2] != ""
-		a, errA := strconv.Atoi(m[3])
-		b, errB := strconv.Atoi(m[4])
+// euCelexMatch is one parsed CELEX reference plus the byte span of its match in
+// the source prose. Used to isolate the clause around each reference.
+type euCelexMatch struct {
+	CELEX string
+	Start int
+	End   int
+}
+
+// extractEUCelexWithPositions parses header eeaReferences prose into deduped
+// CELEX ids (uppercase) together with each match's byte span, so callers can
+// isolate the clause containing a specific reference. It shares the exact
+// type/year/num mapping and sanity checks of extractEUCelex (which delegates to
+// it), so behaviour is identical. The first occurrence of a duplicate CELEX wins.
+func extractEUCelexWithPositions(text string) []euCelexMatch {
+	seen := make(map[string]bool)
+	var out []euCelexMatch
+	for _, idx := range euRefPattern.FindAllStringSubmatchIndex(text, -1) {
+		// idx[0],idx[1] full match; idx[2:4] keyword; idx[4:6] "nr." marker;
+		// idx[6:8] first number; idx[8:10] second number.
+		if len(idx) < 10 {
+			continue
+		}
+		kw := strings.ToLower(text[idx[2]:idx[3]])
+		hasNr := idx[4] >= 0
+		a, errA := strconv.Atoi(text[idx[6]:idx[7]])
+		b, errB := strconv.Atoi(text[idx[8]:idx[9]])
 		if errA != nil || errB != nil {
 			continue
 		}
@@ -103,11 +118,25 @@ func extractEUCelex(text string) []string {
 		if year < 1950 || year > 2100 || num < 1 || num > 9999 {
 			continue
 		}
-		set[euDocToCELEX(typ, year, num)] = true
+		celex := euDocToCELEX(typ, year, num)
+		if seen[celex] {
+			continue
+		}
+		seen[celex] = true
+		out = append(out, euCelexMatch{CELEX: celex, Start: idx[0], End: idx[1]})
 	}
-	out := make([]string, 0, len(set))
-	for c := range set {
-		out = append(out, c)
+	return out
+}
+
+// extractEUCelex parses header eeaReferences prose into a deduped, sorted list
+// of CELEX ids (uppercase). References that don't resolve to a plausible
+// directive/regulation/decision (sanity-checked year/number ranges) are skipped,
+// so the seed never gains a CELEX from a false-positive prose-digit match.
+func extractEUCelex(text string) []string {
+	matches := extractEUCelexWithPositions(text)
+	out := make([]string, 0, len(matches))
+	for _, m := range matches {
+		out = append(out, m.CELEX)
 	}
 	sort.Strings(out)
 	return out

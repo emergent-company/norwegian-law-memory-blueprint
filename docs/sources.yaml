@@ -47,8 +47,9 @@ sources:
       scope: EU/EEA act metadata and partial full text (EUDirective objects)
       limitations: >
         Full text present for 226 of 1509 EUDirective objects; 1235 are stub nodes
-        (celex_id + name only). No Norwegian titles (title_no always empty);
-        in_force always true (no repeal signal extracted).
+        (celex_id + name + community/url_eur_lex/provenance only — no content or
+        in_force). No Norwegian titles (title_no always empty); in_force always
+        true (no repeal signal extracted).
     languages: [en]
 
   - authority: Publications Office of the European Union
